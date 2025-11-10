@@ -65,7 +65,7 @@ func (s Suit) String() string {
 	case Diamond:
 		return "♦"
 	case Joker:
-		return "Joker"
+		return "♔"
 	default:
 		return ""
 	}
@@ -102,10 +102,14 @@ func (r Rank) String() string {
 	case Rank2:
 		return "2"
 	case RankBlackJoker:
-		return "Joker"
+		return "B"
 	case RankRedJoker:
-		return "JOKER"
+		return "R"
 	default:
+		// 确保 10 不会破坏对齐
+		if r == Rank10 {
+			return "10"
+		}
 		return strconv.Itoa(int(r))
 	}
 }
@@ -135,4 +139,22 @@ func (d Deck) Shuffle() {
 	rand.Shuffle(len(d), func(i, j int) {
 		d[i], d[j] = d[j], d[i]
 	})
+}
+
+func (c Card) RenderCard(str string) string {
+	// 手牌的样式
+	styleRed := pterm.NewRGBStyle(pterm.NewRGB(192, 0, 0), pterm.NewRGB(210, 196, 191))
+	styleBlack := pterm.NewStyle(pterm.FgBlack, pterm.BgWhite)
+
+	// 格式化牌的内容，例如 "♥K  " 或 "♠10 " (左对齐，总宽度4)
+	s := fmt.Sprintf("%-2s", str)
+
+	// 根据牌的颜色选择样式
+	var rankStyledContent string
+	rankStyledContent = styleBlack.Sprint(s)
+	if c.Color == Red {
+		rankStyledContent = styleRed.Sprint(s)
+	}
+
+	return rankStyledContent
 }

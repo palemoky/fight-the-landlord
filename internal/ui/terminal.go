@@ -1,12 +1,12 @@
 package ui
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
-	"bufio"
 
 	"github.com/palemoky/fight-the-landlord-go/internal/card"
 	"github.com/palemoky/fight-the-landlord-go/internal/game"
@@ -20,16 +20,6 @@ type TerminalUI struct{}
 func NewTerminalUI() *TerminalUI {
 	// pterm 已经处理了 reader，所以我们不再需要它
 	return &TerminalUI{}
-}
-
-// renderCards 辅助函数，用于漂亮地打印一手牌
-func renderCards(cards []card.Card) string {
-	var sb strings.Builder
-	for _, c := range cards {
-		sb.WriteString(c.String())
-		sb.WriteString(" ")
-	}
-	return sb.String()
 }
 
 // renderPlayerInfo 负责生成玩家信息区域的字符串内容
@@ -92,6 +82,36 @@ func (t *TerminalUI) renderCardCounter(g *game.Game) string {
 	return tableString
 }
 
+// renderFancyHand 负责将一手牌渲染成漂亮的、重叠的ASCII艺术风格
+func (t *TerminalUI) renderFancyHand(hand []card.Card) string {
+	if len(hand) == 0 {
+		return "  "
+	}
+
+	// 使用三个 strings.Builder 来高效地构建每一行
+	var top, rank, suit, bottom strings.Builder
+
+	// 循环构建每一张牌的“主体”部分
+	for _, c := range hand {
+		rankStr := c.Rank.String()
+		suitStr := c.Suit.String()
+
+		top.WriteString("┌──")
+		rank.WriteString("│" + c.RenderCard(rankStr))
+		suit.WriteString("│" + c.RenderCard(suitStr))
+		bottom.WriteString("└──")
+	}
+
+	// 为最后一张牌添加“封口”
+	top.WriteString("┐")
+	rank.WriteString("│")
+	suit.WriteString("│")
+	bottom.WriteString("┘")
+
+	// 将4行拼接成最终的输出
+	return fmt.Sprintf("%s\n%s\n%s\n%s", top.String(), rank.String(), suit.String(), bottom.String())
+}
+
 // renderGameState 负责生成场上情况区域的字符串内容
 func (t *TerminalUI) renderGameState(g *game.Game) string {
 	if !g.LastPlayedHand.IsEmpty() {
@@ -100,7 +120,7 @@ func (t *TerminalUI) renderGameState(g *game.Game) string {
 		if lastPlayer.IsLandlord {
 			lastPlayerName = pterm.LightYellow(lastPlayerName, " (地主)")
 		}
-		return fmt.Sprintf("上家 (%s) 出的牌:\n%s", lastPlayerName, renderCards(g.LastPlayedHand.Cards))
+		return fmt.Sprintf("上家 (%s) 出的牌:\n%s", lastPlayerName, t.renderFancyHand(g.LastPlayedHand.Cards))
 	}
 	return pterm.Green("现在是你的回合, 请随意出牌。")
 }
@@ -114,7 +134,7 @@ func (t *TerminalUI) renderPlayerHand(g *game.Game) {
 	}
 	pterm.DefaultSection.Printf("轮到你了, %s!", nameStyle.Sprint(currentPlayer.Name))
 	pterm.Println("你的手牌:")
-	pterm.Println(renderCards(currentPlayer.Hand))
+	pterm.Println(t.renderFancyHand(currentPlayer.Hand))
 	pterm.Println()
 }
 
@@ -205,7 +225,7 @@ func (t *TerminalUI) GetPlayerInput(p *game.Player, timeout time.Duration) (stri
 				pterm.Warning.Println("\n输入读取失败！")
 				return "PASS", true // 视为超时
 			}
-			fmt.Println() // 输入完成后换行，保持界面整洁
+			fmt.Println()                                           // 输入完成后换行，保持界面整洁
 			return strings.ToUpper(strings.TrimSpace(input)), false // 返回输入，并未超时
 
 		case <-ticker.C:
