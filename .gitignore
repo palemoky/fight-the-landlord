@@ -1,0 +1,11 @@
+# IDE/editor config files
+.idea/*
+.vscode/*
+!.vscode/launch.json
+.DS_Store
+
+# Environment file
+.env
+
+# Go test coverage output
+cover.out
