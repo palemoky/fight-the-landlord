@@ -11,10 +11,9 @@ import (
 
 // TestNewDeck 验证 NewDeck 是否能正确创建一副完整的、无重复的54张牌
 func TestNewDeck(t *testing.T) {
-	// 使用 testify 的 assert
 	assert := assert.New(t)
 
-	// Action: 创建一副新牌
+	// 创建一副新牌
 	deck := NewDeck()
 
 	// Assertion 1: 牌的总数必须是54张
