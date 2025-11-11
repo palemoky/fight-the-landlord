@@ -16,6 +16,9 @@ import (
 )
 
 const (
+	Logo     = "Fight The Landlord"
+	Greeting = "Input Note: T->10; BJ->Black Joker; RJ->Red Joker; Pass\n输入help或rules查看游戏规则"
+
 	TopBorderStart    = "┌──"
 	TopBorderEnd      = "┐"
 	SideBorder        = "│"
@@ -46,8 +49,8 @@ func (t *TerminalUI) renderCardContent(c card.Card, str string) string {
 	styleRed := pterm.NewRGBStyle(pterm.NewRGB(192, 0, 0), pterm.NewRGB(228, 215, 215))
 	styleBlack := pterm.NewRGBStyle(pterm.NewRGB(68, 67, 77), pterm.NewRGB(228, 215, 215))
 
-	// content := fmt.Sprintf("%-2s", str)
-	content := t.getCardContentString(c)
+	content := fmt.Sprintf("%-2s", str)
+	// content := t.getCardContentString(c)
 
 	styledCard := styleBlack.Sprint(content)
 	if c.Color == card.Red {
@@ -205,9 +208,9 @@ func (t *TerminalUI) DisplayGame(g *game.Game) {
 	t.ClearScreen()
 
 	// 1. 渲染大标题
-	logo, _ := pterm.DefaultBigText.WithLetters(putils.LettersFromString("Fight The Landlord")).Srender()
+	logo, _ := pterm.DefaultBigText.WithLetters(putils.LettersFromString(Logo)).Srender()
 	pterm.DefaultCenter.Println(logo)
-	pterm.DefaultCenter.Println("Input Note: T->10; BJ->Black Joker; RJ->Red Joker; Pass")
+	pterm.DefaultCenter.Println(Greeting)
 
 	playerInfoContent := t.renderPlayerInfoBox(g) // 玩家信息
 	counterGridStr := t.renderCounterGrid(g)      // 记牌器
@@ -306,7 +309,7 @@ func (t *TerminalUI) ClearScreen() {
 	}
 }
 
-// (可选) 新增一个游戏结束的界面
+// 新增一个游戏结束的界面
 func (t *TerminalUI) DisplayGameOver(winner *game.Player, isLandlordWinner bool) {
 	t.ClearScreen()
 	pterm.DefaultCenter.Println(pterm.DefaultBigText.WithLetters(
@@ -321,6 +324,36 @@ func (t *TerminalUI) DisplayGameOver(winner *game.Player, isLandlordWinner bool)
 		winnerType = "农民"
 	}
 
-	pterm.Success.Printf("%s (%s) 获胜!\n", winnerType, winner.Name)
+	pterm.Success.Printf("🥳 %s (%s) 获胜! 🎉\n", winnerType, winner.Name)
 	pterm.Println()
+}
+
+func (t *TerminalUI) DisplayRules() {
+	t.ClearScreen()
+
+	// 使用 Header 制作一个漂亮的标题
+	pterm.DefaultHeader.WithFullWidth().WithBackgroundStyle(pterm.NewStyle(pterm.BgLightBlue)).Println("游戏规则 (Game Rules)")
+	pterm.Println()
+
+	// 使用 BulletList 来格式化规则列表，非常清晰
+	pterm.DefaultBulletList.WithItems([]pterm.BulletListItem{
+		{Level: 0, Text: "单张 (Single): 任意一张牌。"},
+		{Level: 0, Text: "对子 (Pair): 两张点数相同的牌。"},
+		{Level: 0, Text: "三张 (Trio): 三张点数相同的牌。"},
+		{Level: 1, Text: "三带一 (Trio with Single): 三张 + 一张单牌。"},
+		{Level: 1, Text: "三带二 (Trio with Pair): 三张 + 一个对子。"},
+		{Level: 0, Text: "顺子 (Straight): 5张或以上点数连续的单牌 (A, 2, 王除外)。"},
+		{Level: 0, Text: "连对 (Pair Straight): 3对或以上点数连续的对子 (A, 2, 王除外)。"},
+		{Level: 0, Text: "飞机 (Plane): 2个或以上点数连续的三张 (A, 2, 王除外)。"},
+		{Level: 1, Text: "飞机带单 (Plane with Singles): 飞机 + 对应数量的单牌。"},
+		{Level: 1, Text: "飞机带对 (Plane with Pairs): 飞机 + 对应数量的对子。"},
+		{Level: 0, Text: "炸弹 (Bomb): 四张点数相同的牌。"},
+		{Level: 1, Text: "四带二 (Four with Two): 四张 + 两张单牌或一个对子。"},
+		{Level: 0, Text: "王炸 (Rocket): 红Joker + 黑Joker，最大的牌型。"},
+	}).Render()
+
+	pterm.Println()
+
+	// 交互式提示，等待用户按键后返回游戏
+	pterm.DefaultInteractiveContinue.Show("按回车键返回游戏...")
 }

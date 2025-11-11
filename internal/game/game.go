@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/palemoky/fight-the-landlord-go/internal/card"
@@ -10,17 +11,17 @@ import (
 )
 
 const (
-	PlayerTurnTimeout = 15 * time.Second
+	PlayerTurnTimeout = 30 * time.Second
 )
 
 // Game 定义游戏状态
 type Game struct {
-	Players           [3]*Player
-	Deck              card.Deck
-	LandlordCards     []card.Card
-	CurrentTurn       int
-	LastPlayedHand    rule.ParsedHand
-	LastPlayerIdx     int
+	Players           [3]*Player      // 玩家
+	Deck              card.Deck       // 手牌
+	LandlordCards     []card.Card     // 地主手牌
+	CurrentTurn       int             // 当前出牌玩家
+	LastPlayedHand    rule.ParsedHand // 上家出牌
+	LastPlayerIdx     int             // 上家
 	ConsecutivePasses int
 	CardCounter       *card.CardCounter
 	ui                UI
@@ -33,6 +34,7 @@ type UI interface {
 	ShowMessage(string)
 	ShowError(error)
 	ClearScreen()
+	DisplayRules()
 }
 
 func NewGame(ui UI) *Game {
@@ -82,7 +84,7 @@ func (g *Game) Bidding() {
 
 	g.ui.ShowMessage(fmt.Sprintf("%s 成为地主！并获得三张底牌。\n", g.Players[bidderIdx].Name))
 	g.ui.ShowMessage(fmt.Sprintf("底牌是: %s", g.LandlordCards))
-	time.Sleep(3 * time.Second)
+	// time.Sleep(3 * time.Second)
 }
 
 func (g *Game) IsLandlordCardPlayed(c card.Card) bool {
@@ -110,6 +112,12 @@ func (g *Game) Run() {
 
 		// 1. 调用带有倒计时功能的 GetPlayerInput
 		input, timedOut := g.ui.GetPlayerInput(currentPlayer, PlayerTurnTimeout)
+
+		upperInput := strings.ToUpper(input)
+		if upperInput == "HELP" || upperInput == "RULES" {
+			g.ui.DisplayRules() // 调用UI来显示规则
+			continue            // 跳过本轮的后续逻辑，重新渲染游戏界面
+		}
 
 		// 5. 根据是否超时来处理输入
 		if timedOut {
