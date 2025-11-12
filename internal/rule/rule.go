@@ -325,3 +325,49 @@ func RemoveCards(hand []card.Card, toRemove []card.Card) []card.Card {
 	}
 	return result
 }
+
+// CanBeatWithHand 检查一个玩家的整手牌中是否存在任何可以打过 opponentHand 的组合
+func CanBeatWithHand(playerHand []card.Card, opponentHand ParsedHand) bool {
+	// 1. 如果是新一轮，总是有牌可出
+	if opponentHand.IsEmpty() {
+		return true
+	}
+
+	// 2. 检查是否有炸弹或王炸 (它们几乎可以打任何牌)
+	// (为了简化，这里只检查一个基础的炸弹逻辑)
+	rankCounts := make(map[card.Rank]int)
+	for _, c := range playerHand {
+		rankCounts[c.Rank]++
+	}
+	
+	hasRocket := false
+	if rankCounts[card.RankBlackJoker] > 0 && rankCounts[card.RankRedJoker] > 0 {
+		hasRocket = true
+	}
+
+	for rank, count := range rankCounts {
+		if count == 4 { // 找到一个炸弹
+			// 如果对手不是王炸或更大的炸弹，那么我方的炸弹总能打
+			if opponentHand.Type != Rocket && (opponentHand.Type != Bomb || rank > opponentHand.KeyRank) {
+				return true
+			}
+		}
+	}
+	if hasRocket {
+		return true // 王炸最大
+	}
+
+	// 3. 检查是否有同类型的、更大的牌
+	// (这是一个非常复杂的步骤，涉及到从手牌中找出所有特定类型的组合)
+	// 这是一个简化的示例，仅用于演示逻辑，实际应用需要更完善的组合查找
+	// TODO: 在此实现更完整的牌型查找逻辑 (如顺子、飞机等)
+	// for _, possibleMove := range findAllMoves(playerHand, opponentHand.Type) {
+	//     if CanBeat(possibleMove, opponentHand) {
+	//         return true
+	//     }
+	// }
+
+	// 4. 如果以上都找不到，则认为没有牌可以打
+	// 在一个完整的实现中，如果上面的TODO部分没有返回true，才执行这里
+	return false // 这是一个临时的简化返回值
+}
