@@ -147,12 +147,22 @@ func (m model) View() string {
 	topContent := lipgloss.JoinVertical(lipgloss.Center, greetContent, counterContent)
 	topSection := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, topContent)
 
-	// 中部: 其他玩家信息
+	// 中部: 其他玩家信息及上家出牌信息
 	player2View := m.renderOtherPlayer(1)
+	lastPlayView := m.renderLastPlay()
 	player3View := m.renderOtherPlayer(2)
 	// 使用一个空的flex-box来创建间隔
-	spacer := lipgloss.NewStyle().Width(m.width - 64).Render()
-	middleSection := lipgloss.JoinHorizontal(lipgloss.Top, player2View, spacer, player3View)
+	// 总宽度 - 三个组件的宽度 = 剩余空间
+	usedWidth := lipgloss.Width(player2View) + lipgloss.Width(lastPlayView) + lipgloss.Width(player3View)
+	remainingSpace := m.width - usedWidth - (docStyle.GetHorizontalMargins() * 2)
+
+	// 我们需要两个间隔，所以每个间隔的宽度是剩余空间的一半
+	spacerWidth := remainingSpace / 2
+	if spacerWidth < 0 {
+		spacerWidth = 0
+	}
+	spacer := lipgloss.NewStyle().Width(spacerWidth).Render()
+	middleSection := lipgloss.JoinHorizontal(lipgloss.Top, player2View, spacer, lastPlayView, spacer, player3View)
 
 	// 底部: 你的手牌和输入提示
 	myHand := m.renderPlayerHand(m.game.Players[0].Hand)
@@ -234,14 +244,13 @@ func (m model) renderOtherPlayer(idx int) string {
 	}
 	name := nameStyle.Render(fmt.Sprintf("%s %s", icon, p.Name))
 	cardsLeft := fmt.Sprintf("剩余: %d", len(p.Hand))
-	var rankSB, suitSB strings.Builder
-	if m.game.LastPlayerIdx == idx && !m.game.LastPlayedHand.IsEmpty() {
-		for _, c := range m.game.LastPlayedHand.Cards {
-			rankSB.WriteString(m.renderCard(c, c.Rank.String()) + " ")
-			suitSB.WriteString(m.renderCard(c, c.Suit.String()) + " ")
-		}
+
+	nameLine := name
+	if m.game.CurrentTurn == idx {
+		timerStr := fmt.Sprintf("⏳ %s", m.timer.View())
+		nameLine = lipgloss.JoinHorizontal(lipgloss.Left, name, "  ", timerStr)
 	}
-	content := lipgloss.JoinVertical(lipgloss.Left, name, cardsLeft, "上次出牌:", rankSB.String(), suitSB.String())
+	content := lipgloss.JoinVertical(lipgloss.Left, nameLine, cardsLeft)
 	return boxStyle.Width(28).Render(content)
 }
 
@@ -305,17 +314,38 @@ func (m model) renderTurnPrompt() string {
 	var sb strings.Builder
 
 	// 根据轮到谁来显示不同的提示和计时器
-	prompt := fmt.Sprintf("⏳ %s", m.timer.View())
-	if m.game.CurrentTurn == 0 { // 轮到你
+	prompt := fmt.Sprintf("⏳ ⏱ %s", m.timer.View())
+	if m.game.CurrentTurn == 0 {
 		sb.WriteString(fmt.Sprintf("轮到你了, %s! %s\n", currentPlayer.Name, prompt))
 		sb.WriteString(m.input.View())
 		if m.error != "" {
 			sb.WriteString("\n" + errorStyle.Render(m.error))
 		}
 	} else { // 等待其他玩家
-		sb.WriteString(fmt.Sprintf("等待 %s 出牌... %s", currentPlayer.Name, prompt))
+		sb.WriteString(fmt.Sprintf("等待 %s 出牌...", currentPlayer.Name))
 	}
 	return promptStyle.Render(sb.String())
+}
+
+func (m model) renderLastPlay() string {
+	const placeholderHeight = 6 // 定义占位符的固定高度
+
+	// 如果没有上一手牌，则渲染一个有固定高度的空盒子
+	if m.game.LastPlayedHand.IsEmpty() {
+		placeholderText := lipgloss.NewStyle().
+			Align(lipgloss.Center).
+			Render("(等待出牌...)")
+
+		return boxStyle.Height(placeholderHeight).
+			Align(lipgloss.Center, lipgloss.Center). // 垂直和水平居中
+			Render(placeholderText)
+	}
+
+	// 如果有牌，正常渲染
+	cardsView := m.renderFancyHand(m.game.LastPlayedHand.Cards)
+	content := lipgloss.JoinVertical(lipgloss.Center, "上家出牌", cardsView)
+
+	return boxStyle.Render(content)
 }
 
 func (m model) gameOverView(winner *game.Player) string {
