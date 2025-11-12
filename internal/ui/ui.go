@@ -14,25 +14,27 @@ import (
 	"github.com/palemoky/fight-the-landlord-go/internal/game"
 )
 
+const (
+	LandlordIcon = "👑"
+	FarmerIcon   = "👨"
+
+	TopBorderStart    = "┌──"
+	TopBorderEnd      = "┌──┐"
+	SideBorder        = "│"
+	BottomBorderStart = "└──"
+	BottomBorderEnd   = "└──┘"
+)
+
 // --- Lipgloss Styles ---
 var (
 	docStyle       = lipgloss.NewStyle().Margin(1, 2)
 	redCardStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#CD0000")).Background(lipgloss.Color("#FFFFFF")).Bold(true)
 	blackCardStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#FFFFFF")).Bold(true)
 	titleStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("228")).Bold(true).Render
-	boxStyle       = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1)
+	boxStyle       = lipgloss.NewStyle().Border(lipgloss.RoundedBorder())
 	promptStyle    = lipgloss.NewStyle().MarginTop(1)
 	errorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
 	cardCellWidth  = 4
-
-	landlordIcon = "👑"
-	farmerIcon   = "👨"
-
-	topBorderStart    = "┌──"
-	topBorderEnd      = "┌──┐"
-	sideBorder        = "│"
-	bottomBorderStart = "└──"
-	bottomBorderEnd   = "└──┘"
 )
 
 // model 是 Bubble Tea 应用的状态
@@ -191,6 +193,10 @@ func (m model) renderCardCounter() string {
 }
 
 func (m model) renderLandlordCards() string {
+	if len(m.game.LandlordCards) == 0 {
+		return ""
+	}
+
 	var rankSB, suitSB strings.Builder
 	for _, c := range m.game.LandlordCards {
 		var style lipgloss.Style
@@ -198,19 +204,20 @@ func (m model) renderLandlordCards() string {
 		if c.Color == card.Red {
 			style = redCardStyle
 		}
-		style = style.Width(cardCellWidth).Align(lipgloss.Center)
-		rankSB.WriteString(style.Render(c.Rank.String()))
-		suitSB.WriteString(style.Render(c.Suit.String()))
+		style = style.Align(lipgloss.Center).Margin(0, 1)
+		rankSB.WriteString(style.Render(fmt.Sprintf("%-2s", c.Rank.String())))
+		suitSB.WriteString(style.Render(fmt.Sprintf("%-2s", c.Suit.String())))
 	}
+
 	content := lipgloss.JoinVertical(lipgloss.Center, "底牌", rankSB.String(), suitSB.String())
-	return boxStyle.MarginTop(1).Render(content)
+	return boxStyle.Render(content)
 }
 
 func (m model) renderOtherPlayer(idx int) string {
 	p := m.game.Players[idx]
-	icon := farmerIcon
+	icon := FarmerIcon
 	if p.IsLandlord {
-		icon = landlordIcon
+		icon = LandlordIcon
 	}
 
 	nameStyle := lipgloss.NewStyle()
@@ -250,10 +257,10 @@ func (m model) renderFancyHand(hand []card.Card) string {
 		suitStr := fmt.Sprintf("%-2s", c.Suit.String())
 
 		// 为每一张重叠的牌只渲染左侧部分
-		top.WriteString(topBorderStart)
-		rank.WriteString(sideBorder + style.Render(rankStr))
-		suit.WriteString(sideBorder + style.Render(suitStr))
-		bottom.WriteString(bottomBorderStart)
+		top.WriteString(TopBorderStart)
+		rank.WriteString(SideBorder + style.Render(rankStr))
+		suit.WriteString(SideBorder + style.Render(suitStr))
+		bottom.WriteString(BottomBorderStart)
 	}
 
 	// 单独处理最后一张牌，渲染一个完整的、封闭的盒子
@@ -265,10 +272,10 @@ func (m model) renderFancyHand(hand []card.Card) string {
 	rankStr := fmt.Sprintf("%-2s", lastCard.Rank.String())
 	suitStr := fmt.Sprintf("%-2s", lastCard.Suit.String())
 
-	top.WriteString(topBorderEnd)
-	rank.WriteString(sideBorder + style.Render(rankStr) + sideBorder)
-	suit.WriteString(sideBorder + style.Render(suitStr) + sideBorder)
-	bottom.WriteString(bottomBorderEnd)
+	top.WriteString(TopBorderEnd)
+	rank.WriteString(SideBorder + style.Render(rankStr) + SideBorder)
+	suit.WriteString(SideBorder + style.Render(suitStr) + SideBorder)
+	bottom.WriteString(BottomBorderEnd)
 
 	// 将四行拼接成最终的视图
 	return lipgloss.JoinVertical(lipgloss.Left,
