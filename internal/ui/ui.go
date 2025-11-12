@@ -27,14 +27,15 @@ const (
 
 // --- Lipgloss Styles ---
 var (
-	docStyle       = lipgloss.NewStyle().Margin(1, 2)
-	redCardStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#CD0000")).Background(lipgloss.Color("#FFFFFF")).Bold(true)
-	blackCardStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#FFFFFF")).Bold(true)
-	titleStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("228")).Bold(true).Render
-	boxStyle       = lipgloss.NewStyle().Border(lipgloss.RoundedBorder())
-	promptStyle    = lipgloss.NewStyle().MarginTop(1)
-	errorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-	cardCellWidth  = 4
+	docStyle      = lipgloss.NewStyle().Margin(1, 2)
+	redStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#CD0000")).Background(lipgloss.Color("#FFFFFF")).Bold(true)
+	blackStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("#FFFFFF")).Bold(true)
+	grayStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Background(lipgloss.Color("#FFFFFF")).Bold(true)
+	titleStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("228")).Bold(true).Render
+	boxStyle      = lipgloss.NewStyle().Border(lipgloss.RoundedBorder())
+	promptStyle   = lipgloss.NewStyle().MarginTop(1)
+	errorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+	ranks         = []card.Rank{card.RankRedJoker, card.RankBlackJoker, card.Rank2, card.RankA, card.RankK, card.RankQ, card.RankJ, card.Rank10, card.Rank9, card.Rank8, card.Rank7, card.Rank6, card.Rank5, card.Rank4, card.Rank3}
 )
 
 // model 是 Bubble Tea 应用的状态
@@ -104,11 +105,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(cmds...)
 		}
 
-	// 计时器消息
-	case timer.TickMsg:
-		m.timer, cmd = m.timer.Update(msg)
-		cmds = append(cmds, cmd)
-
 	case timer.TimeoutMsg:
 		m.error = ""
 		// 超时，自动出牌
@@ -116,10 +112,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			m.error = err.Error()
 		}
+		// 超时出牌更新记牌器
 		// 为下一位玩家重置计时器
 		m.timer = timer.NewWithInterval(game.PlayerTurnTimeout, time.Second)
 		cmds = append(cmds, m.timer.Start())
 	}
+
+	m.timer, cmd = m.timer.Update(msg)
+	cmds = append(cmds, cmd)
 
 	m.input, cmd = m.input.Update(msg)
 	cmds = append(cmds, cmd)
@@ -167,28 +167,27 @@ func (m model) View() string {
 
 func (m model) renderCard(c card.Card, content string) string {
 	if c.Color == card.Red {
-		return redCardStyle.Render(content)
+		return redStyle.Render(content)
 	}
-	return blackCardStyle.Render(content)
+	return blackStyle.Render(content)
 }
 
 func (m model) renderCardCounter() string {
-	ranks := []card.Rank{card.RankRedJoker, card.RankBlackJoker, card.Rank2, card.RankA, card.RankK, card.RankQ, card.RankJ, card.Rank10, card.Rank9, card.Rank8, card.Rank7, card.Rank6, card.Rank5, card.Rank4, card.Rank3}
 	var rankStr, countStr strings.Builder
 	remaining := m.game.CardCounter.GetRemainingCards()
 
 	for _, r := range ranks {
-		rankStr.WriteString(fmt.Sprintf(" %-2s ", r.String()))
+		rankStr.WriteString(fmt.Sprintf(" %-2s", r.String()))
 		count := remaining[r]
 		var cStr string
 		if count == 0 {
-			cStr = errorStyle.Render(fmt.Sprintf(" %-2d ", count))
+			cStr = errorStyle.Render(fmt.Sprintf(" %-2d", count))
 		} else {
-			cStr = fmt.Sprintf(" %-2d ", count)
+			cStr = fmt.Sprintf(" %-2d", count)
 		}
 		countStr.WriteString(cStr)
 	}
-	content := lipgloss.JoinVertical(lipgloss.Left, "记牌器 (Card Counter)", rankStr.String(), countStr.String())
+	content := lipgloss.JoinVertical(lipgloss.Center, "记牌器 (Card Counter)", rankStr.String(), countStr.String())
 	return boxStyle.Render(content)
 }
 
@@ -200,9 +199,9 @@ func (m model) renderLandlordCards() string {
 	var rankSB, suitSB strings.Builder
 	for _, c := range m.game.LandlordCards {
 		var style lipgloss.Style
-		style = blackCardStyle
+		style = blackStyle
 		if c.Color == card.Red {
-			style = redCardStyle
+			style = redStyle
 		}
 		style = style.Align(lipgloss.Center).Margin(0, 1)
 		rankSB.WriteString(style.Render(fmt.Sprintf("%-2s", c.Rank.String())))
@@ -247,9 +246,9 @@ func (m model) renderFancyHand(hand []card.Card) string {
 
 	// 遍历除了最后一张牌之外的所有牌
 	for _, c := range hand[:len(hand)-1] {
-		style := blackCardStyle
+		style := blackStyle
 		if c.Color == card.Red {
-			style = redCardStyle
+			style = redStyle
 		}
 
 		// 格式化点数和花色，确保'10'和'9'对齐
@@ -265,9 +264,9 @@ func (m model) renderFancyHand(hand []card.Card) string {
 
 	// 单独处理最后一张牌，渲染一个完整的、封闭的盒子
 	lastCard := hand[len(hand)-1]
-	style := blackCardStyle
+	style := blackStyle
 	if lastCard.Color == card.Red {
-		style = redCardStyle
+		style = redStyle
 	}
 	rankStr := fmt.Sprintf("%-2s", lastCard.Rank.String())
 	suitStr := fmt.Sprintf("%-2s", lastCard.Suit.String())
