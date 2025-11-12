@@ -1,11 +1,11 @@
 package game
 
 import (
+	"math/rand"
+	"time"
 	"errors"
 	"fmt"
-	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/palemoky/fight-the-landlord-go/internal/card"
 	"github.com/palemoky/fight-the-landlord-go/internal/rule"
@@ -71,82 +71,113 @@ func (g *Game) Bidding() {
 	g.LastPlayerIdx = landlordIdx
 }
 
+
 // PlayTurn 处理玩家的一次出牌操作
 func (g *Game) PlayTurn(input string) error {
 	currentPlayer := g.Players[g.CurrentTurn]
 
-	// 处理超时：如果轮到你自由出牌，则自动出最小的牌；否则自动PASS
-	isTimeout := input == ""
-	if isTimeout {
-		if g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() {
-			minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1] // 手牌已排序，最后一张最小
-			input = minCard.Rank.String()
-		} else {
-			input = "PASS"
-		}
-	}
+	// 1. 预处理输入，处理超时情况
+	processedInput := g.preprocessInput(input, currentPlayer)
 
-	upperInput := strings.ToUpper(strings.TrimSpace(input))
-
-	if upperInput == "PASS" {
-		if g.LastPlayerIdx == g.CurrentTurn || g.ConsecutivePasses == 2 {
-			return errors.New("轮到你出牌，不能PASS")
-		}
-		g.ConsecutivePasses++
-		if g.ConsecutivePasses == 2 {
-			// 如果连续两人PASS，则开启新的一轮
-			g.LastPlayedHand = rule.ParsedHand{}
-			g.LastPlayerIdx = (g.CurrentTurn + 1) % 3 // 新一轮由下家开始
-		}
-		g.CurrentTurn = (g.CurrentTurn + 1) % 3
+	// 2. 根据输入，分派给不同的处理函数
+	var err error
+	if strings.ToUpper(strings.TrimSpace(processedInput)) == "PASS" {
+		err = g.handlePass()
 	} else {
-		cardsToPlay, err := rule.FindCardsInHand(currentPlayer.Hand, upperInput)
-		if err != nil {
-			return fmt.Errorf("出牌无效: %w", err)
-		}
-
-		handToPlay, err := rule.ParseHand(cardsToPlay)
-		if err != nil {
-			return fmt.Errorf("无效的牌型: %w", err)
-		}
-
-		isNewRound := g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() || g.ConsecutivePasses == 2
-		if isNewRound || rule.CanBeat(handToPlay, g.LastPlayedHand) {
-			g.LastPlayedHand = handToPlay
-			g.LastPlayerIdx = g.CurrentTurn
-			g.ConsecutivePasses = 0
-
-			g.CardCounter.Update(cardsToPlay)
-			currentPlayer.Hand = rule.RemoveCards(currentPlayer.Hand, cardsToPlay)
-
-			if len(currentPlayer.Hand) == 0 {
-				// 游戏结束，由UI处理视图
-				return nil
-			}
-
-			g.CurrentTurn = (g.CurrentTurn + 1) % 3
-		} else {
-			return errors.New("你的牌没有大过上家")
-		}
+		err = g.handlePlay(currentPlayer, processedInput)
 	}
 
-	// 获取下一个玩家
-	nextPlayer := g.Players[g.CurrentTurn]
-
-	// 判断下一个玩家是否可以自由出牌
-	// (条件是：轮到他时，场上没有牌，或者最后出牌的人就是他自己，意味着另外两人都PASS了)
-	isFreePlay := g.LastPlayedHand.IsEmpty() || g.LastPlayerIdx == g.CurrentTurn
-
-	if isFreePlay {
-		// 如果可以自由出牌，那他总是有牌可出的
-		g.CanCurrentPlayerPlay = true
-	} else {
-		// 如果他必须压过上家的牌，那么我们就需要调用规则函数来检查
-		// **重要提示**: 确保你的 rule.go 中有 CanBeatWithHand 函数
-		g.CanCurrentPlayerPlay = rule.CanBeatWithHand(nextPlayer.Hand, g.LastPlayedHand)
+	// 3. 如果处理过程中出现错误，立即返回
+	if err != nil {
+		return err
 	}
+
+	// 4. 如果游戏已经结束，直接返回
+	if len(currentPlayer.Hand) == 0 {
+		g.CanCurrentPlayerPlay = false // 游戏结束，下一个玩家无所谓了
+		return nil
+	}
+
+	// 5. 如果回合成功，则推进到下一回合，并更新状态
+	g.advanceToNextTurn()
 
 	return nil
+}
+
+// preprocessInput 负责处理超时逻辑，返回一个确定的指令 ("PASS" 或出牌字符串)
+func (g *Game) preprocessInput(input string, currentPlayer *Player) string {
+	isTimeout := input == ""
+	if !isTimeout {
+		return input
+	}
+
+	// 如果是轮到你自由出牌，不能pass，自动打出最小的单牌
+	if g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() {
+		minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1] // 手牌已排序
+		return minCard.Rank.String()
+	}
+
+	// 否则自动PASS
+	return "PASS"
+}
+
+// handlePass 专门处理玩家选择 PASS 的逻辑
+func (g *Game) handlePass() error {
+	if g.LastPlayerIdx == g.CurrentTurn || g.ConsecutivePasses == 2 {
+		return errors.New("轮到你出牌，不能PASS")
+	}
+	g.ConsecutivePasses++
+	if g.ConsecutivePasses == 2 {
+		// 如果连续两人PASS，则开启新的一轮
+		g.LastPlayedHand = rule.ParsedHand{}
+		g.LastPlayerIdx = (g.CurrentTurn + 1) % 3 // 新一轮由下家开始
+	}
+	return nil
+}
+
+// handlePlay 专门处理玩家出牌的逻辑
+func (g *Game) handlePlay(currentPlayer *Player, input string) error {
+	cardsToPlay, err := rule.FindCardsInHand(currentPlayer.Hand, strings.ToUpper(input))
+	if err != nil {
+		return fmt.Errorf("出牌无效: %w", err)
+	}
+
+	handToPlay, err := rule.ParseHand(cardsToPlay)
+	if err != nil {
+		return fmt.Errorf("无效的牌型: %w", err)
+	}
+
+	isNewRound := g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() || g.ConsecutivePasses == 2
+	if !isNewRound && !rule.CanBeat(handToPlay, g.LastPlayedHand) {
+		return errors.New("你的牌没有大过上家")
+	}
+
+	// 出牌成功，更新游戏状态
+	g.LastPlayedHand = handToPlay
+	g.LastPlayerIdx = g.CurrentTurn
+	g.ConsecutivePasses = 0
+	g.CardCounter.Update(cardsToPlay)
+	currentPlayer.Hand = rule.RemoveCards(currentPlayer.Hand, cardsToPlay)
+
+	return nil
+}
+
+// advanceToNextTurn 推进回合，并为下一个玩家设置状态
+func (g *Game) advanceToNextTurn() {
+	// 1. 将回合交给下一个玩家
+	g.CurrentTurn = (g.CurrentTurn + 1) % 3
+
+	// 2. 获取下一个玩家
+	nextPlayer := g.Players[g.CurrentTurn]
+
+	// 3. 判断下一个玩家是否可以自由出牌
+	isFreePlay := g.LastPlayedHand.IsEmpty() || g.LastPlayerIdx == g.CurrentTurn
+	if isFreePlay {
+		g.CanCurrentPlayerPlay = true
+	} else {
+		// 否则，检查他是否有牌可打
+		g.CanCurrentPlayerPlay = rule.CanBeatWithHand(nextPlayer.Hand, g.LastPlayedHand)
+	}
 }
 
 // CheckWinner 检查是否有玩家获胜
