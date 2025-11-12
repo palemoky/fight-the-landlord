@@ -9,10 +9,11 @@ import (
 // Player 定义玩家
 type Player struct {
 	Name       string
-	Hand       []card.Card 
+	Hand       []card.Card
 	IsLandlord bool
 }
 
+// SortHand 从大到小排序
 func (p *Player) SortHand() {
 	sort.Slice(p.Hand, func(i, j int) bool {
 		return p.Hand[i].Rank > p.Hand[j].Rank
