@@ -55,7 +55,7 @@ func initialModel() model {
 	g.Bidding()
 
 	ti := textinput.New()
-	ti.Placeholder = "输入牌 (如 33344) 或 PASS 然后回车"
+	ti.Placeholder = "请出牌 (如 33344) 或 PASS 然后回车"
 	ti.Focus()
 	ti.CharLimit = 25
 	ti.Width = 50
@@ -76,6 +76,14 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
+	placeHolder := func() {
+		if m.game.CanCurrentPlayerPlay {
+			m.input.Placeholder = "请出牌 (如 33344) 或 PASS"
+		} else {
+			m.input.Placeholder = "没有可出的牌, 请输入 PASS"
+		}
+	}
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -98,6 +106,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = err.Error()
 				} else {
 					// 出牌成功，为下一位玩家重置计时器
+					placeHolder()
+
 					m.timer = timer.NewWithInterval(game.PlayerTurnTimeout, time.Second)
 					cmds = append(cmds, m.timer.Start())
 				}
@@ -112,6 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			m.error = err.Error()
 		}
+		placeHolder()
 		// 超时出牌更新记牌器
 		// 为下一位玩家重置计时器
 		m.timer = timer.NewWithInterval(game.PlayerTurnTimeout, time.Second)
@@ -301,9 +312,8 @@ func (m model) renderFancyHand(hand []card.Card) string {
 }
 
 func (m model) renderPlayerHand(hand []card.Card) string {
-	title := "你的手牌:"
 	handView := m.renderFancyHand(hand) // 调用新的渲染函数
-	return lipgloss.NewStyle().MarginTop(1).Render(lipgloss.JoinVertical(lipgloss.Left, title, handView))
+	return lipgloss.NewStyle().MarginTop(1).Render(lipgloss.JoinVertical(lipgloss.Left, handView))
 }
 
 func (m model) renderTurnPrompt() string {
@@ -339,8 +349,10 @@ func (m model) renderLastPlay() string {
 	}
 
 	// 如果有牌，正常渲染
+	lastPlayerName := m.game.Players[m.game.LastPlayerIdx].Name
+	title := fmt.Sprintf("上家出牌(%s) ", lastPlayerName)
 	cardsView := m.renderFancyHand(m.game.LastPlayedHand.Cards)
-	content := lipgloss.JoinVertical(lipgloss.Center, "上家出牌", cardsView)
+	content := lipgloss.JoinVertical(lipgloss.Center, title, cardsView)
 
 	return boxStyle.Render(content)
 }

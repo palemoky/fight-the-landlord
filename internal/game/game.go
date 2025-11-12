@@ -17,14 +17,15 @@ const (
 
 // Game 定义游戏状态
 type Game struct {
-	Players           [3]*Player
-	Deck              card.Deck
-	LandlordCards     []card.Card
-	CurrentTurn       int
-	LastPlayedHand    rule.ParsedHand
-	LastPlayerIdx     int
-	ConsecutivePasses int
-	CardCounter       *card.CardCounter
+	Players              [3]*Player
+	Deck                 card.Deck
+	LandlordCards        []card.Card
+	CurrentTurn          int
+	LastPlayedHand       rule.ParsedHand
+	LastPlayerIdx        int
+	ConsecutivePasses    int
+	CardCounter          *card.CardCounter
+	CanCurrentPlayerPlay bool
 }
 
 // NewGame 初始化一个新游戏
@@ -38,15 +39,16 @@ func NewGame() *Game {
 	deck.Shuffle()
 
 	return &Game{
-		Players:     players,
-		Deck:        deck,
-		CardCounter: card.NewCardCounter(),
+		Players:              players,
+		Deck:                 deck,
+		CardCounter:          card.NewCardCounter(),
+		CanCurrentPlayerPlay: true, // 游戏开始时，第一个玩家总是有牌可出
 	}
 }
 
 // Deal 发牌
 func (g *Game) Deal() {
-	for i := 0; i < 17; i++ {
+	for range 17 {
 		for _, p := range g.Players {
 			p.Hand = append(p.Hand, g.Deck[0])
 			g.Deck = g.Deck[1:]
@@ -72,9 +74,9 @@ func (g *Game) Bidding() {
 // PlayTurn 处理玩家的一次出牌操作
 func (g *Game) PlayTurn(input string) error {
 	currentPlayer := g.Players[g.CurrentTurn]
-	isTimeout := input == ""
 
 	// 处理超时：如果轮到你自由出牌，则自动出最小的牌；否则自动PASS
+	isTimeout := input == ""
 	if isTimeout {
 		if g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() {
 			minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1] // 手牌已排序，最后一张最小
@@ -97,36 +99,51 @@ func (g *Game) PlayTurn(input string) error {
 			g.LastPlayerIdx = (g.CurrentTurn + 1) % 3 // 新一轮由下家开始
 		}
 		g.CurrentTurn = (g.CurrentTurn + 1) % 3
-		return nil
-	}
-
-	cardsToPlay, err := rule.FindCardsInHand(currentPlayer.Hand, upperInput)
-	if err != nil {
-		return fmt.Errorf("出牌无效: %w", err)
-	}
-
-	handToPlay, err := rule.ParseHand(cardsToPlay)
-	if err != nil {
-		return fmt.Errorf("无效的牌型: %w", err)
-	}
-
-	isNewRound := g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() || g.ConsecutivePasses == 2
-	if isNewRound || rule.CanBeat(handToPlay, g.LastPlayedHand) {
-		g.LastPlayedHand = handToPlay
-		g.LastPlayerIdx = g.CurrentTurn
-		g.ConsecutivePasses = 0
-
-		g.CardCounter.Update(cardsToPlay)
-		currentPlayer.Hand = rule.RemoveCards(currentPlayer.Hand, cardsToPlay)
-
-		if len(currentPlayer.Hand) == 0 {
-			// 游戏结束，由UI处理视图
-			return nil
+	} else {
+		cardsToPlay, err := rule.FindCardsInHand(currentPlayer.Hand, upperInput)
+		if err != nil {
+			return fmt.Errorf("出牌无效: %w", err)
 		}
 
-		g.CurrentTurn = (g.CurrentTurn + 1) % 3
+		handToPlay, err := rule.ParseHand(cardsToPlay)
+		if err != nil {
+			return fmt.Errorf("无效的牌型: %w", err)
+		}
+
+		isNewRound := g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() || g.ConsecutivePasses == 2
+		if isNewRound || rule.CanBeat(handToPlay, g.LastPlayedHand) {
+			g.LastPlayedHand = handToPlay
+			g.LastPlayerIdx = g.CurrentTurn
+			g.ConsecutivePasses = 0
+
+			g.CardCounter.Update(cardsToPlay)
+			currentPlayer.Hand = rule.RemoveCards(currentPlayer.Hand, cardsToPlay)
+
+			if len(currentPlayer.Hand) == 0 {
+				// 游戏结束，由UI处理视图
+				return nil
+			}
+
+			g.CurrentTurn = (g.CurrentTurn + 1) % 3
+		} else {
+			return errors.New("你的牌没有大过上家")
+		}
+	}
+
+	// 获取下一个玩家
+	nextPlayer := g.Players[g.CurrentTurn]
+
+	// 判断下一个玩家是否可以自由出牌
+	// (条件是：轮到他时，场上没有牌，或者最后出牌的人就是他自己，意味着另外两人都PASS了)
+	isFreePlay := g.LastPlayedHand.IsEmpty() || g.LastPlayerIdx == g.CurrentTurn
+
+	if isFreePlay {
+		// 如果可以自由出牌，那他总是有牌可出的
+		g.CanCurrentPlayerPlay = true
 	} else {
-		return errors.New("你的牌没有大过上家")
+		// 如果他必须压过上家的牌，那么我们就需要调用规则函数来检查
+		// **重要提示**: 确保你的 rule.go 中有 CanBeatWithHand 函数
+		g.CanCurrentPlayerPlay = rule.CanBeatWithHand(nextPlayer.Hand, g.LastPlayedHand)
 	}
 
 	return nil
