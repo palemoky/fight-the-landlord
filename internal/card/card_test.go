@@ -83,7 +83,7 @@ func TestStringers(t *testing.T) {
 			{Heart, "♥"},
 			{Club, "♣"},
 			{Diamond, "♦"},
-			{Joker, "Joker"},
+			{Joker, ""},
 			{Suit(99), ""}, // Edge case: invalid suit
 		}
 
@@ -103,8 +103,8 @@ func TestStringers(t *testing.T) {
 			{RankK, "K"},
 			{RankA, "A"},
 			{Rank2, "2"},
-			{RankBlackJoker, "Joker"},
-			{RankRedJoker, "JOKER"},
+			{RankBlackJoker, "B"},
+			{RankRedJoker, "R"},
 		}
 		for _, tt := range rankTests {
 			assert.Equal(t, tt.want, tt.rank.String())
