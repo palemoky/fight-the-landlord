@@ -1,11 +1,11 @@
 package game
 
 import (
-	"math/rand"
-	"time"
 	"errors"
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/palemoky/fight-the-landlord-go/internal/card"
 	"github.com/palemoky/fight-the-landlord-go/internal/rule"
@@ -70,7 +70,6 @@ func (g *Game) Bidding() {
 	g.CurrentTurn = landlordIdx
 	g.LastPlayerIdx = landlordIdx
 }
-
 
 // PlayTurn 处理玩家的一次出牌操作
 func (g *Game) PlayTurn(input string) error {
@@ -137,7 +136,7 @@ func (g *Game) handlePass() error {
 
 // handlePlay 专门处理玩家出牌的逻辑
 func (g *Game) handlePlay(currentPlayer *Player, input string) error {
-	cardsToPlay, err := rule.FindCardsInHand(currentPlayer.Hand, strings.ToUpper(input))
+	cardsToPlay, err := card.FindCardsInHand(currentPlayer.Hand, strings.ToUpper(input))
 	if err != nil {
 		return fmt.Errorf("出牌无效: %w", err)
 	}
@@ -148,18 +147,18 @@ func (g *Game) handlePlay(currentPlayer *Player, input string) error {
 	}
 
 	isNewRound := g.LastPlayerIdx == g.CurrentTurn || g.LastPlayedHand.IsEmpty() || g.ConsecutivePasses == 2
-	if !isNewRound && !rule.CanBeat(handToPlay, g.LastPlayedHand) {
+	if isNewRound || rule.CanBeat(handToPlay, g.LastPlayedHand) {
+		// 出牌成功，更新游戏状态
+		g.LastPlayedHand = handToPlay
+		g.LastPlayerIdx = g.CurrentTurn
+		g.ConsecutivePasses = 0
+		g.CardCounter.Update(cardsToPlay)
+		currentPlayer.Hand = card.RemoveCards(currentPlayer.Hand, cardsToPlay)
+
+		return nil
+	} else {
 		return errors.New("你的牌没有大过上家")
 	}
-
-	// 出牌成功，更新游戏状态
-	g.LastPlayedHand = handToPlay
-	g.LastPlayerIdx = g.CurrentTurn
-	g.ConsecutivePasses = 0
-	g.CardCounter.Update(cardsToPlay)
-	currentPlayer.Hand = rule.RemoveCards(currentPlayer.Hand, cardsToPlay)
-
-	return nil
 }
 
 // advanceToNextTurn 推进回合，并为下一个玩家设置状态
