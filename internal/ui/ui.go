@@ -12,11 +12,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/palemoky/fight-the-landlord-go/internal/card"
 	"github.com/palemoky/fight-the-landlord-go/internal/game"
+	"github.com/palemoky/fight-the-landlord-go/internal/utils"
 )
 
 const (
 	LandlordIcon = "👑"
-	FarmerIcon   = "👨"
+	FarmerIcon   = "🧑‍🌾"
 
 	TopBorderStart    = "┌──"
 	TopBorderEnd      = "┌──┐"
@@ -78,11 +79,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	placeHolder := func() {
-		if m.game.CanCurrentPlayerPlay {
-			m.input.Placeholder = "请出牌 (如 33344) 或 PASS"
-		} else {
-			m.input.Placeholder = "没有可出的牌, 请输入 PASS"
-		}
+		m.input.Placeholder = utils.Ternary(m.game.CanCurrentPlayerPlay,
+			"请出牌 (如 33344) 或 PASS",
+			"没有可出的牌, 请输入 PASS")
 	}
 
 	switch msg := msg.(type) {
@@ -183,10 +182,7 @@ func (m model) View() string {
 // --- 视图渲染帮助函数 ---
 
 func (m model) renderCard(c card.Card, content string) string {
-	if c.Color == card.Red {
-		return redStyle.Render(content)
-	}
-	return blackStyle.Render(content)
+	return utils.Ternary(c.Color == card.Red, redStyle.Render(content), blackStyle.Render(content))
 }
 
 func (m model) renderCardCounter() string {
@@ -205,13 +201,9 @@ func (m model) renderCardCounter() string {
 		rankStr.WriteString(fmt.Sprintf(" %-2s", r.String()))
 		leftCount := remaining[r] - handCounter[r]
 
-		cStr := ""
-		if leftCount > 0 {
-			cStr = grayStyle.MarginLeft(1).Render(fmt.Sprintf("%-2d", leftCount))
-		} else {
-			cStr = fmt.Sprintf(" %-2d", leftCount)
-		}
-		countStr.WriteString(cStr)
+		countStr.WriteString(utils.Ternary(leftCount > 0,
+			grayStyle.MarginLeft(1).Render(fmt.Sprintf("%-2d", leftCount)),
+			fmt.Sprintf(" %-2d", leftCount)))
 	}
 	content := lipgloss.JoinVertical(lipgloss.Center, "记牌器 (Card Counter)", rankStr.String(), countStr.String())
 	return boxStyle.Render(content)
@@ -225,10 +217,7 @@ func (m model) renderLandlordCards() string {
 	var rankSB, suitSB strings.Builder
 	for _, c := range m.game.LandlordCards {
 		var style lipgloss.Style
-		style = blackStyle
-		if c.Color == card.Red {
-			style = redStyle
-		}
+		style = utils.Ternary(c.Color == card.Red, redStyle, blackStyle)
 		style = style.Align(lipgloss.Center).Margin(0, 1)
 		rankSB.WriteString(style.Render(fmt.Sprintf("%-2s", c.Rank.String())))
 		suitSB.WriteString(style.Render(fmt.Sprintf("%-2s", c.Suit.String())))
@@ -240,10 +229,7 @@ func (m model) renderLandlordCards() string {
 
 func (m model) renderOtherPlayer(idx int) string {
 	p := m.game.Players[idx]
-	icon := FarmerIcon
-	if p.IsLandlord {
-		icon = LandlordIcon
-	}
+	icon := utils.Ternary(p.IsLandlord, LandlordIcon, FarmerIcon)
 
 	nameStyle := lipgloss.NewStyle()
 	if m.game.CurrentTurn == idx {
@@ -251,14 +237,12 @@ func (m model) renderOtherPlayer(idx int) string {
 	}
 	name := nameStyle.Render(fmt.Sprintf(" %s %s", icon, p.Name))
 	cardsLeft := fmt.Sprintf(" 🃏 剩余: %d", len(p.Hand))
+	nameLine := utils.Ternary(m.game.CurrentTurn == idx,
+		lipgloss.JoinHorizontal(lipgloss.Left, name, " ",
+			fmt.Sprintf("(⏳ %s)", m.timer.View())), name)
 
-	nameLine := name
-	if m.game.CurrentTurn == idx {
-		timerStr := fmt.Sprintf("⏳ %s", m.timer.View())
-		nameLine = lipgloss.JoinHorizontal(lipgloss.Left, name, " ", timerStr)
-	}
 	content := lipgloss.JoinVertical(lipgloss.Left, nameLine, cardsLeft)
-	return boxStyle.Width(20).Render(content)
+	return boxStyle.Width(22).Render(content)
 }
 
 func (m model) renderFancyHand(hand []card.Card) string {
@@ -271,10 +255,7 @@ func (m model) renderFancyHand(hand []card.Card) string {
 
 	// 遍历除了最后一张牌之外的所有牌
 	for _, c := range hand[:len(hand)-1] {
-		style := blackStyle
-		if c.Color == card.Red {
-			style = redStyle
-		}
+		style := utils.Ternary(c.Color == card.Red, redStyle, blackStyle)
 
 		// 格式化点数和花色，确保'10'和'9'对齐
 		rankStr := fmt.Sprintf("%-2s", c.Rank.String())
@@ -289,10 +270,7 @@ func (m model) renderFancyHand(hand []card.Card) string {
 
 	// 单独处理最后一张牌，渲染一个完整的、封闭的盒子
 	lastCard := hand[len(hand)-1]
-	style := blackStyle
-	if lastCard.Color == card.Red {
-		style = redStyle
-	}
+	style := utils.Ternary(lastCard.Color == card.Red, redStyle, blackStyle)
 	rankStr := fmt.Sprintf("%-2s", lastCard.Rank.String())
 	suitStr := fmt.Sprintf("%-2s", lastCard.Suit.String())
 
@@ -311,7 +289,7 @@ func (m model) renderFancyHand(hand []card.Card) string {
 }
 
 func (m model) renderPlayerHand(hand []card.Card) string {
-	handView := m.renderFancyHand(hand) 
+	handView := m.renderFancyHand(hand)
 	return lipgloss.NewStyle().MarginTop(1).Render(lipgloss.JoinVertical(lipgloss.Left, handView))
 }
 
@@ -357,10 +335,7 @@ func (m model) renderLastPlay() string {
 }
 
 func (m model) gameOverView(winner *game.Player) string {
-	winnerType := "农民"
-	if winner.IsLandlord {
-		winnerType = "地主"
-	}
+	winnerType := utils.Ternary(winner.IsLandlord, "地主", "农民")
 	msg := fmt.Sprintf("GAME OVER\n\n🥳 %s (%s) 获胜! 🎉\n\n按 Ctrl+C 或 Esc 退出", winnerType, winner.Name)
 	return lipgloss.NewStyle().
 		Width(m.width).
