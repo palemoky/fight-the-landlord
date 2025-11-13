@@ -162,7 +162,6 @@ func (m model) View() string {
 	player2View := m.renderOtherPlayer(1)
 	lastPlayView := m.renderLastPlay()
 	player3View := m.renderOtherPlayer(2)
-	// 使用一个空的flex-box来创建间隔
 	// 总宽度 - 三个组件的宽度 = 剩余空间
 	usedWidth := lipgloss.Width(player2View) + lipgloss.Width(lastPlayView) + lipgloss.Width(player3View)
 	remainingSpace := m.width - usedWidth - (docStyle.GetHorizontalMargins() * 2)
@@ -250,16 +249,16 @@ func (m model) renderOtherPlayer(idx int) string {
 	if m.game.CurrentTurn == idx {
 		nameStyle = nameStyle.Foreground(lipgloss.Color("220")).Bold(true)
 	}
-	name := nameStyle.Render(fmt.Sprintf("%s %s", icon, p.Name))
-	cardsLeft := fmt.Sprintf("剩余: %d", len(p.Hand))
+	name := nameStyle.Render(fmt.Sprintf(" %s %s", icon, p.Name))
+	cardsLeft := fmt.Sprintf(" 🃏 剩余: %d", len(p.Hand))
 
 	nameLine := name
 	if m.game.CurrentTurn == idx {
 		timerStr := fmt.Sprintf("⏳ %s", m.timer.View())
-		nameLine = lipgloss.JoinHorizontal(lipgloss.Left, name, "  ", timerStr)
+		nameLine = lipgloss.JoinHorizontal(lipgloss.Left, name, " ", timerStr)
 	}
 	content := lipgloss.JoinVertical(lipgloss.Left, nameLine, cardsLeft)
-	return boxStyle.Width(28).Render(content)
+	return boxStyle.Width(20).Render(content)
 }
 
 func (m model) renderFancyHand(hand []card.Card) string {
@@ -312,7 +311,7 @@ func (m model) renderFancyHand(hand []card.Card) string {
 }
 
 func (m model) renderPlayerHand(hand []card.Card) string {
-	handView := m.renderFancyHand(hand) // 调用新的渲染函数
+	handView := m.renderFancyHand(hand) 
 	return lipgloss.NewStyle().MarginTop(1).Render(lipgloss.JoinVertical(lipgloss.Left, handView))
 }
 
