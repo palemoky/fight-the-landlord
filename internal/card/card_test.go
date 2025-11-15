@@ -3,6 +3,7 @@ package card
 import (
 	"fmt"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -233,7 +234,7 @@ func TestFindCardsInHand(t *testing.T) {
 			hand:          fullHand,
 			input:         "8810",
 			expectError:   false,
-			expectedCards: []Card{{Rank: Rank8, Suit: Heart}, {Rank: Rank8, Suit: Club},{Rank: Rank10, Suit: Club}},
+			expectedCards: []Card{{Rank: Rank8, Suit: Heart}, {Rank: Rank8, Suit: Club}, {Rank: Rank10, Suit: Club}},
 		},
 		{
 			name:          "find the Rocket with JOKER keyword",
@@ -380,4 +381,48 @@ func TestRemoveCards(t *testing.T) {
 			assert.ElementsMatch(t, tc.expectedHand, actualHand)
 		})
 	}
+}
+
+// FuzzRankFromChar 对 RankFromChar 函数进行模糊测试
+func FuzzRankFromChar(f *testing.F) {
+	// 添加种子语料库。这些是有效的、我们期望函数能够正确处理的输入。
+	// 模糊测试引擎会使用这些输入作为起点来生成新的、随机的输入。
+	f.Add("3")
+	f.Add("4")
+	f.Add("5")
+	f.Add("6")
+	f.Add("7")
+	f.Add("8")
+	f.Add("9")
+	f.Add("T")
+	f.Add("J")
+	f.Add("Q")
+	f.Add("K")
+	f.Add("A")
+	f.Add("2")
+	f.Add("B")
+	f.Add("R")
+
+	// 模糊测试的目标函数
+	f.Fuzz(func(t *testing.T, input string) {
+		// 期望至少一个字符
+		if len(input) == 0 {
+			return
+		}
+
+		// 只取第一个 rune（Unicode 码点）进行测试
+		r, _ := utf8.DecodeRuneInString(input)
+		rank, err := RankFromChar(r)
+
+		// 检查函数是否会因为某些输入而崩溃
+		if err != nil { // 如果有错误，选择性地检查 Rank 是否为预期的错误值
+			if rank != -1 {
+				t.Errorf("对于输入 '%s'，在返回错误时，Rank 应该是 -1，但得到的是 %d", input, rank)
+			}
+		} else { // 如果没有错误，检查 Rank 是否在有效范围内
+			if rank < Rank3 || rank > RankRedJoker {
+				t.Errorf("对于输入 '%s'，返回了无效的 Rank: %d", input, rank)
+			}
+		}
+	})
 }
