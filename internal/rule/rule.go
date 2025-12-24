@@ -31,6 +31,42 @@ const (
 	Rocket // 王炸（双王）
 )
 
+// String 返回牌型的中文名称
+func (h HandType) String() string {
+	switch h {
+	case Single:
+		return "单张"
+	case Pair:
+		return "对子"
+	case Trio:
+		return "三张"
+	case TrioWithSingle:
+		return "三带一"
+	case TrioWithPair:
+		return "三带二"
+	case Straight:
+		return "顺子"
+	case PairStraight:
+		return "连对"
+	case Plane:
+		return "飞机"
+	case PlaneWithSingles:
+		return "飞机带单"
+	case PlaneWithPairs:
+		return "飞机带对"
+	case Bomb:
+		return "炸弹"
+	case FourWithTwo:
+		return "四带二"
+	case FourWithTwoPairs:
+		return "四带两对"
+	case Rocket:
+		return "王炸"
+	default:
+		return "无效"
+	}
+}
+
 // ParsedHand 解析后的手牌，用于比较
 type ParsedHand struct {
 	Type    HandType
