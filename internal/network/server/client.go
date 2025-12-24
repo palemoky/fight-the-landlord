@@ -29,6 +29,7 @@ type Client struct {
 	ID     string // 玩家唯一 ID
 	Name   string // 玩家昵称
 	RoomID string // 当前所在房间 ID
+	IP     string // 客户端 IP 地址
 
 	server *Server
 	conn   *websocket.Conn
@@ -70,6 +71,22 @@ func (c *Client) ReadPump() {
 				log.Printf("读取错误: %v", err)
 			}
 			break
+		}
+
+		// 消息速率限制检查
+		allowed, warning := c.server.messageLimiter.AllowMessage(c.ID)
+		if !allowed {
+			log.Printf("⚠️ 客户端 %s (IP: %s) 消息过于频繁", c.Name, c.IP)
+			c.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "消息发送过于频繁"))
+			// 如果警告次数过多，断开连接
+			if c.server.messageLimiter.GetWarningCount(c.ID) > 5 {
+				log.Printf("🚫 客户端 %s 因多次超速被断开连接", c.Name)
+				break
+			}
+			continue
+		}
+		if warning {
+			c.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "请求过于频繁，请放慢速度"))
 		}
 
 		// 解析消息

@@ -34,6 +34,12 @@ type Server struct {
 	clients        map[string]*Client
 	clientsMu      sync.RWMutex
 	handler        *Handler
+
+	// 安全组件
+	rateLimiter    *RateLimiter
+	originChecker  *OriginChecker
+	messageLimiter *MessageRateLimiter
+	ipFilter       *IPFilter
 }
 
 // NewServer 创建服务器实例
@@ -59,6 +65,15 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		leaderboard:    NewLeaderboardManager(rdb),
 		clients:        make(map[string]*Client),
 		sessionManager: NewSessionManager(),
+		// 初始化安全组件
+		rateLimiter: NewRateLimiter(
+			cfg.Security.RateLimit.MaxPerSecond,
+			cfg.Security.RateLimit.MaxPerMinute,
+			cfg.Security.RateLimit.BanDurationTime(),
+		),
+		originChecker:  NewOriginChecker(cfg.Security.AllowedOrigins),
+		messageLimiter: NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
+		ipFilter:       NewIPFilter(),
 	}
 
 	// 初始化房间管理器
@@ -69,6 +84,9 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	// 初始化消息处理器
 	s.handler = NewHandler(s)
+
+	log.Printf("🔒 安全配置: 连接限制=%d/秒, 消息限制=%d/秒",
+		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond)
 
 	return s, nil
 }
@@ -86,6 +104,29 @@ func (s *Server) Start() error {
 
 // handleWebSocket 处理 WebSocket 连接
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	clientIP := GetClientIP(r)
+
+	// IP 过滤检查
+	if !s.ipFilter.IsAllowed(clientIP) {
+		log.Printf("🚫 IP %s 被过滤器拒绝", clientIP)
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// 来源验证
+	if !s.originChecker.Check(r) {
+		log.Printf("🚫 来源验证失败: %s (IP: %s)", r.Header.Get("Origin"), clientIP)
+		http.Error(w, "Origin not allowed", http.StatusForbidden)
+		return
+	}
+
+	// 速率限制检查
+	if !s.rateLimiter.Allow(clientIP) {
+		log.Printf("🚫 IP %s 请求过于频繁", clientIP)
+		http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("WebSocket 升级失败: %v", err)
@@ -94,6 +135,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	// 创建客户端
 	client := NewClient(s, conn)
+	client.IP = clientIP // 记录客户端 IP
 	s.registerClient(client)
 
 	// 创建会话

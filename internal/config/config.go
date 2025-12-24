@@ -9,9 +9,10 @@ import (
 
 // Config 服务端配置
 type Config struct {
-	Server ServerConfig `yaml:"server"`
-	Redis  RedisConfig  `yaml:"redis"`
-	Game   GameConfig   `yaml:"game"`
+	Server   ServerConfig   `yaml:"server"`
+	Redis    RedisConfig    `yaml:"redis"`
+	Game     GameConfig     `yaml:"game"`
+	Security SecurityConfig `yaml:"security"`
 }
 
 // ServerConfig WebSocket 服务器配置
@@ -34,6 +35,25 @@ type GameConfig struct {
 	RoomTimeout int `yaml:"room_timeout"` // 房间等待超时（分钟）
 }
 
+// SecurityConfig 安全配置
+type SecurityConfig struct {
+	AllowedOrigins []string           `yaml:"allowed_origins"` // 允许的来源
+	RateLimit      RateLimitConfig    `yaml:"rate_limit"`      // 连接速率限制
+	MessageLimit   MessageLimitConfig `yaml:"message_limit"`   // 消息速率限制
+}
+
+// RateLimitConfig 连接速率限制配置
+type RateLimitConfig struct {
+	MaxPerSecond int `yaml:"max_per_second"` // 每秒最大连接数
+	MaxPerMinute int `yaml:"max_per_minute"` // 每分钟最大连接数
+	BanDuration  int `yaml:"ban_duration"`   // 封禁时长（秒）
+}
+
+// MessageLimitConfig 消息速率限制配置
+type MessageLimitConfig struct {
+	MaxPerSecond int `yaml:"max_per_second"` // 每秒最大消息数
+}
+
 // TurnTimeoutDuration 返回出牌超时时长
 func (c *GameConfig) TurnTimeoutDuration() time.Duration {
 	return time.Duration(c.TurnTimeout) * time.Second
@@ -49,6 +69,11 @@ func (c *GameConfig) RoomTimeoutDuration() time.Duration {
 	return time.Duration(c.RoomTimeout) * time.Minute
 }
 
+// BanDurationTime 返回封禁时长
+func (c *RateLimitConfig) BanDurationTime() time.Duration {
+	return time.Duration(c.BanDuration) * time.Second
+}
+
 // Load 加载配置文件
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
@@ -62,6 +87,13 @@ func Load(path string) (*Config, error) {
 	}
 
 	// 设置默认值
+	setDefaults(&cfg)
+
+	return &cfg, nil
+}
+
+// setDefaults 设置默认值
+func setDefaults(cfg *Config) {
 	if cfg.Server.Host == "" {
 		cfg.Server.Host = "0.0.0.0"
 	}
@@ -80,13 +112,27 @@ func Load(path string) (*Config, error) {
 	if cfg.Game.RoomTimeout == 0 {
 		cfg.Game.RoomTimeout = 10
 	}
-
-	return &cfg, nil
+	// 安全配置默认值
+	if len(cfg.Security.AllowedOrigins) == 0 {
+		cfg.Security.AllowedOrigins = []string{"*"}
+	}
+	if cfg.Security.RateLimit.MaxPerSecond == 0 {
+		cfg.Security.RateLimit.MaxPerSecond = 10
+	}
+	if cfg.Security.RateLimit.MaxPerMinute == 0 {
+		cfg.Security.RateLimit.MaxPerMinute = 60
+	}
+	if cfg.Security.RateLimit.BanDuration == 0 {
+		cfg.Security.RateLimit.BanDuration = 60
+	}
+	if cfg.Security.MessageLimit.MaxPerSecond == 0 {
+		cfg.Security.MessageLimit.MaxPerSecond = 20
+	}
 }
 
 // Default 返回默认配置
 func Default() *Config {
-	return &Config{
+	cfg := &Config{
 		Server: ServerConfig{
 			Host: "0.0.0.0",
 			Port: 1780,
@@ -99,5 +145,17 @@ func Default() *Config {
 			BidTimeout:  15,
 			RoomTimeout: 10,
 		},
+		Security: SecurityConfig{
+			AllowedOrigins: []string{"*"},
+			RateLimit: RateLimitConfig{
+				MaxPerSecond: 10,
+				MaxPerMinute: 60,
+				BanDuration:  60,
+			},
+			MessageLimit: MessageLimitConfig{
+				MaxPerSecond: 20,
+			},
+		},
 	}
+	return cfg
 }
