@@ -38,4 +38,5 @@ formatters:
     - goimports
   settings:
     goimports:
-      local-prefixes: github.com/palemoky/fight-the-landlord
+      local-prefixes:
+        - github.com/palemoky/fight-the-landlord
