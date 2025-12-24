@@ -11,6 +11,7 @@ repos:
         name: Run golangci-lint
         stages: [pre-commit]
         args:
+          - --fix
           - --timeout=5m
           - --config=.golangci.yml
 
