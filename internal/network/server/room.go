@@ -256,7 +256,6 @@ func (rm *RoomManager) NotifyPlayerOffline(client *Client) {
 	}
 
 	room.mu.Lock()
-	defer room.mu.Unlock()
 
 	// 通知其他在线玩家
 	for id, player := range room.Players {
@@ -264,9 +263,17 @@ func (rm *RoomManager) NotifyPlayerOffline(client *Client) {
 			player.Client.SendMessage(protocol.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
 				PlayerID:   client.ID,
 				PlayerName: client.Name,
-				Timeout:    120, // 2分钟重连时间
+				Timeout:    20, // 20秒离线等待
 			}))
 		}
+	}
+
+	// 如果游戏进行中，通知 GameSession 暂停该玩家的计时器
+	game := room.game
+	room.mu.Unlock()
+
+	if game != nil {
+		game.PlayerOffline(client.ID)
 	}
 
 	log.Printf("📴 玩家 %s 在房间 %s 中掉线", client.Name, roomCode)
@@ -287,10 +294,10 @@ func (rm *RoomManager) ReconnectPlayer(oldClient *Client, newClient *Client) err
 	}
 
 	room.mu.Lock()
-	defer room.mu.Unlock()
 
 	player, exists := room.Players[oldClient.ID]
 	if !exists {
+		room.mu.Unlock()
 		return ErrNotInRoom
 	}
 
@@ -306,6 +313,14 @@ func (rm *RoomManager) ReconnectPlayer(oldClient *Client, newClient *Client) err
 				PlayerName: newClient.Name,
 			}))
 		}
+	}
+
+	// 如果游戏进行中，通知 GameSession 恢复该玩家的计时器
+	game := room.game
+	room.mu.Unlock()
+
+	if game != nil {
+		game.PlayerOnline(newClient.ID)
 	}
 
 	log.Printf("📶 玩家 %s 重连到房间 %s", newClient.Name, roomCode)
