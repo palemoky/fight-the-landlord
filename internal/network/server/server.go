@@ -26,6 +26,7 @@ var upgrader = websocket.Upgrader{
 type Server struct {
 	config         *config.Config
 	redis          *redis.Client
+	redisStore     *RedisStore
 	roomManager    *RoomManager
 	matcher        *Matcher
 	sessionManager *SessionManager
@@ -53,6 +54,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	s := &Server{
 		config:         cfg,
 		redis:          rdb,
+		redisStore:     NewRedisStore(rdb),
 		clients:        make(map[string]*Client),
 		sessionManager: NewSessionManager(),
 	}
