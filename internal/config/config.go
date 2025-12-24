@@ -2,6 +2,8 @@ package config
 
 import (
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -89,7 +91,63 @@ func Load(path string) (*Config, error) {
 	// 设置默认值
 	setDefaults(&cfg)
 
+	// 从环境变量覆盖
+	loadFromEnv(&cfg)
+
 	return &cfg, nil
+}
+
+// loadFromEnv 从环境变量加载配置（覆盖文件配置）
+func loadFromEnv(cfg *Config) {
+	// Server
+	if v := os.Getenv("SERVER_HOST"); v != "" {
+		cfg.Server.Host = v
+	}
+	if v := os.Getenv("SERVER_PORT"); v != "" {
+		if port, err := strconv.Atoi(v); err == nil {
+			cfg.Server.Port = port
+		}
+	}
+
+	// Redis
+	if v := os.Getenv("REDIS_ADDR"); v != "" {
+		cfg.Redis.Addr = v
+	}
+	if v := os.Getenv("REDIS_PASSWORD"); v != "" {
+		cfg.Redis.Password = v
+	}
+	if v := os.Getenv("REDIS_DB"); v != "" {
+		if db, err := strconv.Atoi(v); err == nil {
+			cfg.Redis.DB = db
+		}
+	}
+
+	// Game
+	if v := os.Getenv("GAME_TURN_TIMEOUT"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.TurnTimeout = t
+		}
+	}
+	if v := os.Getenv("GAME_BID_TIMEOUT"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.BidTimeout = t
+		}
+	}
+
+	// Security
+	if v := os.Getenv("SECURITY_ALLOWED_ORIGINS"); v != "" {
+		cfg.Security.AllowedOrigins = strings.Split(v, ",")
+	}
+	if v := os.Getenv("SECURITY_RATE_LIMIT_PER_SECOND"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.Security.RateLimit.MaxPerSecond = n
+		}
+	}
+	if v := os.Getenv("SECURITY_MESSAGE_LIMIT_PER_SECOND"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.Security.MessageLimit.MaxPerSecond = n
+		}
+	}
 }
 
 // setDefaults 设置默认值
