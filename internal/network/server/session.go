@@ -485,7 +485,7 @@ func (gs *GameSession) startBidTimer() {
 	gs.turnTimer = time.AfterFunc(timeout, func() {
 		// 超时自动不叫
 		currentPlayer := gs.players[gs.currentBidder]
-		gs.HandleBid(currentPlayer.ID, false)
+		_ = gs.HandleBid(currentPlayer.ID, false)
 	})
 }
 
@@ -517,14 +517,14 @@ func (gs *GameSession) handlePlayTimeout() {
 		if len(currentPlayer.Hand) > 0 {
 			minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1]
 			gs.mu.Unlock()
-			gs.HandlePlayCards(currentPlayer.ID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
+			_ = gs.HandlePlayCards(currentPlayer.ID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
 			return
 		}
 	}
 
 	// 自动 PASS
 	gs.mu.Unlock()
-	gs.HandlePass(currentPlayer.ID)
+	_ = gs.HandlePass(currentPlayer.ID)
 }
 
 func (gs *GameSession) stopTimer() {
@@ -633,7 +633,7 @@ func (gs *GameSession) PlayerOnline(playerID string) {
 		if isBidding {
 			gs.turnTimer = time.AfterFunc(gs.remainingTime, func() {
 				currentPlayer := gs.players[gs.currentBidder]
-				gs.HandleBid(currentPlayer.ID, false)
+				_ = gs.HandleBid(currentPlayer.ID, false)
 			})
 		} else {
 			gs.turnTimer = time.AfterFunc(gs.remainingTime, func() {
@@ -667,7 +667,7 @@ func (gs *GameSession) handleOfflineTimeout(playerID string) {
 	// 根据当前状态执行自动操作
 	if gs.state == GameStateBidding && gs.currentBidder == playerIdx {
 		gs.mu.Unlock()
-		gs.HandleBid(playerID, false)
+		_ = gs.HandleBid(playerID, false)
 		return
 	}
 
@@ -679,11 +679,11 @@ func (gs *GameSession) handleOfflineTimeout(playerID string) {
 			// 出最小的牌
 			minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1]
 			gs.mu.Unlock()
-			gs.HandlePlayCards(playerID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
+			_ = gs.HandlePlayCards(playerID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
 			return
 		}
 		gs.mu.Unlock()
-		gs.HandlePass(playerID)
+		_ = gs.HandlePass(playerID)
 		return
 	}
 

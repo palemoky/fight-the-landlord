@@ -185,14 +185,14 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case timer.TimeoutMsg:
 		// 超时处理
 		if m.phase == PhaseBidding && m.bidTurn == m.playerID {
-			m.client.Bid(false) // 自动不叫
+			_ = m.client.Bid(false) // 自动不叫
 		} else if m.phase == PhasePlaying && m.currentTurn == m.playerID {
 			if m.mustPlay && len(m.hand) > 0 {
 				// 自动出最小的牌
 				minCard := m.hand[len(m.hand)-1]
-				m.client.PlayCards([]protocol.CardInfo{protocol.CardToInfo(minCard)})
+				_ = m.client.PlayCards([]protocol.CardInfo{protocol.CardToInfo(minCard)})
 			} else {
-				m.client.Pass()
+				_ = m.client.Pass()
 			}
 		}
 
@@ -224,28 +224,28 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		// 大厅界面：1=创建房间, 2=加入房间, 3=快速匹配, 4=排行榜, 5=我的战绩
 		switch input {
 		case "1":
-			m.client.CreateRoom()
+			_ = m.client.CreateRoom()
 		case "2":
 			m.input.Placeholder = "请输入房间号..."
 			m.input.Focus()
 		case "3":
 			m.phase = PhaseMatching
-			m.client.QuickMatch()
+			_ = m.client.QuickMatch()
 		case "4":
-			m.client.GetLeaderboard("total", 0, 10)
+			_ = m.client.GetLeaderboard("total", 0, 10)
 		case "5":
-			m.client.GetStats()
+			_ = m.client.GetStats()
 		default:
 			// 可能是房间号
 			if len(input) > 0 {
-				m.client.JoinRoom(input)
+				_ = m.client.JoinRoom(input)
 			}
 		}
 
 	case PhaseWaiting:
 		// 等待房间：输入 r 准备
 		if strings.ToLower(input) == "r" || strings.ToLower(input) == "ready" {
-			m.client.Ready()
+			_ = m.client.Ready()
 		}
 
 	case PhaseBidding:
@@ -253,9 +253,9 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		if m.bidTurn == m.playerID {
 			switch strings.ToLower(input) {
 			case "y", "yes", "1":
-				m.client.Bid(true)
+				_ = m.client.Bid(true)
 			case "n", "no", "0":
-				m.client.Bid(false)
+				_ = m.client.Bid(false)
 			}
 		}
 
@@ -264,14 +264,14 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		if m.currentTurn == m.playerID {
 			upperInput := strings.ToUpper(input)
 			if upperInput == "PASS" || upperInput == "P" {
-				m.client.Pass()
+				_ = m.client.Pass()
 			} else if len(input) > 0 {
 				// 解析出牌
 				cards, err := m.parseCardsInput(input)
 				if err != nil {
 					m.error = err.Error()
 				} else {
-					m.client.PlayCards(protocol.CardsToInfos(cards))
+					_ = m.client.PlayCards(protocol.CardsToInfos(cards))
 				}
 			}
 		}
@@ -290,13 +290,13 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 	switch msg.Type {
 	case protocol.MsgConnected:
 		var payload protocol.ConnectedPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.playerID = payload.PlayerID
 		m.playerName = payload.PlayerName
 
 	case protocol.MsgRoomCreated:
 		var payload protocol.RoomCreatedPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.roomCode = payload.RoomCode
 		m.players = []protocol.PlayerInfo{payload.Player}
 		m.phase = PhaseWaiting
@@ -304,7 +304,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgRoomJoined:
 		var payload protocol.RoomJoinedPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.roomCode = payload.RoomCode
 		m.players = payload.Players
 		m.phase = PhaseWaiting
@@ -312,12 +312,12 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgPlayerJoined:
 		var payload protocol.PlayerJoinedPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.players = append(m.players, payload.Player)
 
 	case protocol.MsgPlayerLeft:
 		var payload protocol.PlayerLeftPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		for i, p := range m.players {
 			if p.ID == payload.PlayerID {
 				m.players = append(m.players[:i], m.players[i+1:]...)
@@ -327,7 +327,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgPlayerReady:
 		var payload protocol.PlayerReadyPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		for i, p := range m.players {
 			if p.ID == payload.PlayerID {
 				m.players[i].Ready = payload.Ready
@@ -337,12 +337,12 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgGameStart:
 		var payload protocol.GameStartPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.players = payload.Players
 
 	case protocol.MsgDealCards:
 		var payload protocol.DealCardsPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.hand = protocol.InfosToCards(payload.Cards)
 		m.sortHand()
 		if len(payload.LandlordCards) > 0 && payload.LandlordCards[0].Rank > 0 {
@@ -351,7 +351,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgBidTurn:
 		var payload protocol.BidTurnPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.phase = PhaseBidding
 		m.bidTurn = payload.PlayerID
 		m.resetBell() // 重置提示音状态
@@ -367,7 +367,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgLandlord:
 		var payload protocol.LandlordPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.landlordCards = protocol.InfosToCards(payload.LandlordCards)
 		// 更新玩家是否是地主
 		for i, p := range m.players {
@@ -379,7 +379,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgPlayTurn:
 		var payload protocol.PlayTurnPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.phase = PhasePlaying
 		m.currentTurn = payload.PlayerID
 		m.mustPlay = payload.MustPlay
@@ -400,7 +400,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgCardPlayed:
 		var payload protocol.CardPlayedPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.lastPlayedBy = payload.PlayerID
 		m.lastPlayedName = payload.PlayerName
 		m.lastPlayed = protocol.InfosToCards(payload.Cards)
@@ -419,12 +419,12 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgPlayerPass:
 		var payload protocol.PlayerPassPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		// 可以显示 PASS 信息
 
 	case protocol.MsgGameOver:
 		var payload protocol.GameOverPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.phase = PhaseGameOver
 		m.winner = payload.WinnerName
 		m.winnerIsLandlord = payload.IsLandlord
@@ -432,12 +432,12 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgError:
 		var payload protocol.ErrorPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.error = payload.Message
 
 	case protocol.MsgReconnected:
 		var payload protocol.ReconnectedPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.playerID = payload.PlayerID
 		m.playerName = payload.PlayerName
 		if payload.RoomCode != "" {
@@ -454,7 +454,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgPlayerOffline:
 		var payload protocol.PlayerOfflinePayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		// 标记玩家离线
 		for i, p := range m.players {
 			if p.ID == payload.PlayerID {
@@ -465,7 +465,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgPlayerOnline:
 		var payload protocol.PlayerOnlinePayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		// 标记玩家上线
 		for i, p := range m.players {
 			if p.ID == payload.PlayerID {
@@ -476,17 +476,17 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 	case protocol.MsgPong:
 		var payload protocol.PongPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.latency = time.Now().UnixMilli() - payload.ClientTimestamp
 
 	case protocol.MsgStatsResult:
 		var payload protocol.StatsResultPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.myStats = &payload
 
 	case protocol.MsgLeaderboardResult:
 		var payload protocol.LeaderboardResultPayload
-		json.Unmarshal(msg.Payload, &payload)
+		_ = json.Unmarshal(msg.Payload, &payload)
 		m.leaderboard = payload.Entries
 	}
 

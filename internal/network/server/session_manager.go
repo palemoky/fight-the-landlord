@@ -195,6 +195,6 @@ func (sm *SessionManager) cleanup() {
 // generateToken 生成随机 token
 func generateToken() string {
 	bytes := make([]byte, 32)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }

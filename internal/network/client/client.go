@@ -98,9 +98,9 @@ func (c *Client) readPump() {
 		}
 	}()
 
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error {
-		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 
@@ -170,15 +170,15 @@ func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		_ = c.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.send:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
@@ -187,7 +187,7 @@ func (c *Client) writePump() {
 			}
 
 		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
@@ -251,7 +251,7 @@ func (c *Client) Close() {
 		c.closed = true
 		close(c.done)
 		if c.conn != nil {
-			c.conn.Close()
+			_ = c.conn.Close()
 		}
 	}
 }
@@ -358,7 +358,7 @@ func (c *Client) StartHeartbeat() {
 			select {
 			case <-ticker.C:
 				if c.IsConnected() {
-					c.Ping()
+					_ = c.Ping()
 				}
 			case <-c.done:
 				return
@@ -408,7 +408,7 @@ func (c *Client) tryReconnect() {
 		time.Sleep(100 * time.Millisecond)
 		if err := c.Reconnect(); err != nil {
 			log.Printf("发送重连请求失败: %v", err)
-			c.conn.Close()
+			_ = c.conn.Close()
 			continue
 		}
 

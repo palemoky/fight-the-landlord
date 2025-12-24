@@ -159,7 +159,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 // handleHealth 健康检查接口
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	_, _ = w.Write([]byte("OK"))
 }
 
 // registerClient 注册客户端
@@ -197,7 +197,7 @@ func (s *Server) Shutdown() {
 	s.clientsMu.Unlock()
 
 	// 关闭 Redis
-	s.redis.Close()
+	_ = s.redis.Close()
 
 	log.Println("服务器已关闭")
 }
