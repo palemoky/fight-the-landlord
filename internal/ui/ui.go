@@ -182,10 +182,6 @@ func (m model) View() string {
 
 // --- 视图渲染帮助函数 ---
 
-func (m model) renderCard(c card.Card, content string) string {
-	return utils.Ternary(c.Color == card.Red, redStyle.Render(content), blackStyle.Render(content))
-}
-
 func (m model) renderCardCounter() string {
 	// 获取总牌数
 	remaining := m.game.CardCounter.GetRemainingCards()

@@ -157,11 +157,12 @@ func (lm *LeaderboardManager) RecordGameResult(ctx context.Context, playerID, pl
 	}
 
 	// 连胜加成
-	if stats.CurrentStreak >= 10 {
+	switch {
+	case stats.CurrentStreak >= 10:
 		scoreChange += StreakBonus10
-	} else if stats.CurrentStreak >= 5 {
+	case stats.CurrentStreak >= 5:
 		scoreChange += StreakBonus5
-	} else if stats.CurrentStreak >= 3 {
+	case stats.CurrentStreak >= 3:
 		scoreChange += StreakBonus3
 	}
 

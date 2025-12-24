@@ -549,7 +549,7 @@ func (gs *GameSession) PlayerOffline(playerID string) {
 	defer gs.mu.Unlock()
 
 	// 找到玩家
-	var playerIdx int = -1
+	playerIdx := -1
 	for i, p := range gs.players {
 		if p.ID == playerID {
 			p.IsOffline = true
@@ -597,7 +597,7 @@ func (gs *GameSession) PlayerOnline(playerID string) {
 	defer gs.mu.Unlock()
 
 	// 找到玩家
-	var playerIdx int = -1
+	playerIdx := -1
 	for i, p := range gs.players {
 		if p.ID == playerID {
 			p.IsOffline = false
@@ -649,7 +649,7 @@ func (gs *GameSession) handleOfflineTimeout(playerID string) {
 	gs.mu.Lock()
 
 	// 找到玩家
-	var playerIdx int = -1
+	playerIdx := -1
 	for i, p := range gs.players {
 		if p.ID == playerID {
 			playerIdx = i

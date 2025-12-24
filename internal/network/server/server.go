@@ -180,13 +180,6 @@ func (s *Server) unregisterClient(client *Client) {
 	}
 }
 
-// getClient 获取客户端
-func (s *Server) getClient(id string) *Client {
-	s.clientsMu.RLock()
-	defer s.clientsMu.RUnlock()
-	return s.clients[id]
-}
-
 // Shutdown 关闭服务器
 func (s *Server) Shutdown() {
 	// 关闭所有客户端连接

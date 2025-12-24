@@ -386,11 +386,12 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		m.canBeat = payload.CanBeat
 		m.resetBell() // 重置提示音状态
 		if payload.PlayerID == m.playerID {
-			if payload.MustPlay {
+			switch {
+			case payload.MustPlay:
 				m.input.Placeholder = "你必须出牌 (如 33344)"
-			} else if payload.CanBeat {
+			case payload.CanBeat:
 				m.input.Placeholder = "出牌或 PASS"
-			} else {
+			default:
 				m.input.Placeholder = "没有能打过的牌，输入 PASS"
 			}
 			m.input.Focus()

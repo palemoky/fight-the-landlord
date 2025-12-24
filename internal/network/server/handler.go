@@ -196,9 +196,10 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 
 	// 当前回合玩家 ID
 	currentTurnID := ""
-	if game.state == GameStateBidding {
+	switch game.state {
+	case GameStateBidding:
 		currentTurnID = game.players[game.currentBidder].ID
-	} else if game.state == GameStatePlaying {
+	case GameStatePlaying:
 		currentTurnID = game.players[game.currentPlayer].ID
 	}
 

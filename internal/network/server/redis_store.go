@@ -17,8 +17,6 @@ const (
 
 	// 房间数据过期时间
 	roomExpiration = 2 * time.Hour
-	// 会话数据过期时间
-	sessionExpiration = 30 * time.Minute
 )
 
 // RoomData 房间数据（用于 Redis 序列化）
