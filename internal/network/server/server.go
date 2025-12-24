@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/palemoky/fight-the-landlord-go/internal/config"
-	"github.com/palemoky/fight-the-landlord-go/internal/network/protocol"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/palemoky/fight-the-landlord/internal/config"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
 var upgrader = websocket.Upgrader{

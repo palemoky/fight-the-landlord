@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/palemoky/fight-the-landlord-go/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
 // Handler 消息处理器

@@ -1,10 +1,10 @@
 package card
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
-	"fmt"
 )
 
 // Suit 定义花色

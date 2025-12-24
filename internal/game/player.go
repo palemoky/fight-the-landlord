@@ -3,7 +3,7 @@ package game
 import (
 	"sort"
 
-	"github.com/palemoky/fight-the-landlord-go/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/card"
 )
 
 // Player 定义玩家

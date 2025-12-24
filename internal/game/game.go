@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/palemoky/fight-the-landlord-go/internal/card"
-	"github.com/palemoky/fight-the-landlord-go/internal/rule"
+	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/rule"
 )
 
 const (

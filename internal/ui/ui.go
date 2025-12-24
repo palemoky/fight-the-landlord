@@ -10,9 +10,10 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/palemoky/fight-the-landlord-go/internal/card"
-	"github.com/palemoky/fight-the-landlord-go/internal/game"
-	"github.com/palemoky/fight-the-landlord-go/internal/utils"
+
+	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game"
+	"github.com/palemoky/fight-the-landlord/internal/utils"
 )
 
 const (

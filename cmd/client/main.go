@@ -6,7 +6,8 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/palemoky/fight-the-landlord-go/internal/ui"
+
+	"github.com/palemoky/fight-the-landlord/internal/ui"
 )
 
 func main() {

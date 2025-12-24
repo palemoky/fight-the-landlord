@@ -1,6 +1,6 @@
 package protocol
 
-import "github.com/palemoky/fight-the-landlord-go/internal/card"
+import "github.com/palemoky/fight-the-landlord/internal/card"
 
 // CardToInfo 将 card.Card 转换为 CardInfo
 func CardToInfo(c card.Card) CardInfo {

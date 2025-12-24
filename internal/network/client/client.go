@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/palemoky/fight-the-landlord-go/internal/network/protocol"
+
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
 const (
