@@ -79,6 +79,9 @@ type OnlineModel struct {
 	// 网络状态
 	latency int64 // 延迟（毫秒）
 
+	// 提醒状态
+	bellPlayed bool // 是否已播放提示音
+
 	// UI 组件
 	input  textinput.Model
 	timer  timer.Model
@@ -186,6 +189,13 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.client.Pass()
 			}
+		}
+
+	case timer.TickMsg:
+		// 检查是否需要播放提示音
+		if m.shouldPlayBell() {
+			m.bellPlayed = true
+			cmds = append(cmds, m.playBell())
 		}
 	}
 
@@ -335,6 +345,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		json.Unmarshal(msg.Payload, &payload)
 		m.phase = PhaseBidding
 		m.bidTurn = payload.PlayerID
+		m.resetBell() // 重置提示音状态
 		if payload.PlayerID == m.playerID {
 			m.input.Placeholder = "叫地主? (Y/N)"
 			m.input.Focus()
@@ -364,6 +375,7 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		m.currentTurn = payload.PlayerID
 		m.mustPlay = payload.MustPlay
 		m.canBeat = payload.CanBeat
+		m.resetBell() // 重置提示音状态
 		if payload.PlayerID == m.playerID {
 			if payload.MustPlay {
 				m.input.Placeholder = "你必须出牌 (如 33344)"
@@ -519,6 +531,35 @@ func (m *OnlineModel) restoreGameState(gs *protocol.GameStateDTO) {
 	default:
 		m.phase = PhaseWaiting
 	}
+}
+
+// shouldPlayBell 判断是否应该播放提示音
+func (m *OnlineModel) shouldPlayBell() bool {
+	// 已经播放过了
+	if m.bellPlayed {
+		return false
+	}
+
+	// 必须是自己的回合
+	isMyTurn := (m.phase == PhaseBidding && m.bidTurn == m.playerID) ||
+		(m.phase == PhasePlaying && m.currentTurn == m.playerID)
+	if !isMyTurn {
+		return false
+	}
+
+	// 检查剩余时间是否为 10 秒
+	remaining := m.timer.Timeout
+	return remaining <= 10*time.Second && remaining > 9*time.Second
+}
+
+// playBell 播放终端提示音
+func (m *OnlineModel) playBell() tea.Cmd {
+	return tea.Printf("\a") // 发送 ASCII Bell 字符
+}
+
+// resetBell 重置提示音状态（新回合开始时调用）
+func (m *OnlineModel) resetBell() {
+	m.bellPlayed = false
 }
 
 func (m *OnlineModel) View() string {
