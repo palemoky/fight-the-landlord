@@ -4,8 +4,9 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/palemoky/fight-the-landlord-go/internal/card"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/palemoky/fight-the-landlord/internal/card"
 )
 
 // testRuleCards is a helper to quickly create card slices for testing.

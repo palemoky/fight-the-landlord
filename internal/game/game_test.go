@@ -3,10 +3,11 @@ package game
 import (
 	"testing"
 
-	"github.com/palemoky/fight-the-landlord-go/internal/card"
-	"github.com/palemoky/fight-the-landlord-go/internal/rule"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/rule"
 )
 
 // testCards is a helper function to quickly create cards for testing.

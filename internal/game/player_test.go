@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/palemoky/fight-the-landlord-go/internal/card"
+
+	"github.com/palemoky/fight-the-landlord/internal/card"
 )
 
 func testPlayerCards(ranks ...card.Rank) []card.Card {
@@ -17,9 +18,9 @@ func testPlayerCards(ranks ...card.Rank) []card.Card {
 
 func TestPlayer_SortHand(t *testing.T) {
 	testCases := []struct {
-		name         string      
-		initialHand  []card.Card 
-		expectedHand []card.Card 
+		name         string
+		initialHand  []card.Card
+		expectedHand []card.Card
 	}{
 		{
 			name:         "standard unsorted hand",

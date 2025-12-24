@@ -1,0 +1,86 @@
+.PHONY: help release test coverage lint fmt clean build install
+
+# 默认目标
+.DEFAULT_GOAL := help
+
+# 颜色输出
+BLUE := \033[0;34m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+CYAN := \033[0;36m
+NC := \033[0m # No Color
+
+## help: 显示帮助信息
+help:  ## Show this help message
+	@echo "$(BLUE)════════════════════════════════════════$(NC)"
+	@echo "$(BLUE)      Fight the Landlord - Makefile     $(NC)"
+	@echo "$(BLUE)════════════════════════════════════════$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-15s$(NC) %s\n", $$1, $$2}'
+
+## test: 运行所有测试
+test:  ## Run all tests
+	@echo "$(BLUE)Running tests...$(NC)"
+	go test -v -race ./...
+
+## coverage: 生成测试覆盖率报告
+coverage:  ## Generate test coverage report
+	@echo "$(BLUE)Generating coverage report...$(NC)"
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "$(GREEN)✓ Coverage report generated: coverage.html$(NC)"
+
+## release: 创建并推送版本标签
+release:  ## Create and push version tag
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "$(RED)Error: Working directory has uncommitted changes$(NC)"; \
+		echo "$(YELLOW)Please commit or stash your changes before releasing$(NC)"; \
+		exit 1; \
+	fi; \
+	LATEST_TAG=$$(git describe --tags --abbrev=0 2>/dev/null || echo "none"); \
+	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
+	echo "$(BLUE)         Release New Version$(NC)"; \
+	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
+	echo "$(CYAN)Current latest tag: $(GREEN)$$LATEST_TAG$(NC)"; \
+	echo "$(BLUE)════════════════════════════════════════$(NC)"; \
+	printf "$(YELLOW)Enter new version: $(NC)"; \
+	read -r VERSION; \
+	if [ -z "$$VERSION" ]; then \
+		echo "$(RED)Error: Version cannot be empty$(NC)"; \
+		exit 1; \
+	fi; \
+	if ! echo "$$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		echo "$(RED)Error: Invalid version format '$$VERSION'$(NC)"; \
+		echo "$(YELLOW)Expected format: v1.0.0$(NC)"; \
+		exit 1; \
+	fi; \
+	if git tag | grep -q "^$$VERSION$$"; then \
+		echo "$(RED)Error: Tag $$VERSION already exists$(NC)"; \
+		exit 1; \
+	fi; \
+	echo ""; \
+	echo "$(YELLOW)About to create and push tag: $(GREEN)$$VERSION$(NC)"; \
+	printf "$(YELLOW)Continue? [y/N] $(NC)"; \
+	read -r CONFIRM; \
+	if [ "$$CONFIRM" != "y" ] && [ "$$CONFIRM" != "Y" ]; then \
+		echo "$(YELLOW)Aborted$(NC)"; \
+		exit 1; \
+	fi; \
+	if git config user.signingkey >/dev/null 2>&1 && command -v gpg >/dev/null 2>&1; then \
+		echo "$(BLUE)Creating GPG signed tag $$VERSION...$(NC)"; \
+		if git tag -s $$VERSION -m "Release $$VERSION" 2>/dev/null; then \
+			echo "$(GREEN)✓ Signed tag $$VERSION created (Verified ✓)$(NC)"; \
+		else \
+			echo "$(YELLOW)⚠ GPG signing failed, using regular tag...$(NC)"; \
+			git tag -a $$VERSION -m "Release $$VERSION"; \
+			echo "$(GREEN)✓ Tag $$VERSION created$(NC)"; \
+		fi \
+	else \
+		echo "$(BLUE)Creating tag $$VERSION...$(NC)"; \
+		git tag -a $$VERSION -m "Release $$VERSION"; \
+		echo "$(GREEN)✓ Tag $$VERSION created$(NC)"; \
+		echo "$(YELLOW)💡 Tip: Configure GPG key to show Verified badge$(NC)"; \
+	fi; \
+	echo "$(BLUE)Pushing tag to remote...$(NC)"; \
+	git push origin $$VERSION; \
+	echo "$(GREEN)✓ Release $$VERSION completed$(NC)"

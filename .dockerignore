@@ -1,0 +1,31 @@
+# Docker 相关
+.docker/
+
+# 环境变量文件（可能包含密钥）
+.env
+
+# 本地开发配置
+configs/local.yaml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 编译产物
+/server
+/client
+*.exe
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+logs/
+
+# 测试覆盖率
+coverage.out
+coverage.html

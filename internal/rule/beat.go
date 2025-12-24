@@ -1,11 +1,12 @@
 package rule
 
 import (
-	"sort"
 	"slices"
+	"sort"
 
-	"github.com/palemoky/fight-the-landlord-go/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/card"
 )
+
 // hasWinningBombOrRocket checks for any bomb or rocket that can beat the opponent's hand.
 func hasWinningBombOrRocket(analysis HandAnalysis, opponentHand ParsedHand) bool {
 	// Check for a winning Rocket.

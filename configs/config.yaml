@@ -1,0 +1,37 @@
+# 斗地主服务端配置
+
+server:
+  # WebSocket 监听地址
+  host: "0.0.0.0"
+  port: 1780
+
+redis:
+  # Redis 地址
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+
+game:
+  # 玩家回合超时时间（秒）
+  turn_timeout: 30
+  # 叫地主超时时间（秒）
+  bid_timeout: 15
+  # 房间等待超时时间（分钟），超时自动解散
+  room_timeout: 10
+
+security:
+  # 允许的来源（设置为 ["*"] 允许所有）
+  allowed_origins:
+    - "*"
+  # 连接速率限制
+  rate_limit:
+    # 每秒最大连接数（per IP）
+    max_per_second: 10
+    # 每分钟最大连接数（per IP）
+    max_per_minute: 60
+    # 超限后封禁时长（秒）
+    ban_duration: 60
+  # 消息速率限制（per client）
+  message_limit:
+    # 每秒最大消息数
+    max_per_second: 20
