@@ -239,14 +239,9 @@ func TestHandlePlay(t *testing.T) {
 
 // TestAdvanceToNextTurn tests the logic for advancing the turn and setting the next player's state.
 func TestAdvanceToNextTurn(t *testing.T) {
-	// Mock the dependency on rule.CanBeatWithHand for predictable testing
-	originalCanBeatWithHand := rule.CanBeatWithHand
-	defer func() { rule.CanBeatWithHand = originalCanBeatWithHand }() // Restore after test
-
 	testCases := []struct {
 		name            string
 		setupGame       func(g *Game)
-		mockCanBeat     bool
 		expectedTurn    int
 		expectedCanPlay bool
 	}{
@@ -257,7 +252,6 @@ func TestAdvanceToNextTurn(t *testing.T) {
 				g.LastPlayerIdx = 0
 				g.LastPlayedHand = rule.ParsedHand{}
 			},
-			mockCanBeat:     true, // Irrelevant for this case
 			expectedTurn:    1,
 			expectedCanPlay: true,
 		},
@@ -266,9 +260,10 @@ func TestAdvanceToNextTurn(t *testing.T) {
 			setupGame: func(g *Game) {
 				g.CurrentTurn = 0
 				g.LastPlayerIdx = 0
-				g.LastPlayedHand, _ = rule.ParseHand(testCards(card.Rank3))
+				g.LastPlayedHand, _ = rule.ParseHand(testCards(card.Rank3)) // Single 3
+				// Player 1 has A which can beat 3
+				g.Players[1].Hand = testCards(card.RankA)
 			},
-			mockCanBeat:     true,
 			expectedTurn:    1,
 			expectedCanPlay: true,
 		},
@@ -277,9 +272,10 @@ func TestAdvanceToNextTurn(t *testing.T) {
 			setupGame: func(g *Game) {
 				g.CurrentTurn = 1
 				g.LastPlayerIdx = 1
-				g.LastPlayedHand, _ = rule.ParseHand(testCards(card.RankA))
+				g.LastPlayedHand, _ = rule.ParseHand(testCards(card.RankA, card.RankA)) // Pair of A
+				// Player 2 only has single cards, cannot beat a pair
+				g.Players[2].Hand = testCards(card.Rank3, card.Rank4, card.Rank5)
 			},
-			mockCanBeat:     false,
 			expectedTurn:    2,
 			expectedCanPlay: false,
 		},
@@ -290,11 +286,6 @@ func TestAdvanceToNextTurn(t *testing.T) {
 			t.Parallel()
 			g := setupTestGame()
 			tc.setupGame(g)
-
-			// Apply the mock for this specific test case
-			rule.CanBeatWithHand = func(playerHand []card.Card, opponentHand rule.ParsedHand) bool {
-				return tc.mockCanBeat
-			}
 
 			g.advanceToNextTurn()
 
