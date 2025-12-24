@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -47,6 +48,12 @@ func (h *Handler) Handle(client *Client, msg *protocol.Message) {
 		h.handlePlayCards(client, msg)
 	case protocol.MsgPass:
 		h.handlePass(client)
+
+	// 排行榜操作
+	case protocol.MsgGetStats:
+		h.handleGetStats(client)
+	case protocol.MsgGetLeaderboard:
+		h.handleGetLeaderboard(client, msg)
 
 	default:
 		log.Printf("未知消息类型: %s", msg.Type)
@@ -371,4 +378,95 @@ func (h *Handler) handlePass(client *Client) {
 			client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 	}
+}
+
+// --- 排行榜处理 ---
+
+// handleGetStats 获取个人统计
+func (h *Handler) handleGetStats(client *Client) {
+	ctx := context.Background()
+	stats, err := h.server.leaderboard.GetPlayerStats(ctx, client.ID)
+	if err != nil {
+		client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取统计失败"))
+		return
+	}
+
+	if stats == nil {
+		// 没有统计数据，返回空数据
+		client.SendMessage(protocol.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
+			PlayerID:   client.ID,
+			PlayerName: client.Name,
+		}))
+		return
+	}
+
+	// 获取排名
+	rank, _ := h.server.leaderboard.GetPlayerRank(ctx, client.ID)
+
+	winRate := 0.0
+	if stats.TotalGames > 0 {
+		winRate = float64(stats.Wins) / float64(stats.TotalGames) * 100
+	}
+
+	client.SendMessage(protocol.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
+		PlayerID:      stats.PlayerID,
+		PlayerName:    stats.PlayerName,
+		TotalGames:    stats.TotalGames,
+		Wins:          stats.Wins,
+		Losses:        stats.Losses,
+		WinRate:       winRate,
+		LandlordGames: stats.LandlordGames,
+		LandlordWins:  stats.LandlordWins,
+		FarmerGames:   stats.FarmerGames,
+		FarmerWins:    stats.FarmerWins,
+		Score:         stats.Score,
+		Rank:          int(rank),
+		CurrentStreak: stats.CurrentStreak,
+		MaxWinStreak:  stats.MaxWinStreak,
+	}))
+}
+
+// handleGetLeaderboard 获取排行榜
+func (h *Handler) handleGetLeaderboard(client *Client, msg *protocol.Message) {
+	payload, err := protocol.ParsePayload[protocol.GetLeaderboardPayload](msg)
+	if err != nil {
+		// 默认获取总排行榜前 10
+		payload = &protocol.GetLeaderboardPayload{
+			Type:   "total",
+			Offset: 0,
+			Limit:  10,
+		}
+	}
+
+	// 限制请求数量
+	if payload.Limit <= 0 || payload.Limit > 50 {
+		payload.Limit = 10
+	}
+	if payload.Offset < 0 {
+		payload.Offset = 0
+	}
+
+	entries, err := h.server.leaderboard.GetLeaderboard(context.Background(), payload.Type, payload.Offset, payload.Limit)
+	if err != nil {
+		client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取排行榜失败"))
+		return
+	}
+
+	// 转换为协议格式
+	protocolEntries := make([]protocol.LeaderboardEntry, len(entries))
+	for i, e := range entries {
+		protocolEntries[i] = protocol.LeaderboardEntry{
+			Rank:       e.Rank,
+			PlayerID:   e.PlayerID,
+			PlayerName: e.PlayerName,
+			Score:      e.Score,
+			Wins:       e.Wins,
+			WinRate:    e.WinRate,
+		}
+	}
+
+	client.SendMessage(protocol.MustNewMessage(protocol.MsgLeaderboardResult, protocol.LeaderboardResultPayload{
+		Type:    payload.Type,
+		Entries: protocolEntries,
+	}))
 }

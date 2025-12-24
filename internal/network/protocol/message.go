@@ -29,6 +29,10 @@ const (
 	MsgBid       MessageType = "bid"        // 叫地主
 	MsgPlayCards MessageType = "play_cards" // 出牌
 	MsgPass      MessageType = "pass"       // 不出
+
+	// 排行榜
+	MsgGetStats       MessageType = "get_stats"       // 获取个人统计
+	MsgGetLeaderboard MessageType = "get_leaderboard" // 获取排行榜
 )
 
 // 服务端 → 客户端 消息类型
@@ -60,6 +64,10 @@ const (
 	MsgGameOver    MessageType = "game_over"    // 游戏结束
 	MsgRoundResult MessageType = "round_result" // 本轮结果
 
+	// 排行榜
+	MsgStatsResult       MessageType = "stats_result"       // 个人统计结果
+	MsgLeaderboardResult MessageType = "leaderboard_result" // 排行榜结果
+
 	// 错误
 	MsgError MessageType = "error" // 错误消息
 )
@@ -90,6 +98,13 @@ type BidPayload struct {
 // PlayCardsPayload 出牌请求
 type PlayCardsPayload struct {
 	Cards []CardInfo `json:"cards"`
+}
+
+// GetLeaderboardPayload 获取排行榜请求
+type GetLeaderboardPayload struct {
+	Type   string `json:"type"`   // total/daily/weekly
+	Offset int    `json:"offset"` // 偏移量
+	Limit  int    `json:"limit"`  // 数量
 }
 
 // --- 服务端响应 Payloads ---
@@ -244,6 +259,40 @@ type PlayerHand struct {
 type ErrorPayload struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+// StatsResultPayload 个人统计结果
+type StatsResultPayload struct {
+	PlayerID      string  `json:"player_id"`
+	PlayerName    string  `json:"player_name"`
+	TotalGames    int     `json:"total_games"`
+	Wins          int     `json:"wins"`
+	Losses        int     `json:"losses"`
+	WinRate       float64 `json:"win_rate"`
+	LandlordGames int     `json:"landlord_games"`
+	LandlordWins  int     `json:"landlord_wins"`
+	FarmerGames   int     `json:"farmer_games"`
+	FarmerWins    int     `json:"farmer_wins"`
+	Score         int     `json:"score"`
+	Rank          int     `json:"rank"`
+	CurrentStreak int     `json:"current_streak"`
+	MaxWinStreak  int     `json:"max_win_streak"`
+}
+
+// LeaderboardResultPayload 排行榜结果
+type LeaderboardResultPayload struct {
+	Type    string             `json:"type"` // total/daily/weekly
+	Entries []LeaderboardEntry `json:"entries"`
+}
+
+// LeaderboardEntry 排行榜条目
+type LeaderboardEntry struct {
+	Rank       int     `json:"rank"`
+	PlayerID   string  `json:"player_id"`
+	PlayerName string  `json:"player_name"`
+	Score      int     `json:"score"`
+	Wins       int     `json:"wins"`
+	WinRate    float64 `json:"win_rate"`
 }
 
 // --- 通用数据结构 ---

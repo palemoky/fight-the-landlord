@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"sort"
@@ -402,6 +403,40 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 
 	log.Printf("🎮 游戏结束！房间 %s，获胜者: %s (%s)",
 		gs.room.Code, winner.Name, ternary(winner.IsLandlord, "地主", "农民"))
+
+	// 记录游戏结果到排行榜
+	gs.recordGameResults(winner)
+}
+
+// recordGameResults 记录游戏结果到排行榜
+func (gs *GameSession) recordGameResults(winner *GamePlayer) {
+	ctx := context.Background()
+	leaderboard := gs.room.server.leaderboard
+
+	// 计算获胜方
+	landlordWins := winner.IsLandlord
+
+	for _, p := range gs.players {
+		isWinner := false
+		if landlordWins {
+			// 地主胜利
+			isWinner = p.IsLandlord
+		} else {
+			// 农民胜利
+			isWinner = !p.IsLandlord
+		}
+
+		// 获取玩家名称
+		playerName := p.Name
+		if rp, exists := gs.room.Players[p.ID]; exists && rp.Client != nil {
+			playerName = rp.Client.Name
+		}
+
+		// 记录结果
+		if err := leaderboard.RecordGameResult(ctx, p.ID, playerName, p.IsLandlord, isWinner); err != nil {
+			log.Printf("记录游戏结果失败: %v", err)
+		}
+	}
 }
 
 // validateCardsInHand 验证牌是否在手中

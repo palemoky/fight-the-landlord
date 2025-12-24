@@ -27,6 +27,7 @@ type Server struct {
 	config         *config.Config
 	redis          *redis.Client
 	redisStore     *RedisStore
+	leaderboard    *LeaderboardManager
 	roomManager    *RoomManager
 	matcher        *Matcher
 	sessionManager *SessionManager
@@ -55,6 +56,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		config:         cfg,
 		redis:          rdb,
 		redisStore:     NewRedisStore(rdb),
+		leaderboard:    NewLeaderboardManager(rdb),
 		clients:        make(map[string]*Client),
 		sessionManager: NewSessionManager(),
 	}

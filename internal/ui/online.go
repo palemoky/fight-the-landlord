@@ -82,6 +82,10 @@ type OnlineModel struct {
 	// 提醒状态
 	bellPlayed bool // 是否已播放提示音
 
+	// 排行榜
+	myStats     *protocol.StatsResultPayload
+	leaderboard []protocol.LeaderboardEntry
+
 	// UI 组件
 	input  textinput.Model
 	timer  timer.Model
@@ -216,7 +220,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 	switch m.phase {
 	case PhaseLobby:
-		// 大厅界面：1=创建房间, 2=加入房间, 3=快速匹配
+		// 大厅界面：1=创建房间, 2=加入房间, 3=快速匹配, 4=排行榜, 5=我的战绩
 		switch input {
 		case "1":
 			m.client.CreateRoom()
@@ -226,6 +230,10 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		case "3":
 			m.phase = PhaseMatching
 			m.client.QuickMatch()
+		case "4":
+			m.client.GetLeaderboard("total", 0, 10)
+		case "5":
+			m.client.GetStats()
 		default:
 			// 可能是房间号
 			if len(input) > 0 {
@@ -469,6 +477,16 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		var payload protocol.PongPayload
 		json.Unmarshal(msg.Payload, &payload)
 		m.latency = time.Now().UnixMilli() - payload.ClientTimestamp
+
+	case protocol.MsgStatsResult:
+		var payload protocol.StatsResultPayload
+		json.Unmarshal(msg.Payload, &payload)
+		m.myStats = &payload
+
+	case protocol.MsgLeaderboardResult:
+		var payload protocol.LeaderboardResultPayload
+		json.Unmarshal(msg.Payload, &payload)
+		m.leaderboard = payload.Entries
 	}
 
 	return nil
@@ -613,11 +631,25 @@ func (m *OnlineModel) lobbyView() string {
 		"  1. 创建房间",
 		"  2. 加入房间",
 		"  3. 快速匹配",
+		"  4. 排行榜",
+		"  5. 我的战绩",
 	))
 	sb.WriteString(menu)
 	sb.WriteString("\n\n")
 
-	m.input.Placeholder = "输入选项 (1/2/3) 或房间号"
+	// 显示排行榜
+	if len(m.leaderboard) > 0 {
+		sb.WriteString(m.renderLeaderboard())
+		sb.WriteString("\n\n")
+	}
+
+	// 显示我的战绩
+	if m.myStats != nil && m.myStats.TotalGames > 0 {
+		sb.WriteString(m.renderMyStats())
+		sb.WriteString("\n\n")
+	}
+
+	m.input.Placeholder = "输入选项 (1-5) 或房间号"
 	sb.WriteString(m.input.View())
 
 	if m.error != "" {
@@ -625,6 +657,92 @@ func (m *OnlineModel) lobbyView() string {
 	}
 
 	return sb.String()
+}
+
+// renderLeaderboard 渲染排行榜
+func (m *OnlineModel) renderLeaderboard() string {
+	var sb strings.Builder
+	sb.WriteString("🏆 排行榜 TOP 10\n")
+	sb.WriteString(strings.Repeat("─", 50) + "\n")
+	sb.WriteString(fmt.Sprintf("%-4s %-12s %8s %6s %8s\n", "排名", "玩家", "积分", "胜场", "胜率"))
+	sb.WriteString(strings.Repeat("─", 50) + "\n")
+
+	for _, e := range m.leaderboard {
+		rankIcon := ""
+		switch e.Rank {
+		case 1:
+			rankIcon = "🥇"
+		case 2:
+			rankIcon = "🥈"
+		case 3:
+			rankIcon = "🥉"
+		default:
+			rankIcon = fmt.Sprintf("%2d.", e.Rank)
+		}
+		sb.WriteString(fmt.Sprintf("%-4s %-12s %8d %6d %7.1f%%\n",
+			rankIcon, truncateName(e.PlayerName, 10), e.Score, e.Wins, e.WinRate))
+	}
+
+	return boxStyle.Render(sb.String())
+}
+
+// renderMyStats 渲染我的战绩
+func (m *OnlineModel) renderMyStats() string {
+	s := m.myStats
+	var sb strings.Builder
+	sb.WriteString("📊 我的战绩\n")
+	sb.WriteString(strings.Repeat("─", 40) + "\n")
+
+	// 排名和积分
+	rankStr := "未上榜"
+	if s.Rank > 0 {
+		rankStr = fmt.Sprintf("#%d", s.Rank)
+	}
+	sb.WriteString(fmt.Sprintf("排名: %s  |  积分: %d\n", rankStr, s.Score))
+	sb.WriteString(strings.Repeat("─", 40) + "\n")
+
+	// 总战绩
+	sb.WriteString(fmt.Sprintf("总场次: %d  胜: %d  负: %d  胜率: %.1f%%\n",
+		s.TotalGames, s.Wins, s.Losses, s.WinRate))
+
+	// 地主/农民分开
+	landlordRate := 0.0
+	if s.LandlordGames > 0 {
+		landlordRate = float64(s.LandlordWins) / float64(s.LandlordGames) * 100
+	}
+	farmerRate := 0.0
+	if s.FarmerGames > 0 {
+		farmerRate = float64(s.FarmerWins) / float64(s.FarmerGames) * 100
+	}
+
+	sb.WriteString(fmt.Sprintf("地主: %d胜/%d场 (%.1f%%)  |  农民: %d胜/%d场 (%.1f%%)\n",
+		s.LandlordWins, s.LandlordGames, landlordRate,
+		s.FarmerWins, s.FarmerGames, farmerRate))
+
+	// 连胜信息
+	streakStr := ""
+	if s.CurrentStreak > 0 {
+		streakStr = fmt.Sprintf("🔥 %d 连胜!", s.CurrentStreak)
+	} else if s.CurrentStreak < 0 {
+		streakStr = fmt.Sprintf("💔 %d 连败", -s.CurrentStreak)
+	}
+	if s.MaxWinStreak > 0 {
+		streakStr += fmt.Sprintf("  最高连胜: %d", s.MaxWinStreak)
+	}
+	if streakStr != "" {
+		sb.WriteString(streakStr + "\n")
+	}
+
+	return boxStyle.Render(sb.String())
+}
+
+// truncateName 截断玩家名称
+func truncateName(name string, maxLen int) string {
+	runes := []rune(name)
+	if len(runes) > maxLen {
+		return string(runes[:maxLen-1]) + "…"
+	}
+	return name
 }
 
 func (m *OnlineModel) matchingView() string {

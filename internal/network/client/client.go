@@ -315,6 +315,20 @@ func (c *Client) Pass() error {
 	return c.SendMessage(protocol.MustNewMessage(protocol.MsgPass, nil))
 }
 
+// GetStats 获取个人统计
+func (c *Client) GetStats() error {
+	return c.SendMessage(protocol.MustNewMessage(protocol.MsgGetStats, nil))
+}
+
+// GetLeaderboard 获取排行榜
+func (c *Client) GetLeaderboard(leaderboardType string, offset, limit int) error {
+	return c.SendMessage(protocol.MustNewMessage(protocol.MsgGetLeaderboard, protocol.GetLeaderboardPayload{
+		Type:   leaderboardType,
+		Offset: offset,
+		Limit:  limit,
+	}))
+}
+
 // Ping 发送心跳
 func (c *Client) Ping() error {
 	return c.SendMessage(protocol.MustNewMessage(protocol.MsgPing, protocol.PingPayload{
