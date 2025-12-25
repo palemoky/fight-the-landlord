@@ -1,7 +1,7 @@
 <div align="center">
     <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/logo.png" alt="Logo" height="100px" />
 
-# 🎮 快乐斗地主
+# 🎮 欢乐斗地主
 
 基于 Go 语言实现的斗地主游戏，支持联网对战、断线重连、排行榜等功能。
 
