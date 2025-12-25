@@ -510,20 +510,20 @@ func (gs *GameSession) handlePlayTimeout() {
 	}
 
 	currentPlayer := gs.players[gs.currentPlayer]
-	mustPlay := gs.lastPlayerIdx == gs.currentPlayer || gs.lastPlayedHand.IsEmpty()
 
-	if mustPlay {
-		// 必须出牌时，自动出最小的单牌
-		if len(currentPlayer.Hand) > 0 {
-			minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1]
-			playerID := currentPlayer.ID
-			gs.mu.Unlock()
-			_ = gs.HandlePlayCards(playerID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
-			return
-		}
+	// 尝试找到最小能打过的牌
+	cardsToPlay := rule.FindSmallestBeatingCards(currentPlayer.Hand, gs.lastPlayedHand)
+
+	if cardsToPlay != nil {
+		// 找到了能打的牌，出牌
+		playerID := currentPlayer.ID
+		cardInfos := protocol.CardsToInfos(cardsToPlay)
+		gs.mu.Unlock()
+		_ = gs.HandlePlayCards(playerID, cardInfos)
+		return
 	}
 
-	// 自动 PASS
+	// 没有能打的牌，自动 PASS
 	playerID := currentPlayer.ID
 	gs.mu.Unlock()
 	_ = gs.HandlePass(playerID)
