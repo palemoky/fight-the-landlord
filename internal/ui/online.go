@@ -107,6 +107,9 @@ type OnlineModel struct {
 	// 大厅菜单导航
 	selectedLobbyIndex int // 当前选中的菜单项索引 (0-5)
 
+	// 在线人数
+	onlineCount int // 当前在线人数
+
 	// UI 组件
 	input  textinput.Model
 	timer  timer.Model

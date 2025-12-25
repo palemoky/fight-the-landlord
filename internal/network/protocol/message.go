@@ -44,6 +44,7 @@ const (
 	MsgPong          MessageType = "pong"           // 心跳 pong
 	MsgPlayerOffline MessageType = "player_offline" // 玩家掉线通知
 	MsgPlayerOnline  MessageType = "player_online"  // 玩家上线通知
+	MsgOnlineCount   MessageType = "online_count"   // 在线人数更新
 
 	// 房间相关
 	MsgRoomCreated  MessageType = "room_created"  // 房间创建成功
@@ -156,6 +157,11 @@ type PlayerOfflinePayload struct {
 type PlayerOnlinePayload struct {
 	PlayerID   string `json:"player_id"`
 	PlayerName string `json:"player_name"`
+}
+
+// OnlineCountPayload 在线人数更新
+type OnlineCountPayload struct {
+	Count int `json:"count"` // 当前在线人数
 }
 
 // RoomCreatedPayload 房间创建成功响应

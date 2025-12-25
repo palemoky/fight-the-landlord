@@ -29,6 +29,14 @@ func (m *OnlineModel) lobbyView() string {
 	if m.playerName != "" {
 		welcome := fmt.Sprintf("欢迎, %s!", m.playerName)
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, welcome))
+		sb.WriteString("\n")
+
+		// 显示在线人数
+		if m.onlineCount > 0 {
+			onlineInfo := fmt.Sprintf("🌐 在线玩家: %d 人", m.onlineCount)
+			onlineStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42")) // 绿色
+			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, onlineStyle.Render(onlineInfo)))
+		}
 		sb.WriteString("\n\n")
 	}
 

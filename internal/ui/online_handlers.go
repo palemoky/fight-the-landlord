@@ -41,6 +41,8 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		return m.handleMsgPlayerOffline(msg)
 	case protocol.MsgPlayerOnline:
 		return m.handleMsgPlayerOnline(msg)
+	case protocol.MsgOnlineCount:
+		return m.handleMsgOnlineCount(msg)
 	case protocol.MsgRoomListResult:
 		return m.handleMsgRoomListResult(msg)
 
@@ -119,6 +121,13 @@ func (m *OnlineModel) handleMsgError(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ErrorPayload
 	_ = json.Unmarshal(msg.Payload, &payload)
 	m.error = payload.Message
+	return nil
+}
+
+func (m *OnlineModel) handleMsgOnlineCount(msg *protocol.Message) tea.Cmd {
+	var payload protocol.OnlineCountPayload
+	_ = json.Unmarshal(msg.Payload, &payload)
+	m.onlineCount = payload.Count
 	return nil
 }
 

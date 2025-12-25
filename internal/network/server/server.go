@@ -167,6 +167,9 @@ func (s *Server) registerClient(client *Client) {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 	s.clients[client.ID] = client
+
+	// 广播在线人数更新
+	go s.broadcastOnlineCount()
 }
 
 // unregisterClient 注销客户端
@@ -177,6 +180,27 @@ func (s *Server) unregisterClient(client *Client) {
 	if _, ok := s.clients[client.ID]; ok {
 		delete(s.clients, client.ID)
 		log.Printf("❌ 玩家 %s (%s) 已断开", client.Name, client.ID)
+
+		// 广播在线人数更新
+		go s.broadcastOnlineCount()
+	}
+}
+
+// broadcastOnlineCount 广播在线人数
+func (s *Server) broadcastOnlineCount() {
+	s.clientsMu.RLock()
+	count := len(s.clients)
+	s.clientsMu.RUnlock()
+
+	msg := protocol.MustNewMessage(protocol.MsgOnlineCount, protocol.OnlineCountPayload{
+		Count: count,
+	})
+
+	// 广播给所有在线客户端
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+	for _, client := range s.clients {
+		client.SendMessage(msg)
 	}
 }
 
