@@ -362,7 +362,9 @@ func (m *OnlineModel) renderMiddleSection() string {
 	lastPlayView := "(等待出牌...)"
 	if len(m.lastPlayed) > 0 {
 		var cardStrs []string
-		for _, c := range m.lastPlayed {
+		// 反向遍历，从大到小显示
+		for i := len(m.lastPlayed) - 1; i >= 0; i-- {
+			c := m.lastPlayed[i]
 			style := blackStyle
 			if c.Color == card.Red {
 				style = redStyle

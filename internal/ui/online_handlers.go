@@ -234,6 +234,12 @@ func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 	if len(payload.LandlordCards) > 0 && payload.LandlordCards[0].Rank > 0 {
 		m.landlordCards = protocol.InfosToCards(payload.LandlordCards)
 	}
+
+	// 初始化所有玩家的牌数为 17
+	for i := range m.players {
+		m.players[i].CardsCount = 17
+	}
+
 	return nil
 }
 
@@ -268,6 +274,10 @@ func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 	m.landlordCards = protocol.InfosToCards(payload.LandlordCards)
 	for i, p := range m.players {
 		m.players[i].IsLandlord = (p.ID == payload.PlayerID)
+		// 地主拿到底牌，牌数变为 20
+		if p.ID == payload.PlayerID {
+			m.players[i].CardsCount = 20
+		}
 	}
 	if payload.PlayerID == m.playerID {
 		m.isLandlord = true
