@@ -327,7 +327,7 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 		case payload.CanBeat:
 			m.input.Placeholder = "出牌或 PASS"
 		default:
-			m.input.Placeholder = "没有能打过的牌，输入 PASS"
+			m.input.Placeholder = "没有能大过上家的牌，输入 PASS"
 		}
 		m.input.Focus()
 	} else {

@@ -372,7 +372,7 @@ func (m *OnlineModel) gameView() string {
 
 	// 提示和输入
 	prompt := m.renderPrompt()
-	sb.WriteString(prompt)
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, prompt))
 
 	if m.error != "" {
 		sb.WriteString("\n" + errorStyle.Render(m.error))
