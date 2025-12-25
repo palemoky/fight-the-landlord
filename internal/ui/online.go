@@ -96,6 +96,7 @@ func NewOnlineModel(serverURL string) *OnlineModel {
 	ti.Placeholder = "输入房间号..."
 	ti.CharLimit = 10
 	ti.Width = 20
+	ti.Focus()
 
 	c := client.NewClient(serverURL)
 
@@ -167,6 +168,8 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ConnectionErrorMsg:
 		m.error = fmt.Sprintf("连接错误: %v", msg.Err)
 		m.phase = PhaseLobby
+		m.input.Placeholder = "输入选项 (1-5) 或房间号"
+		m.input.Focus()
 
 	case ServerMessage:
 		cmd = m.handleServerMessage(msg.Msg)
@@ -275,6 +278,8 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 	case PhaseGameOver:
 		// 游戏结束：输入任意键返回大厅
 		m.phase = PhaseLobby
+		m.input.Placeholder = "输入选项 (1-5) 或房间号"
+		m.input.Focus()
 		m.resetGameState()
 	}
 

@@ -80,6 +80,8 @@ func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 	_ = json.Unmarshal(msg.Payload, &payload)
 	m.playerID = payload.PlayerID
 	m.playerName = payload.PlayerName
+	m.input.Placeholder = "输入选项 (1-5) 或房间号"
+	m.input.Focus()
 	return nil
 }
 
@@ -97,6 +99,8 @@ func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 		}
 	} else {
 		m.phase = PhaseLobby
+		m.input.Placeholder = "输入选项 (1-5) 或房间号"
+		m.input.Focus()
 	}
 	return nil
 }
