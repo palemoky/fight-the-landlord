@@ -162,6 +162,48 @@ func (m *OnlineModel) matchingView() string {
 		Render(content)
 }
 
+func (m *OnlineModel) roomListView() string {
+	var sb strings.Builder
+
+	title := titleStyle("📋 可加入的房间")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, title))
+	sb.WriteString("\n\n")
+
+	if len(m.availableRooms) == 0 {
+		noRooms := "暂无可加入的房间\n\n按 ESC 返回大厅"
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, noRooms))
+	} else {
+		// 显示房间列表
+		var roomList strings.Builder
+		roomList.WriteString("房间列表:\n\n")
+
+		for i, room := range m.availableRooms {
+			prefix := "  "
+			if i == m.selectedRoomIndex {
+				prefix = "▶ " // 选中标记
+			}
+			roomList.WriteString(fmt.Sprintf("%s房间 %s  (%d/3)\n", prefix, room.RoomCode, room.PlayerCount))
+		}
+
+		roomList.WriteString("\n↑↓ 选择  回车加入  ESC 返回")
+
+		roomBox := boxStyle.Render(roomList.String())
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, roomBox))
+		sb.WriteString("\n\n")
+	}
+
+	// 输入框用于直接输入房间号
+	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
+	sb.WriteString(inputView)
+
+	if m.error != "" {
+		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(m.error))
+		sb.WriteString(errorView)
+	}
+
+	return sb.String()
+}
+
 func (m *OnlineModel) waitingView() string {
 	var sb strings.Builder
 

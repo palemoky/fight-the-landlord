@@ -21,6 +21,7 @@ const (
 	PhaseConnecting GamePhase = iota
 	PhaseReconnecting
 	PhaseLobby
+	PhaseRoomList
 	PhaseMatching
 	PhaseWaiting
 	PhaseBidding
@@ -84,6 +85,10 @@ type OnlineModel struct {
 
 	// 匹配状态
 	matchingStartTime time.Time // 匹配开始时间
+
+	// 房间列表
+	availableRooms    []protocol.RoomListItem
+	selectedRoomIndex int
 
 	// 排行榜
 	myStats     *protocol.StatsResultPayload
@@ -153,8 +158,32 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
+			// ESC 键处理
+			if m.phase == PhaseRoomList || m.phase == PhaseMatching {
+				// 返回大厅
+				m.phase = PhaseLobby
+				m.error = ""
+				m.input.Reset()
+				m.input.Placeholder = "1=创建房间, 2=加入房间, 3=快速匹配"
+				m.input.Focus()
+				return m, nil
+			}
 			m.client.Close()
 			return m, tea.Quit
+		case tea.KeyUp:
+			if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
+				m.selectedRoomIndex--
+				if m.selectedRoomIndex < 0 {
+					m.selectedRoomIndex = len(m.availableRooms) - 1
+				}
+			}
+		case tea.KeyDown:
+			if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
+				m.selectedRoomIndex++
+				if m.selectedRoomIndex >= len(m.availableRooms) {
+					m.selectedRoomIndex = 0
+				}
+			}
 		case tea.KeyEnter:
 			cmd = m.handleEnter()
 			if cmd != nil {
@@ -231,8 +260,12 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		case "1":
 			_ = m.client.CreateRoom()
 		case "2":
-			m.input.Placeholder = "请输入房间号..."
+			// 请求房间列表
+			m.phase = PhaseRoomList
+			m.selectedRoomIndex = 0
+			m.input.Placeholder = "或直接输入房间号..."
 			m.input.Focus()
+			_ = m.client.GetRoomList()
 		case "3":
 			m.phase = PhaseMatching
 			m.matchingStartTime = time.Now()
@@ -246,6 +279,19 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 			if len(input) > 0 {
 				_ = m.client.JoinRoom(input)
 			}
+		}
+
+	case PhaseRoomList:
+		// 房间列表界面
+		if input == "" {
+			// 没有输入，加入选中的房间
+			if len(m.availableRooms) > 0 && m.selectedRoomIndex < len(m.availableRooms) {
+				roomCode := m.availableRooms[m.selectedRoomIndex].RoomCode
+				_ = m.client.JoinRoom(roomCode)
+			}
+		} else {
+			// 有输入，直接加入输入的房间号
+			_ = m.client.JoinRoom(input)
 		}
 
 	case PhaseWaiting:
@@ -305,6 +351,8 @@ func (m *OnlineModel) View() string {
 		content = m.connectingView()
 	case PhaseLobby:
 		content = m.lobbyView()
+	case PhaseRoomList:
+		content = m.roomListView()
 	case PhaseMatching:
 		content = m.matchingView()
 	case PhaseWaiting:

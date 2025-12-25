@@ -41,6 +41,8 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		return m.handleMsgPlayerOffline(msg)
 	case protocol.MsgPlayerOnline:
 		return m.handleMsgPlayerOnline(msg)
+	case protocol.MsgRoomListResult:
+		return m.handleMsgRoomListResult(msg)
 
 	// 游戏相关
 	case protocol.MsgGameStart:
@@ -180,6 +182,14 @@ func (m *OnlineModel) handleMsgPlayerReady(msg *protocol.Message) tea.Cmd {
 			break
 		}
 	}
+	return nil
+}
+
+func (m *OnlineModel) handleMsgRoomListResult(msg *protocol.Message) tea.Cmd {
+	var payload protocol.RoomListResultPayload
+	_ = json.Unmarshal(msg.Payload, &payload)
+	m.availableRooms = payload.Rooms
+	m.selectedRoomIndex = 0
 	return nil
 }
 

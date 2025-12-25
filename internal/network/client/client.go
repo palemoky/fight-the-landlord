@@ -330,6 +330,11 @@ func (c *Client) GetLeaderboard(leaderboardType string, offset, limit int) error
 	}))
 }
 
+// GetRoomList 获取房间列表
+func (c *Client) GetRoomList() error {
+	return c.SendMessage(protocol.MustNewMessage(protocol.MsgGetRoomList, nil))
+}
+
 // Ping 发送心跳
 func (c *Client) Ping() error {
 	return c.SendMessage(protocol.MustNewMessage(protocol.MsgPing, protocol.PingPayload{

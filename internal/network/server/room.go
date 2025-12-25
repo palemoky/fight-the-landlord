@@ -252,6 +252,27 @@ func (rm *RoomManager) GetRoom(code string) *Room {
 	return rm.rooms[code]
 }
 
+// GetRoomList 获取可加入的房间列表
+func (rm *RoomManager) GetRoomList() []protocol.RoomListItem {
+	rm.mu.RLock()
+	defer rm.mu.RUnlock()
+
+	var rooms []protocol.RoomListItem
+	for code, room := range rm.rooms {
+		room.mu.RLock()
+		// 只返回等待中且未满的房间
+		if room.State == RoomStateWaiting && len(room.Players) < 3 {
+			rooms = append(rooms, protocol.RoomListItem{
+				RoomCode:    code,
+				PlayerCount: len(room.Players),
+				MaxPlayers:  3,
+			})
+		}
+		room.mu.RUnlock()
+	}
+	return rooms
+}
+
 // NotifyPlayerOffline 通知房间内其他玩家某个玩家掉线
 func (rm *RoomManager) NotifyPlayerOffline(client *Client) {
 	roomCode := client.GetRoom()

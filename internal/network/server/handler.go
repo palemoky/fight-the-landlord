@@ -54,6 +54,8 @@ func (h *Handler) Handle(client *Client, msg *protocol.Message) {
 		h.handleGetStats(client)
 	case protocol.MsgGetLeaderboard:
 		h.handleGetLeaderboard(client, msg)
+	case protocol.MsgGetRoomList:
+		h.handleGetRoomList(client)
 
 	default:
 		log.Printf("未知消息类型: %s", msg.Type)
@@ -469,5 +471,14 @@ func (h *Handler) handleGetLeaderboard(client *Client, msg *protocol.Message) {
 	client.SendMessage(protocol.MustNewMessage(protocol.MsgLeaderboardResult, protocol.LeaderboardResultPayload{
 		Type:    payload.Type,
 		Entries: protocolEntries,
+	}))
+}
+
+// handleGetRoomList 获取房间列表
+func (h *Handler) handleGetRoomList(client *Client) {
+	rooms := h.server.roomManager.GetRoomList()
+
+	client.SendMessage(protocol.MustNewMessage(protocol.MsgRoomListResult, protocol.RoomListResultPayload{
+		Rooms: rooms,
 	}))
 }
