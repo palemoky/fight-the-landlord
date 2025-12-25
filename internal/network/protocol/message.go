@@ -33,6 +33,7 @@ const (
 	// 排行榜
 	MsgGetStats       MessageType = "get_stats"       // 获取个人统计
 	MsgGetLeaderboard MessageType = "get_leaderboard" // 获取排行榜
+	MsgGetRoomList    MessageType = "get_room_list"   // 获取房间列表
 )
 
 // 服务端 → 客户端 消息类型
@@ -67,6 +68,7 @@ const (
 	// 排行榜
 	MsgStatsResult       MessageType = "stats_result"       // 个人统计结果
 	MsgLeaderboardResult MessageType = "leaderboard_result" // 排行榜结果
+	MsgRoomListResult    MessageType = "room_list_result"   // 房间列表结果
 
 	// 错误
 	MsgError MessageType = "error" // 错误消息
@@ -293,6 +295,18 @@ type LeaderboardEntry struct {
 	Score      int     `json:"score"`
 	Wins       int     `json:"wins"`
 	WinRate    float64 `json:"win_rate"`
+}
+
+// RoomListResultPayload 房间列表结果
+type RoomListResultPayload struct {
+	Rooms []RoomListItem `json:"rooms"`
+}
+
+// RoomListItem 房间列表项
+type RoomListItem struct {
+	RoomCode    string `json:"room_code"`
+	PlayerCount int    `json:"player_count"`
+	MaxPlayers  int    `json:"max_players"`
 }
 
 // --- 通用数据结构 ---

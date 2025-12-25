@@ -2,6 +2,7 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/timer"
@@ -40,6 +41,8 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		return m.handleMsgPlayerOffline(msg)
 	case protocol.MsgPlayerOnline:
 		return m.handleMsgPlayerOnline(msg)
+	case protocol.MsgRoomListResult:
+		return m.handleMsgRoomListResult(msg)
 
 	// 游戏相关
 	case protocol.MsgGameStart:
@@ -80,6 +83,8 @@ func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 	_ = json.Unmarshal(msg.Payload, &payload)
 	m.playerID = payload.PlayerID
 	m.playerName = payload.PlayerName
+	m.input.Placeholder = "输入选项 (1-5) 或房间号"
+	m.input.Focus()
 	return nil
 }
 
@@ -97,6 +102,8 @@ func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 		}
 	} else {
 		m.phase = PhaseLobby
+		m.input.Placeholder = "输入选项 (1-5) 或房间号"
+		m.input.Focus()
 	}
 	return nil
 }
@@ -162,9 +169,27 @@ func (m *OnlineModel) handleMsgPlayerReady(msg *protocol.Message) tea.Cmd {
 	for i, p := range m.players {
 		if p.ID == payload.PlayerID {
 			m.players[i].Ready = payload.Ready
+			// 如果是自己的准备状态变化，更新 placeholder
+			if payload.PlayerID == m.playerID {
+				if payload.Ready {
+					m.input.Placeholder = "等待其他玩家准备..."
+					m.input.Blur()
+				} else {
+					m.input.Placeholder = "输入 R 准备"
+					m.input.Focus()
+				}
+			}
 			break
 		}
 	}
+	return nil
+}
+
+func (m *OnlineModel) handleMsgRoomListResult(msg *protocol.Message) tea.Cmd {
+	var payload protocol.RoomListResultPayload
+	_ = json.Unmarshal(msg.Payload, &payload)
+	m.availableRooms = payload.Rooms
+	m.selectedRoomIndex = 0
 	return nil
 }
 
@@ -209,6 +234,30 @@ func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 	if len(payload.LandlordCards) > 0 && payload.LandlordCards[0].Rank > 0 {
 		m.landlordCards = protocol.InfosToCards(payload.LandlordCards)
 	}
+
+	// 初始化所有玩家的牌数为 17
+	for i := range m.players {
+		m.players[i].CardsCount = 17
+	}
+
+	// 初始化记牌器
+	m.remainingCards = make(map[card.Rank]int)
+	// 3-A 和 2 各 4 张
+	for rank := card.Rank3; rank <= card.RankA; rank++ {
+		m.remainingCards[rank] = 4
+	}
+	m.remainingCards[card.Rank2] = 4
+	// 两个王各 1 张
+	m.remainingCards[card.RankBlackJoker] = 1
+	m.remainingCards[card.RankRedJoker] = 1
+
+	// 扣除自己的手牌
+	for _, c := range m.hand {
+		if m.remainingCards[c.Rank] > 0 {
+			m.remainingCards[c.Rank]--
+		}
+	}
+
 	return nil
 }
 
@@ -221,8 +270,19 @@ func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 	if payload.PlayerID == m.playerID {
 		m.input.Placeholder = "叫地主? (Y/N)"
 		m.input.Focus()
+	} else {
+		// 不是自己的回合，显示等待提示
+		for _, p := range m.players {
+			if p.ID == payload.PlayerID {
+				m.input.Placeholder = fmt.Sprintf("等待 %s 叫地主...", p.Name)
+				break
+			}
+		}
+		m.input.Blur()
 	}
-	m.timer = timer.NewWithInterval(time.Duration(payload.Timeout)*time.Second, time.Second)
+	m.timerDuration = time.Duration(payload.Timeout) * time.Second
+	m.timerStartTime = time.Now()
+	m.timer = timer.NewWithInterval(m.timerDuration, time.Second)
 	return m.timer.Start()
 }
 
@@ -232,6 +292,10 @@ func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 	m.landlordCards = protocol.InfosToCards(payload.LandlordCards)
 	for i, p := range m.players {
 		m.players[i].IsLandlord = (p.ID == payload.PlayerID)
+		// 地主拿到底牌，牌数变为 20
+		if p.ID == payload.PlayerID {
+			m.players[i].CardsCount = 20
+		}
 	}
 	if payload.PlayerID == m.playerID {
 		m.isLandlord = true
@@ -257,8 +321,19 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 			m.input.Placeholder = "没有能打过的牌，输入 PASS"
 		}
 		m.input.Focus()
+	} else {
+		// 不是自己的回合，显示等待提示
+		for _, p := range m.players {
+			if p.ID == payload.PlayerID {
+				m.input.Placeholder = fmt.Sprintf("等待 %s 出牌...", p.Name)
+				break
+			}
+		}
+		m.input.Blur()
 	}
-	m.timer = timer.NewWithInterval(time.Duration(payload.Timeout)*time.Second, time.Second)
+	m.timerDuration = time.Duration(payload.Timeout) * time.Second
+	m.timerStartTime = time.Now()
+	m.timer = timer.NewWithInterval(m.timerDuration, time.Second)
 	return m.timer.Start()
 }
 
@@ -278,6 +353,14 @@ func (m *OnlineModel) handleMsgCardPlayed(msg *protocol.Message) tea.Cmd {
 	if payload.PlayerID == m.playerID {
 		m.hand = card.RemoveCards(m.hand, m.lastPlayed)
 	}
+
+	// 更新记牌器（扣除已出的牌）
+	for _, c := range m.lastPlayed {
+		if m.remainingCards[c.Rank] > 0 {
+			m.remainingCards[c.Rank]--
+		}
+	}
+
 	return nil
 }
 

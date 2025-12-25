@@ -89,7 +89,13 @@ func (m *OnlineModel) shouldPlayBell() bool {
 	}
 
 	// 检查剩余时间是否为 10 秒
-	remaining := m.timer.Timeout
+	if m.timerStartTime.IsZero() {
+		return false
+	}
+
+	elapsed := time.Since(m.timerStartTime)
+	remaining := m.timerDuration - elapsed
+
 	return remaining <= 10*time.Second && remaining > 9*time.Second
 }
 
