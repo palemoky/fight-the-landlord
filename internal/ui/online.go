@@ -27,6 +27,8 @@ const (
 	PhaseBidding
 	PhasePlaying
 	PhaseGameOver
+	PhaseLeaderboard
+	PhaseStats
 )
 
 // ServerMessage 服务器消息（用于 tea.Msg）
@@ -159,7 +161,7 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			// ESC 键处理
-			if m.phase == PhaseRoomList || m.phase == PhaseMatching {
+			if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats {
 				// 返回大厅
 				m.phase = PhaseLobby
 				m.error = ""
@@ -271,8 +273,10 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 			m.matchingStartTime = time.Now()
 			_ = m.client.QuickMatch()
 		case "4":
+			m.phase = PhaseLeaderboard
 			_ = m.client.GetLeaderboard("total", 0, 10)
 		case "5":
+			m.phase = PhaseStats
 			_ = m.client.GetStats()
 		default:
 			// 可能是房间号
@@ -361,6 +365,10 @@ func (m *OnlineModel) View() string {
 		content = m.gameView()
 	case PhaseGameOver:
 		content = m.gameOverView()
+	case PhaseLeaderboard:
+		content = m.leaderboardView()
+	case PhaseStats:
+		content = m.statsView()
 	}
 
 	return docStyle.Render(content)

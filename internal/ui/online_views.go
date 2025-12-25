@@ -44,20 +44,6 @@ func (m *OnlineModel) lobbyView() string {
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, menu))
 	sb.WriteString("\n\n")
 
-	// 显示排行榜
-	if len(m.leaderboard) > 0 {
-		leaderboard := m.renderLeaderboard()
-		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, leaderboard))
-		sb.WriteString("\n\n")
-	}
-
-	// 显示我的战绩
-	if m.myStats != nil && m.myStats.TotalGames > 0 {
-		stats := m.renderMyStats()
-		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, stats))
-		sb.WriteString("\n\n")
-	}
-
 	m.input.Placeholder = "输入选项 (1-5) 或房间号"
 	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
 	sb.WriteString(inputView)
@@ -145,6 +131,50 @@ func (m *OnlineModel) renderMyStats() string {
 	}
 
 	return boxStyle.Render(sb.String())
+}
+
+func (m *OnlineModel) leaderboardView() string {
+	var sb strings.Builder
+
+	title := titleStyle("🏆 排行榜")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, title))
+	sb.WriteString("\n\n")
+
+	if len(m.leaderboard) > 0 {
+		leaderboard := m.renderLeaderboard()
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, leaderboard))
+	} else {
+		noData := "正在加载排行榜..."
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, noData))
+	}
+
+	sb.WriteString("\n\n")
+	hint := "按 ESC 返回大厅"
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, hint))
+
+	return sb.String()
+}
+
+func (m *OnlineModel) statsView() string {
+	var sb strings.Builder
+
+	title := titleStyle("📊 我的战绩")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, title))
+	sb.WriteString("\n\n")
+
+	if m.myStats != nil && m.myStats.TotalGames > 0 {
+		stats := m.renderMyStats()
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, stats))
+	} else {
+		noData := "暂无战绩数据"
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, noData))
+	}
+
+	sb.WriteString("\n\n")
+	hint := "按 ESC 返回大厅"
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, hint))
+
+	return sb.String()
 }
 
 func (m *OnlineModel) matchingView() string {
