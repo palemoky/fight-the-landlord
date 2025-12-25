@@ -21,12 +21,14 @@ func (m *OnlineModel) connectingView() string {
 func (m *OnlineModel) lobbyView() string {
 	var sb strings.Builder
 
-	title := titleStyle("🎮 斗地主 - 联网对战")
+	title := titleStyle("🎮 欢乐斗地主")
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, title))
 	sb.WriteString("\n\n")
 
 	if m.playerName != "" {
-		sb.WriteString(fmt.Sprintf("欢迎, %s!\n\n", m.playerName))
+		welcome := fmt.Sprintf("欢迎, %s!", m.playerName)
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, welcome))
+		sb.WriteString("\n\n")
 	}
 
 	menu := boxStyle.Render(lipgloss.JoinVertical(lipgloss.Left,
@@ -38,26 +40,30 @@ func (m *OnlineModel) lobbyView() string {
 		"  4. 排行榜",
 		"  5. 我的战绩",
 	))
-	sb.WriteString(menu)
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, menu))
 	sb.WriteString("\n\n")
 
 	// 显示排行榜
 	if len(m.leaderboard) > 0 {
-		sb.WriteString(m.renderLeaderboard())
+		leaderboard := m.renderLeaderboard()
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, leaderboard))
 		sb.WriteString("\n\n")
 	}
 
 	// 显示我的战绩
 	if m.myStats != nil && m.myStats.TotalGames > 0 {
-		sb.WriteString(m.renderMyStats())
+		stats := m.renderMyStats()
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, stats))
 		sb.WriteString("\n\n")
 	}
 
 	m.input.Placeholder = "输入选项 (1-5) 或房间号"
-	sb.WriteString(m.input.View())
+	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
+	sb.WriteString(inputView)
 
 	if m.error != "" {
-		sb.WriteString("\n" + errorStyle.Render(m.error))
+		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(m.error))
+		sb.WriteString(errorView)
 	}
 
 	return sb.String()
