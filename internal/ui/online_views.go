@@ -185,13 +185,16 @@ func (m *OnlineModel) waitingView() string {
 	}
 	playerList.WriteString(fmt.Sprintf("\n等待玩家: %d/3", len(m.players)))
 
-	sb.WriteString(boxStyle.Render(playerList.String()))
+	playerBox := boxStyle.Render(playerList.String())
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, playerBox))
 	sb.WriteString("\n\n")
 
-	sb.WriteString(m.input.View())
+	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
+	sb.WriteString(inputView)
 
 	if m.error != "" {
-		sb.WriteString("\n" + errorStyle.Render(m.error))
+		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(m.error))
+		sb.WriteString(errorView)
 	}
 
 	return sb.String()
