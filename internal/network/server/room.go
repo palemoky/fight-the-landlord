@@ -14,7 +14,7 @@ const (
 	// 房间号长度
 	roomCodeLength = 6
 	// 房间号字符集
-	roomCodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // 排除容易混淆的字符
+	roomCodeChars = "0123456789"
 )
 
 // RoomState 房间状态
