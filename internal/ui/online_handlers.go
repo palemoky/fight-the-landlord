@@ -167,6 +167,16 @@ func (m *OnlineModel) handleMsgPlayerReady(msg *protocol.Message) tea.Cmd {
 	for i, p := range m.players {
 		if p.ID == payload.PlayerID {
 			m.players[i].Ready = payload.Ready
+			// 如果是自己的准备状态变化，更新 placeholder
+			if payload.PlayerID == m.playerID {
+				if payload.Ready {
+					m.input.Placeholder = "等待其他玩家准备..."
+					m.input.Blur()
+				} else {
+					m.input.Placeholder = "输入 R 准备"
+					m.input.Focus()
+				}
+			}
 			break
 		}
 	}
