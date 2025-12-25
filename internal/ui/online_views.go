@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 
@@ -147,10 +148,18 @@ func (m *OnlineModel) renderMyStats() string {
 }
 
 func (m *OnlineModel) matchingView() string {
+	elapsed := ""
+	if !m.matchingStartTime.IsZero() {
+		seconds := int(time.Since(m.matchingStartTime).Seconds())
+		elapsed = fmt.Sprintf("\n已等待: %d 秒", seconds)
+	}
+
+	content := fmt.Sprintf("🔍 正在匹配中...%s\n\n按 ESC 取消", elapsed)
+
 	return lipgloss.NewStyle().
 		Width(m.width).
 		Align(lipgloss.Center).
-		Render("🔍 正在匹配中...\n\n按 ESC 取消")
+		Render(content)
 }
 
 func (m *OnlineModel) waitingView() string {

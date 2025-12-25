@@ -82,6 +82,9 @@ type OnlineModel struct {
 	timerStartTime time.Time     // 计时器开始时间
 	timerDuration  time.Duration // 计时器总时长
 
+	// 匹配状态
+	matchingStartTime time.Time // 匹配开始时间
+
 	// 排行榜
 	myStats     *protocol.StatsResultPayload
 	leaderboard []protocol.LeaderboardEntry
@@ -232,6 +235,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 			m.input.Focus()
 		case "3":
 			m.phase = PhaseMatching
+			m.matchingStartTime = time.Now()
 			_ = m.client.QuickMatch()
 		case "4":
 			_ = m.client.GetLeaderboard("total", 0, 10)
