@@ -503,9 +503,9 @@ func (gs *GameSession) startPlayTimer() {
 
 func (gs *GameSession) handlePlayTimeout() {
 	gs.mu.Lock()
-	defer gs.mu.Unlock()
 
 	if gs.state != GameStatePlaying {
+		gs.mu.Unlock()
 		return
 	}
 
@@ -516,15 +516,17 @@ func (gs *GameSession) handlePlayTimeout() {
 		// 必须出牌时，自动出最小的单牌
 		if len(currentPlayer.Hand) > 0 {
 			minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1]
+			playerID := currentPlayer.ID
 			gs.mu.Unlock()
-			_ = gs.HandlePlayCards(currentPlayer.ID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
+			_ = gs.HandlePlayCards(playerID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
 			return
 		}
 	}
 
 	// 自动 PASS
+	playerID := currentPlayer.ID
 	gs.mu.Unlock()
-	_ = gs.HandlePass(currentPlayer.ID)
+	_ = gs.HandlePass(playerID)
 }
 
 func (gs *GameSession) stopTimer() {
