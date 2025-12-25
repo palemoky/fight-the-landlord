@@ -169,72 +169,10 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			// ESC 键处理
-			// 如果游戏中正在显示帮助，先关闭帮助
-			if m.showingHelp {
-				m.showingHelp = false
-				return m, nil
-			}
-			// 从特定页面返回大厅
-			if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats || m.phase == PhaseRules {
-				// 返回大厅
-				m.phase = PhaseLobby
-				m.error = ""
-				m.input.Reset()
-				m.input.Placeholder = "输入选项 (1-6) 或房间号"
-				m.input.Focus()
-				return m, nil
-			}
-			m.client.Close()
-			return m, tea.Quit
-		case tea.KeyUp:
-			if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
-				m.selectedRoomIndex--
-				if m.selectedRoomIndex < 0 {
-					m.selectedRoomIndex = len(m.availableRooms) - 1
-				}
-			} else if m.phase == PhaseLobby {
-				m.selectedLobbyIndex--
-				if m.selectedLobbyIndex < 0 {
-					m.selectedLobbyIndex = 5 // 6 个菜单项，索引 0-5
-				}
-			}
-		case tea.KeyDown:
-			if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
-				m.selectedRoomIndex++
-				if m.selectedRoomIndex >= len(m.availableRooms) {
-					m.selectedRoomIndex = 0
-				}
-			} else if m.phase == PhaseLobby {
-				m.selectedLobbyIndex++
-				if m.selectedLobbyIndex > 5 { // 6 个菜单项，索引 0-5
-					m.selectedLobbyIndex = 0
-				}
-			}
-		case tea.KeyRunes:
-			// C 键切换记牌器
-			if len(msg.Runes) > 0 && (msg.Runes[0] == 'c' || msg.Runes[0] == 'C') {
-				if m.phase == PhaseBidding || m.phase == PhasePlaying {
-					m.cardCounterEnabled = !m.cardCounterEnabled
-					// 直接返回，不让 textinput 处理这个按键
-					return m, nil
-				}
-			}
-			// H 键切换帮助
-			if len(msg.Runes) > 0 && (msg.Runes[0] == 'h' || msg.Runes[0] == 'H') {
-				if m.phase == PhaseBidding || m.phase == PhasePlaying {
-					m.showingHelp = !m.showingHelp
-					// 直接返回，不让 textinput 处理这个按键
-					return m, nil
-				}
-			}
-		case tea.KeyEnter:
-			cmd = m.handleEnter()
-			if cmd != nil {
-				cmds = append(cmds, cmd)
-			}
+		// 提取按键处理到独立方法
+		handled, returnCmd := m.handleKeyPress(msg)
+		if handled {
+			return m, returnCmd
 		}
 
 	case ConnectedMsg:
@@ -263,18 +201,7 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case timer.TimeoutMsg:
-		// 超时处理
-		if m.phase == PhaseBidding && m.bidTurn == m.playerID {
-			_ = m.client.Bid(false) // 自动不叫
-		} else if m.phase == PhasePlaying && m.currentTurn == m.playerID {
-			if m.mustPlay && len(m.hand) > 0 {
-				// 自动出最小的牌
-				minCard := m.hand[len(m.hand)-1]
-				_ = m.client.PlayCards([]protocol.CardInfo{protocol.CardToInfo(minCard)})
-			} else {
-				_ = m.client.Pass()
-			}
-		}
+		m.handleTimeout()
 
 	case timer.TickMsg:
 		// 检查是否需要播放提示音
@@ -291,6 +218,118 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+// handleKeyPress 处理按键消息，返回是否已处理和命令
+func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyCtrlC, tea.KeyEsc:
+		return m.handleEscKey()
+	case tea.KeyUp:
+		m.handleUpKey()
+		return false, nil
+	case tea.KeyDown:
+		m.handleDownKey()
+		return false, nil
+	case tea.KeyRunes:
+		return m.handleRuneKey(msg)
+	case tea.KeyEnter:
+		cmd := m.handleEnter()
+		return false, cmd
+	}
+	return false, nil
+}
+
+// handleEscKey 处理 ESC 键
+func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
+	// 如果游戏中正在显示帮助，先关闭帮助
+	if m.showingHelp {
+		m.showingHelp = false
+		return true, nil
+	}
+	// 从特定页面返回大厅
+	if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats || m.phase == PhaseRules {
+		m.phase = PhaseLobby
+		m.error = ""
+		m.input.Reset()
+		m.input.Placeholder = "输入选项 (1-6) 或房间号"
+		m.input.Focus()
+		return true, nil
+	}
+	m.client.Close()
+	return true, tea.Quit
+}
+
+// handleUpKey 处理上箭头键
+func (m *OnlineModel) handleUpKey() {
+	if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
+		m.selectedRoomIndex--
+		if m.selectedRoomIndex < 0 {
+			m.selectedRoomIndex = len(m.availableRooms) - 1
+		}
+	} else if m.phase == PhaseLobby {
+		m.selectedLobbyIndex--
+		if m.selectedLobbyIndex < 0 {
+			m.selectedLobbyIndex = 5 // 6 个菜单项，索引 0-5
+		}
+	}
+}
+
+// handleDownKey 处理下箭头键
+func (m *OnlineModel) handleDownKey() {
+	if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
+		m.selectedRoomIndex++
+		if m.selectedRoomIndex >= len(m.availableRooms) {
+			m.selectedRoomIndex = 0
+		}
+	} else if m.phase == PhaseLobby {
+		m.selectedLobbyIndex++
+		if m.selectedLobbyIndex > 5 { // 6 个菜单项，索引 0-5
+			m.selectedLobbyIndex = 0
+		}
+	}
+}
+
+// handleRuneKey 处理字符键（C/H 等）
+func (m *OnlineModel) handleRuneKey(msg tea.KeyMsg) (bool, tea.Cmd) {
+	if len(msg.Runes) == 0 {
+		return false, nil
+	}
+
+	// C 键切换记牌器
+	if msg.Runes[0] == 'c' || msg.Runes[0] == 'C' {
+		if m.phase == PhaseBidding || m.phase == PhasePlaying {
+			m.cardCounterEnabled = !m.cardCounterEnabled
+			// 直接返回，不让 textinput 处理这个按键
+			return true, nil
+		}
+	}
+
+	// H 键切换帮助
+	if msg.Runes[0] == 'h' || msg.Runes[0] == 'H' {
+		if m.phase == PhaseBidding || m.phase == PhasePlaying {
+			m.showingHelp = !m.showingHelp
+			// 直接返回，不让 textinput 处理这个按键
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// handleTimeout 处理超时消息
+func (m *OnlineModel) handleTimeout() {
+	if m.phase == PhaseBidding && m.bidTurn == m.playerID {
+		_ = m.client.Bid(false) // 自动不叫
+	} else if m.phase == PhasePlaying && m.currentTurn == m.playerID {
+		if m.mustPlay && len(m.hand) > 0 {
+			// 自动出最小的牌
+			minCard := m.hand[len(m.hand)-1]
+			_ = m.client.PlayCards([]protocol.CardInfo{protocol.CardToInfo(minCard)})
+		} else {
+			_ = m.client.Pass()
+		}
+	}
 }
 
 // handleEnter 处理回车键
