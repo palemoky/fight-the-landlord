@@ -2,6 +2,7 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/timer"
@@ -225,6 +226,15 @@ func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 	if payload.PlayerID == m.playerID {
 		m.input.Placeholder = "叫地主? (Y/N)"
 		m.input.Focus()
+	} else {
+		// 不是自己的回合，显示等待提示
+		for _, p := range m.players {
+			if p.ID == payload.PlayerID {
+				m.input.Placeholder = fmt.Sprintf("等待 %s 叫地主...", p.Name)
+				break
+			}
+		}
+		m.input.Blur()
 	}
 	m.timerDuration = time.Duration(payload.Timeout) * time.Second
 	m.timerStartTime = time.Now()
@@ -263,6 +273,15 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 			m.input.Placeholder = "没有能打过的牌，输入 PASS"
 		}
 		m.input.Focus()
+	} else {
+		// 不是自己的回合，显示等待提示
+		for _, p := range m.players {
+			if p.ID == payload.PlayerID {
+				m.input.Placeholder = fmt.Sprintf("等待 %s 出牌...", p.Name)
+				break
+			}
+		}
+		m.input.Blur()
 	}
 	m.timerDuration = time.Duration(payload.Timeout) * time.Second
 	m.timerStartTime = time.Now()
