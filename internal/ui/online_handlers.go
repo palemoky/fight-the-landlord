@@ -226,7 +226,9 @@ func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 		m.input.Placeholder = "叫地主? (Y/N)"
 		m.input.Focus()
 	}
-	m.timer = timer.NewWithInterval(time.Duration(payload.Timeout)*time.Second, time.Second)
+	m.timerDuration = time.Duration(payload.Timeout) * time.Second
+	m.timerStartTime = time.Now()
+	m.timer = timer.NewWithInterval(m.timerDuration, time.Second)
 	return m.timer.Start()
 }
 
@@ -262,7 +264,9 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 		}
 		m.input.Focus()
 	}
-	m.timer = timer.NewWithInterval(time.Duration(payload.Timeout)*time.Second, time.Second)
+	m.timerDuration = time.Duration(payload.Timeout) * time.Second
+	m.timerStartTime = time.Now()
+	m.timer = timer.NewWithInterval(m.timerDuration, time.Second)
 	return m.timer.Start()
 }
 

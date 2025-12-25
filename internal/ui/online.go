@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/timer"
@@ -77,7 +78,9 @@ type OnlineModel struct {
 	latency int64 // 延迟（毫秒）
 
 	// 提醒状态
-	bellPlayed bool // 是否已播放提示音
+	bellPlayed     bool          // 是否已播放提示音
+	timerStartTime time.Time     // 计时器开始时间
+	timerDuration  time.Duration // 计时器总时长
 
 	// 排行榜
 	myStats     *protocol.StatsResultPayload
