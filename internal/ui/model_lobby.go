@@ -28,14 +28,24 @@ type LobbyModel struct {
 	leaderboard     []protocol.LeaderboardEntry
 	myStats         *protocol.StatsResultPayload
 
+	// Chat
+	chatHistory []string
+	chatInput   textinput.Model
+
 	// Input
 	input *textinput.Model
 }
 
 func NewLobbyModel(c *client.Client, input *textinput.Model) *LobbyModel {
+	chatInput := textinput.New()
+	chatInput.Placeholder = "按 / 键聊天..."
+	chatInput.CharLimit = 50
+	chatInput.Width = 30
+
 	return &LobbyModel{
-		client: c,
-		input:  input,
+		client:    c,
+		input:     input,
+		chatInput: chatInput,
 	}
 }
 
@@ -116,6 +126,29 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 	m.input.Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
 	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
 	sb.WriteString(inputView)
+
+	// Render Chat Box (Bottom Right or similar)
+	if len(m.chatHistory) > 0 {
+		var chatBuilder strings.Builder
+		count := len(m.chatHistory)
+		start := 0
+		if count > 5 {
+			start = count - 5
+		}
+		for i := start; i < count; i++ {
+			chatBuilder.WriteString(m.chatHistory[i] + "\n")
+		}
+		chatBox := boxStyle.Width(40).Render(chatBuilder.String())
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
+		sb.WriteString("\n")
+	}
+
+	// Always show chat input if focused or placeholder if not
+	chatView := m.chatInput.View()
+	if !m.chatInput.Focused() {
+		chatView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天...")
+	}
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatView))
 
 	if onlineModel.error != "" {
 		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))

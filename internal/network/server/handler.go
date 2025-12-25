@@ -58,6 +58,8 @@ func (h *Handler) Handle(client *Client, msg *protocol.Message) {
 		h.handleGetRoomList(client)
 	case protocol.MsgGetOnlineCount:
 		h.handleGetOnlineCount(client)
+	case protocol.MsgChat:
+		h.handleChat(client, msg)
 
 	default:
 		log.Printf("未知消息类型: %s", msg.Type)

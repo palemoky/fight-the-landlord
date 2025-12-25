@@ -72,6 +72,10 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 		return m.handleMsgStatsResult(msg)
 	case protocol.MsgLeaderboardResult:
 		return m.handleMsgLeaderboardResult(msg)
+
+	// Chat
+	case protocol.MsgChat:
+		return m.handleMsgChat(msg)
 	}
 
 	return nil

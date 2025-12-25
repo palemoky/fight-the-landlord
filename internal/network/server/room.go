@@ -429,11 +429,16 @@ func (rm *RoomManager) cleanup() {
 
 // --- Room 方法 ---
 
-// broadcast 广播消息给房间内所有玩家
-func (r *Room) broadcast(msg *protocol.Message) {
+// Broadcast 广播消息给房间内所有玩家
+func (r *Room) Broadcast(msg *protocol.Message) {
 	for _, player := range r.Players {
 		player.Client.SendMessage(msg)
 	}
+}
+
+// broadcast 内部使用的广播方法（保留以兼容现有代码）
+func (r *Room) broadcast(msg *protocol.Message) {
+	r.Broadcast(msg)
 }
 
 // broadcastExcept 广播消息给除指定玩家外的所有玩家

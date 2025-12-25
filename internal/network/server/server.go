@@ -190,6 +190,16 @@ func (s *Server) GetOnlineCount() int {
 	return len(s.clients)
 }
 
+// Broadcast 广播消息给所有客户端
+func (s *Server) Broadcast(msg *protocol.Message) {
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+
+	for _, client := range s.clients {
+		client.SendMessage(msg)
+	}
+}
+
 // Shutdown 关闭服务器
 func (s *Server) Shutdown() {
 	// 关闭所有客户端连接

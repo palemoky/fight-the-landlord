@@ -54,12 +54,23 @@ type GameModel struct {
 	cardCounterEnabled bool
 	remainingCards     map[card.Rank]int
 	showingHelp        bool
+
+	// Chat & Quick Messages
+	chatHistory      []string
+	chatInput        textinput.Model // Reuse for chat
+	showQuickMsgMenu bool
 }
 
 func NewGameModel(c *client.Client, input *textinput.Model) *GameModel {
+	chatInput := textinput.New()
+	chatInput.Placeholder = "按 / 键聊天, T 键快捷消息..."
+	chatInput.CharLimit = 50
+	chatInput.Width = 30
+
 	return &GameModel{
-		client: c,
-		input:  input,
+		client:    c,
+		input:     input,
+		chatInput: chatInput,
 	}
 }
 
@@ -108,6 +119,21 @@ func (m *GameModel) waitingView(onlineModel *OnlineModel) string {
 	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
 	sb.WriteString(inputView)
 
+	// Chat Rendering
+	chatBox := m.renderChatBox()
+	if chatBox != "" {
+		sb.WriteString("\n")
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
+	}
+
+	// Chat Input
+	chatInputView := m.chatInput.View()
+	if !m.chatInput.Focused() {
+		chatInputView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天...")
+	}
+	sb.WriteString("\n")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatInputView))
+
 	if onlineModel.error != "" {
 		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
 		sb.WriteString(errorView)
@@ -134,11 +160,36 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 	prompt := m.renderPrompt(onlineModel.playerID, onlineModel.phase)
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, prompt))
 
+	// Chat Rendering
+	chatBox := m.renderChatBox()
+	if chatBox != "" {
+		sb.WriteString("\n")
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
+	}
+
+	// Chat Input
+	chatInputView := m.chatInput.View()
+	if !m.chatInput.Focused() {
+		chatInputView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天, T 键快捷消息")
+	}
+	sb.WriteString("\n")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatInputView))
+
 	if onlineModel.error != "" {
 		sb.WriteString("\n" + errorStyle.Render(onlineModel.error))
 	}
 
 	gameContent := sb.String()
+
+	// Overlays
+	if m.showQuickMsgMenu {
+		menuContent := m.renderQuickMsgMenu()
+		return lipgloss.Place(m.width, m.height,
+			lipgloss.Center, lipgloss.Center,
+			menuContent,
+			lipgloss.WithWhitespaceChars(" "),
+		)
+	}
 
 	if m.showingHelp {
 		helpContent := m.renderGameRules()

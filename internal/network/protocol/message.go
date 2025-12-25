@@ -35,6 +35,7 @@ const (
 	MsgGetLeaderboard MessageType = "get_leaderboard"  // 获取排行榜
 	MsgGetRoomList    MessageType = "get_room_list"    // 获取房间列表
 	MsgGetOnlineCount MessageType = "get_online_count" // 获取在线人数
+	MsgChat           MessageType = "chat"             // 聊天消息
 )
 
 // 服务端 → 客户端 消息类型

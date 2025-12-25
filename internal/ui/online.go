@@ -261,6 +261,113 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // handleKeyPress 处理按键消息，返回是否已处理和命令
 func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
+	// 全局 Chat Chat Focus 切换 (大厅)
+	if m.phase == PhaseLobby {
+		if m.lobby.chatInput.Focused() {
+			switch msg.Type {
+			case tea.KeyEnter:
+				// 发送消息
+				content := m.lobby.chatInput.Value()
+				if content != "" {
+					chatMsg := protocol.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
+						Content: content,
+						Scope:   "lobby",
+					})
+					if err := m.client.SendMessage(chatMsg); err != nil {
+						m.error = fmt.Sprintf("发送消息失败: %v", err)
+					}
+					m.lobby.chatInput.SetValue("")
+				}
+				return true, nil
+			case tea.KeyEsc:
+				m.lobby.chatInput.Blur()
+				return true, nil
+			default:
+				var cmd tea.Cmd
+				m.lobby.chatInput, cmd = m.lobby.chatInput.Update(msg)
+				return true, cmd
+			}
+		} else if msg.String() == "/" {
+			m.lobby.chatInput.Focus()
+			return true, nil
+		}
+	}
+
+	// 游戏内 Chat / Quick Message
+	isInGame := m.phase == PhaseWaiting || m.phase == PhaseBidding || m.phase == PhasePlaying
+	if isInGame {
+		// 1. 处理快捷消息菜单
+		if m.game.showQuickMsgMenu {
+			switch msg.Type {
+			case tea.KeyEsc:
+				m.game.showQuickMsgMenu = false
+				return true, nil
+			case tea.KeyRunes:
+				// 数字键选择 1-8
+				if msg.String() >= "1" && msg.String() <= "8" {
+					idx := int(msg.Runes[0] - '1')
+					if idx < len(quickMessages) {
+						content := quickMessages[idx]
+						chatMsg := protocol.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
+							Content: content,
+							Scope:   "room",
+						})
+						if err := m.client.SendMessage(chatMsg); err != nil {
+							m.error = fmt.Sprintf("发送消息失败: %v", err)
+						}
+						m.game.showQuickMsgMenu = false
+						return true, nil
+					}
+				}
+			}
+			return true, nil // 吞掉其他按键，模态
+		}
+
+		// 2. 处理聊天输入
+		if m.game.chatInput.Focused() {
+			switch msg.Type {
+			case tea.KeyEnter:
+				content := m.game.chatInput.Value()
+				if content != "" {
+					chatMsg := protocol.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
+						Content: content,
+						Scope:   "room",
+					})
+					if err := m.client.SendMessage(chatMsg); err != nil {
+						m.error = fmt.Sprintf("发送消息失败: %v", err)
+					}
+					m.game.chatInput.SetValue("")
+					m.game.chatInput.Blur()
+				}
+				return true, nil
+			case tea.KeyEsc:
+				m.game.chatInput.Blur()
+				return true, nil
+			default:
+				var cmd tea.Cmd
+				m.game.chatInput, cmd = m.game.chatInput.Update(msg)
+				return true, cmd
+			}
+		}
+
+		// 3. 触发快捷键
+		// 只有在没有聚焦主输入框时才触发 (注意：主输入框一直在聚焦状态除非显示菜单/聊天)
+		// 但这是个 TUI，我们得小心冲突。
+		// 简单起见：
+		// / -> 聚焦聊天
+		// T -> 打开快捷消息
+		// ESC -> 取消 (已处理)
+
+		if msg.String() == "/" {
+			m.game.chatInput.Focus()
+			return true, nil
+		}
+		if msg.String() == "t" || msg.String() == "T" {
+			m.game.showQuickMsgMenu = true
+			return true, nil
+		}
+	}
+
 	switch msg.Type {
 	case tea.KeyCtrlC, tea.KeyEsc:
 		return m.handleEscKey()
