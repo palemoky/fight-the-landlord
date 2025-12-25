@@ -32,19 +32,31 @@ func (m *OnlineModel) lobbyView() string {
 		sb.WriteString("\n\n")
 	}
 
-	menu := boxStyle.Render(lipgloss.JoinVertical(lipgloss.Left,
-		"请选择:",
-		"",
-		"  1. 创建房间",
-		"  2. 加入房间",
-		"  3. 快速匹配",
-		"  4. 排行榜",
-		"  5. 我的战绩",
-	))
+	// 构建菜单项，为选中项添加标记
+	menuItems := []string{
+		"1. 创建房间",
+		"2. 加入房间",
+		"3. 快速匹配",
+		"4. 排行榜",
+		"5. 我的战绩",
+		"6. 游戏规则",
+	}
+
+	var menuLines []string
+	menuLines = append(menuLines, "请选择:", "")
+	for i, item := range menuItems {
+		prefix := "  "
+		if i == m.selectedLobbyIndex {
+			prefix = "▶ "
+		}
+		menuLines = append(menuLines, prefix+item)
+	}
+
+	menu := boxStyle.Render(lipgloss.JoinVertical(lipgloss.Left, menuLines...))
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, menu))
 	sb.WriteString("\n\n")
 
-	m.input.Placeholder = "输入选项 (1-5) 或房间号"
+	m.input.Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
 	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
 	sb.WriteString(inputView)
 
@@ -177,6 +189,66 @@ func (m *OnlineModel) statsView() string {
 	return sb.String()
 }
 
+// renderGameRules 渲染游戏规则内容
+func (m *OnlineModel) renderGameRules() string {
+	var sb strings.Builder
+	sb.WriteString("📖 斗地主游戏规则\n")
+	sb.WriteString(strings.Repeat("─", 60) + "\n\n")
+
+	sb.WriteString("【游戏目标】\n")
+	sb.WriteString("地主：先出完手中所有牌\n")
+	sb.WriteString("农民：任意一个农民先出完牌，则农民方获胜\n\n")
+
+	sb.WriteString("【牌型说明】\n")
+	sb.WriteString("• 单牌：任意一张牌\n")
+	sb.WriteString("• 对子：两张点数相同的牌\n")
+	sb.WriteString("• 三张：三张点数相同的牌\n")
+	sb.WriteString("• 三带一：三张 + 单牌\n")
+	sb.WriteString("• 三带二：三张 + 对子\n")
+	sb.WriteString("• 顺子：五张或更多连续的牌（2和王不能在顺子中）\n")
+	sb.WriteString("• 连对：三对或更多连续的对子\n")
+	sb.WriteString("• 飞机：两个或更多连续的三张\n")
+	sb.WriteString("• 四带二：四张 + 两张单牌或两个对子\n")
+	sb.WriteString("• 炸弹：四张点数相同的牌（可炸任何牌型）\n")
+	sb.WriteString("• 王炸：大王 + 小王（最大的牌型）\n\n")
+
+	sb.WriteString("【叫地主规则】\n")
+	sb.WriteString("1. 发牌后每位玩家依次选择是否叫地主\n")
+	sb.WriteString("2. 如果有人叫地主，该玩家成为地主\n")
+	sb.WriteString("3. 地主获得3张底牌，共20张牌\n")
+	sb.WriteString("4. 农民各17张牌\n\n")
+
+	sb.WriteString("【出牌规则】\n")
+	sb.WriteString("1. 地主先出牌\n")
+	sb.WriteString("2. 后续玩家必须出相同牌型且更大的牌，或选择PASS\n")
+	sb.WriteString("3. 如果都PASS，则最后出牌的玩家可以出任意牌型\n")
+	sb.WriteString("4. 炸弹和王炸可以压任何牌型\n\n")
+
+	sb.WriteString("【快捷键】\n")
+	sb.WriteString("• C：切换记牌器（游戏中）\n")
+	sb.WriteString("• H：显示/隐藏帮助（游戏中）\n")
+	sb.WriteString("• ESC：返回上一级或退出\n")
+
+	return boxStyle.Render(sb.String())
+}
+
+func (m *OnlineModel) rulesView() string {
+	var sb strings.Builder
+
+	title := titleStyle("📖 游戏规则")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, title))
+	sb.WriteString("\n\n")
+
+	rules := m.renderGameRules()
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, rules))
+	sb.WriteString("\n\n")
+
+	hint := "按 ESC 返回大厅"
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, hint))
+
+	return sb.String()
+}
+
 func (m *OnlineModel) matchingView() string {
 	elapsed := ""
 	if !m.matchingStartTime.IsZero() {
@@ -298,7 +370,21 @@ func (m *OnlineModel) gameView() string {
 		sb.WriteString("\n" + errorStyle.Render(m.error))
 	}
 
-	return sb.String()
+	gameContent := sb.String()
+
+	// 如果显示帮助，叠加帮助内容
+	if m.showingHelp {
+		helpContent := m.renderGameRules()
+		// 使用 lipgloss.Place 在游戏视图上方居中显示帮助
+		helpOverlay := lipgloss.Place(m.width, m.height,
+			lipgloss.Center, lipgloss.Center,
+			helpContent,
+			lipgloss.WithWhitespaceChars(" "),
+		)
+		return helpOverlay
+	}
+
+	return gameContent
 }
 
 func (m *OnlineModel) gameOverView() string {

@@ -29,6 +29,7 @@ const (
 	PhaseGameOver
 	PhaseLeaderboard
 	PhaseStats
+	PhaseRules
 )
 
 // ServerMessage 服务器消息（用于 tea.Msg）
@@ -100,6 +101,12 @@ type OnlineModel struct {
 	myStats     *protocol.StatsResultPayload
 	leaderboard []protocol.LeaderboardEntry
 
+	// 帮助系统
+	showingHelp bool // 游戏中是否显示帮助叠加层
+
+	// 大厅菜单导航
+	selectedLobbyIndex int // 当前选中的菜单项索引 (0-5)
+
 	// UI 组件
 	input  textinput.Model
 	timer  timer.Model
@@ -165,12 +172,18 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			// ESC 键处理
-			if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats {
+			// 如果游戏中正在显示帮助，先关闭帮助
+			if m.showingHelp {
+				m.showingHelp = false
+				return m, nil
+			}
+			// 从特定页面返回大厅
+			if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats || m.phase == PhaseRules {
 				// 返回大厅
 				m.phase = PhaseLobby
 				m.error = ""
 				m.input.Reset()
-				m.input.Placeholder = "1=创建房间, 2=加入房间, 3=快速匹配"
+				m.input.Placeholder = "输入选项 (1-6) 或房间号"
 				m.input.Focus()
 				return m, nil
 			}
@@ -182,12 +195,22 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.selectedRoomIndex < 0 {
 					m.selectedRoomIndex = len(m.availableRooms) - 1
 				}
+			} else if m.phase == PhaseLobby {
+				m.selectedLobbyIndex--
+				if m.selectedLobbyIndex < 0 {
+					m.selectedLobbyIndex = 5 // 6 个菜单项，索引 0-5
+				}
 			}
 		case tea.KeyDown:
 			if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
 				m.selectedRoomIndex++
 				if m.selectedRoomIndex >= len(m.availableRooms) {
 					m.selectedRoomIndex = 0
+				}
+			} else if m.phase == PhaseLobby {
+				m.selectedLobbyIndex++
+				if m.selectedLobbyIndex > 5 { // 6 个菜单项，索引 0-5
+					m.selectedLobbyIndex = 0
 				}
 			}
 		case tea.KeyRunes:
@@ -196,6 +219,13 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.phase == PhaseBidding || m.phase == PhasePlaying {
 					m.cardCounterEnabled = !m.cardCounterEnabled
 					m.input.Reset() // 清空输入框中的 'C'
+				}
+			}
+			// H 键切换帮助
+			if len(msg.Runes) > 0 && (msg.Runes[0] == 'h' || msg.Runes[0] == 'H') {
+				if m.phase == PhaseBidding || m.phase == PhasePlaying {
+					m.showingHelp = !m.showingHelp
+					m.input.Reset() // 清空输入框中的 'H'
 				}
 			}
 		case tea.KeyEnter:
@@ -269,7 +299,12 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 	switch m.phase {
 	case PhaseLobby:
-		// 大厅界面：1=创建房间, 2=加入房间, 3=快速匹配, 4=排行榜, 5=我的战绩
+		// 大厅界面：1=创建房间, 2=加入房间, 3=快速匹配, 4=排行榜, 5=我的战绩, 6=游戏规则
+		// 如果输入为空，使用选中的菜单项
+		if input == "" {
+			input = fmt.Sprintf("%d", m.selectedLobbyIndex+1)
+		}
+
 		switch input {
 		case "1":
 			_ = m.client.CreateRoom()
@@ -290,6 +325,8 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		case "5":
 			m.phase = PhaseStats
 			_ = m.client.GetStats()
+		case "6":
+			m.phase = PhaseRules
 		default:
 			// 可能是房间号
 			if len(input) > 0 {
@@ -381,6 +418,8 @@ func (m *OnlineModel) View() string {
 		content = m.leaderboardView()
 	case PhaseStats:
 		content = m.statsView()
+	case PhaseRules:
+		content = m.rulesView()
 	}
 
 	return docStyle.Render(content)
