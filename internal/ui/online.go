@@ -218,14 +218,16 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(msg.Runes) > 0 && (msg.Runes[0] == 'c' || msg.Runes[0] == 'C') {
 				if m.phase == PhaseBidding || m.phase == PhasePlaying {
 					m.cardCounterEnabled = !m.cardCounterEnabled
-					m.input.Reset() // 清空输入框中的 'C'
+					// 直接返回，不让 textinput 处理这个按键
+					return m, nil
 				}
 			}
 			// H 键切换帮助
 			if len(msg.Runes) > 0 && (msg.Runes[0] == 'h' || msg.Runes[0] == 'H') {
 				if m.phase == PhaseBidding || m.phase == PhasePlaying {
 					m.showingHelp = !m.showingHelp
-					m.input.Reset() // 清空输入框中的 'H'
+					// 直接返回，不让 textinput 处理这个按键
+					return m, nil
 				}
 			}
 		case tea.KeyEnter:
