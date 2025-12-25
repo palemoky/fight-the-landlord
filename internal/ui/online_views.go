@@ -275,17 +275,10 @@ func (m *OnlineModel) waitingView() string {
 func (m *OnlineModel) gameView() string {
 	var sb strings.Builder
 
-	// 顶部：底牌和记牌器
-	landlordCardsView := m.renderLandlordCardsOnline()
-	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, landlordCardsView))
+	// 顶部：底牌和记牌器在同一行
+	topSection := m.renderTopSection()
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, topSection))
 	sb.WriteString("\n")
-
-	// 记牌器（如果启用）
-	if m.cardCounterEnabled {
-		cardCounter := m.renderCardCounter()
-		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, cardCounter))
-		sb.WriteString("\n")
-	}
 
 	// 中部：其他玩家信息和上家出牌
 	middleSection := m.renderMiddleSection()
@@ -328,8 +321,6 @@ func (m *OnlineModel) renderCardCounter() string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString("记牌器 (C)\n")
-	sb.WriteString(strings.Repeat("─", 44) + "\n")
 
 	// 定义牌的顺序：大王 小王 2 A K Q J 10 9 8 7 6 5 4 3
 	ranks := []card.Rank{
@@ -365,22 +356,40 @@ func (m *OnlineModel) renderCardCounter() string {
 	return boxStyle.Render(sb.String())
 }
 
+// renderTopSection 渲染顶部区域（底牌和记牌器）
+func (m *OnlineModel) renderTopSection() string {
+	landlordCardsView := m.renderLandlordCardsOnline()
+
+	if m.cardCounterEnabled {
+		// 记牌器和底牌在同一行
+		cardCounter := m.renderCardCounter()
+		return lipgloss.JoinHorizontal(lipgloss.Top, cardCounter, "  ", landlordCardsView)
+	}
+
+	// 只显示底牌
+	return landlordCardsView
+}
+
 func (m *OnlineModel) renderLandlordCardsOnline() string {
 	if len(m.landlordCards) == 0 {
+		// 待揭晓时，使用简单的单行显示
 		return boxStyle.Render("底牌: (待揭晓)")
 	}
 
-	// 渲染底牌
-	var cardStrs []string
+	// 使用与手牌相同的两行样式：点数和花色
+	var rankStr, suitStr strings.Builder
 	for _, c := range m.landlordCards {
 		style := blackStyle
 		if c.Color == card.Red {
 			style = redStyle
 		}
-		cardStrs = append(cardStrs, style.Render(fmt.Sprintf("%s%s", c.Suit.String(), c.Rank.String())))
+		style = style.Align(lipgloss.Center).Margin(0, 1)
+		rankStr.WriteString(style.Render(fmt.Sprintf("%-2s", c.Rank.String())))
+		suitStr.WriteString(style.Render(fmt.Sprintf("%-2s", c.Suit.String())))
 	}
 
-	content := "底牌: " + strings.Join(cardStrs, " ")
+	title := "底牌"
+	content := lipgloss.JoinVertical(lipgloss.Center, title, rankStr.String(), suitStr.String())
 	return boxStyle.Render(content)
 }
 
