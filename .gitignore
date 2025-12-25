@@ -9,3 +9,6 @@
 
 # Go test coverage output
 cover.out
+
+# Binary files
+bin/*
