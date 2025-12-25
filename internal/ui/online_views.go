@@ -13,10 +13,14 @@ import (
 // --- 视图渲染 ---
 
 func (m *OnlineModel) connectingView() string {
+	content := "🔌 正在连接服务器..."
+	if m.error != "" {
+		content = errorStyle.Render(m.error)
+	}
 	return lipgloss.NewStyle().
 		Width(m.width).
 		Align(lipgloss.Center).
-		Render("🔌 正在连接服务器...")
+		Render(content)
 }
 
 func (m *OnlineModel) lobbyView() string {
@@ -37,14 +41,26 @@ func (m *OnlineModel) lobbyView() string {
 			onlineStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42")) // 绿色
 			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, onlineStyle.Render(onlineInfo)))
 		}
-		sb.WriteString("\n\n")
+		sb.WriteString("\n")
+
+		// 显示重连状态（居中显示在欢迎信息和菜单之间）
+		if m.reconnecting || m.reconnectSuccess {
+			var reconnectStyle lipgloss.Style
+			if m.reconnectSuccess {
+				reconnectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true) // 绿色加粗
+			} else {
+				reconnectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")) // 橙色
+			}
+			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, reconnectStyle.Render(m.reconnectMessage)))
+		}
+		sb.WriteString("\n")
 	}
 
 	// 构建菜单项，为选中项添加标记
 	menuItems := []string{
-		"1. 创建房间",
-		"2. 加入房间",
-		"3. 快速匹配",
+		"1. 快速匹配",
+		"2. 创建房间",
+		"3. 加入房间",
 		"4. 排行榜",
 		"5. 我的战绩",
 		"6. 游戏规则",
@@ -60,7 +76,7 @@ func (m *OnlineModel) lobbyView() string {
 		menuLines = append(menuLines, prefix+item)
 	}
 
-	menu := boxStyle.Render(lipgloss.JoinVertical(lipgloss.Left, menuLines...))
+	menu := boxStyle.Padding(1, 2).Render(lipgloss.JoinVertical(lipgloss.Left, menuLines...))
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, menu))
 	sb.WriteString("\n\n")
 

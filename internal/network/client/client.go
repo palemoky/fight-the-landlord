@@ -41,11 +41,12 @@ type Client struct {
 	Latency int64
 
 	// 回调
-	OnMessage       func(*protocol.Message) // 消息回调
-	OnError         func(error)             // 错误回调
-	OnClose         func()                  // 关闭回调
-	OnReconnect     func()                  // 重连成功回调
-	OnLatencyUpdate func(int64)             // 延迟更新回调
+	OnMessage       func(*protocol.Message)     // 消息回调
+	OnError         func(error)                 // 错误回调
+	OnClose         func()                      // 关闭回调
+	OnReconnecting  func(attempt, maxTries int) // 正在重连回调
+	OnReconnect     func()                      // 重连成功回调
+	OnLatencyUpdate func(int64)                 // 延迟更新回调
 
 	mu             sync.RWMutex
 	closed         bool
@@ -131,13 +132,12 @@ func (c *Client) readPump() {
 			}
 		}
 
-		// 处理重连成功消息
+		// 处理重连成功消息 - 标记状态但不立即回调
+		isReconnected := false
 		if msg.Type == protocol.MsgReconnected {
 			c.reconnecting.Store(false)
 			c.reconnectCount = 0
-			if c.OnReconnect != nil {
-				c.OnReconnect()
-			}
+			isReconnected = true
 		}
 
 		// 处理 pong 消息计算延迟
@@ -161,6 +161,11 @@ func (c *Client) readPump() {
 		select {
 		case c.receive <- msg:
 		default:
+		}
+
+		// 重连成功回调放在最后，确保消息已经发送到 channel
+		if isReconnected && c.OnReconnect != nil {
+			c.OnReconnect()
 		}
 	}
 }
@@ -381,7 +386,10 @@ func (c *Client) tryReconnect() {
 
 	for c.reconnectCount < maxReconnectAttempts {
 		c.reconnectCount++
-		log.Printf("🔄 尝试重连 (%d/%d)...", c.reconnectCount, maxReconnectAttempts)
+		// 通过回调通知 UI 正在重连
+		if c.OnReconnecting != nil {
+			c.OnReconnecting(c.reconnectCount, maxReconnectAttempts)
+		}
 
 		time.Sleep(reconnectInterval)
 
@@ -393,7 +401,6 @@ func (c *Client) tryReconnect() {
 
 		conn, _, err := dialer.Dial(c.ServerURL, nil)
 		if err != nil {
-			log.Printf("重连失败: %v", err)
 			continue
 		}
 
@@ -413,17 +420,15 @@ func (c *Client) tryReconnect() {
 		// 发送重连请求
 		time.Sleep(100 * time.Millisecond)
 		if err := c.Reconnect(); err != nil {
-			log.Printf("发送重连请求失败: %v", err)
 			_ = c.conn.Close()
 			continue
 		}
 
-		log.Printf("✅ 重连成功")
+		// 重连成功（通过 MsgReconnected 消息通知 UI）
 		return
 	}
 
 	// 重连失败
-	log.Printf("❌ 重连失败，已达最大尝试次数")
 	c.reconnecting.Store(false)
 	c.Close()
 	if c.OnClose != nil {

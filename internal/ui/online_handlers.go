@@ -91,9 +91,19 @@ func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ReconnectedPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+		return nil
+	}
+
 	m.playerID = payload.PlayerID
-	m.playerName = payload.PlayerName
+	// 只有当 payload 中有名字时才更新，避免被空字符串覆盖
+	if payload.PlayerName != "" {
+		m.playerName = payload.PlayerName
+	} else if m.playerName == "" && m.client.PlayerName != "" {
+		// 如果 model 名字为空，尝试从 client 恢复
+		m.playerName = m.client.PlayerName
+	}
+
 	if payload.RoomCode != "" {
 		m.roomCode = payload.RoomCode
 		if payload.GameState != nil {
@@ -106,6 +116,7 @@ func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 		m.input.Placeholder = "输入选项 (1-5) 或房间号"
 		m.input.Focus()
 	}
+	// 注意：ReconnectSuccessMsg 已通过 OnReconnect 回调发送，这里不需要再发送
 	return nil
 }
 

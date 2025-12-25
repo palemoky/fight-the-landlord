@@ -45,6 +45,18 @@ type ConnectionErrorMsg struct {
 	Err error
 }
 
+// ReconnectingMsg 正在重连消息
+type ReconnectingMsg struct {
+	Attempt  int
+	MaxTries int
+}
+
+// ReconnectSuccessMsg 重连成功消息
+type ReconnectSuccessMsg struct{}
+
+// ClearReconnectMsg 清除重连消息
+type ClearReconnectMsg struct{}
+
 // OnlineModel 联网模式的 model
 type OnlineModel struct {
 	client *client.Client
@@ -110,6 +122,14 @@ type OnlineModel struct {
 	// 在线人数
 	onlineCount int // 当前在线人数
 
+	// 重连状态
+	reconnecting      bool         // 是否正在重连
+	reconnectAttempt  int          // 当前重连尝试次数
+	reconnectMaxTries int          // 最大重连次数
+	reconnectSuccess  bool         // 重连是否成功
+	reconnectMessage  string       // 重连消息
+	reconnectChan     chan tea.Msg // 重连消息通道（可发送多种消息类型）
+
 	// UI 组件
 	input  textinput.Model
 	timer  timer.Model
@@ -126,19 +146,49 @@ func NewOnlineModel(serverURL string) *OnlineModel {
 	ti.Focus()
 
 	c := client.NewClient(serverURL)
+	reconnectChan := make(chan tea.Msg, 10)
 
-	return &OnlineModel{
-		client: c,
-		phase:  PhaseConnecting,
-		input:  ti,
+	m := &OnlineModel{
+		client:            c,
+		phase:             PhaseConnecting,
+		input:             ti,
+		reconnectMaxTries: 5, // 最大重连次数
+		reconnectChan:     reconnectChan,
 	}
+
+	// 设置重连回调 - 通过 channel 发送消息到 Bubble Tea
+	c.OnReconnecting = func(attempt, maxTries int) {
+		select {
+		case reconnectChan <- ReconnectingMsg{Attempt: attempt, MaxTries: maxTries}:
+		default:
+		}
+	}
+
+	// 设置重连成功回调
+	c.OnReconnect = func() {
+		select {
+		case reconnectChan <- ReconnectSuccessMsg{}:
+		default:
+		}
+	}
+
+	return m
 }
 
 func (m *OnlineModel) Init() tea.Cmd {
 	return tea.Batch(
 		m.connectToServer(),
 		textinput.Blink,
+		m.listenForReconnect(),
 	)
+}
+
+// listenForReconnect 监听重连消息
+func (m *OnlineModel) listenForReconnect() tea.Cmd {
+	return func() tea.Msg {
+		msg := <-m.reconnectChan
+		return msg
+	}
 }
 
 // connectToServer 连接服务器
@@ -188,10 +238,37 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.listenForMessages())
 
 	case ConnectionErrorMsg:
-		m.error = fmt.Sprintf("连接错误: %v", msg.Err)
-		m.phase = PhaseLobby
-		m.input.Placeholder = "输入选项 (1-5) 或房间号"
-		m.input.Focus()
+		m.error = fmt.Sprintf("无法连接到服务器: %v\n\n按 ESC 退出", msg.Err)
+		// 保持在连接阶段，不显示大厅菜单
+		m.phase = PhaseConnecting
+
+	case ReconnectingMsg:
+		m.reconnecting = true
+		m.reconnectAttempt = msg.Attempt
+		m.reconnectMaxTries = msg.MaxTries
+		m.reconnectSuccess = false
+		m.reconnectMessage = fmt.Sprintf("🔄 正在重连 (%d/%d)...", msg.Attempt, msg.MaxTries)
+		// 继续监听重连消息
+		cmds = append(cmds, m.listenForReconnect())
+
+	case ReconnectSuccessMsg:
+		m.reconnecting = false
+		m.reconnectSuccess = true
+		m.reconnectMessage = "✅ 重连成功！"
+		// 3秒后清除消息
+		cmds = append(cmds, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+			return ClearReconnectMsg{}
+		}))
+		// 继续监听重连消息（为未来的重连做准备）
+		cmds = append(cmds, m.listenForReconnect())
+		// 重新开始监听服务器消息（因为重连后 receive channel 被重置了）
+		if m.client.IsConnected() {
+			cmds = append(cmds, m.listenForMessages())
+		}
+
+	case ClearReconnectMsg:
+		m.reconnectSuccess = false
+		m.reconnectMessage = ""
 
 	case ServerMessage:
 		cmd = m.handleServerMessage(msg.Msg)
@@ -343,7 +420,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 	switch m.phase {
 	case PhaseLobby:
-		// 大厅界面：1=创建房间, 2=加入房间, 3=快速匹配, 4=排行榜, 5=我的战绩, 6=游戏规则
+		// 大厅界面：1=快速匹配, 2=创建房间, 3=加入房间, 4=排行榜, 5=我的战绩, 6=游戏规则
 		// 如果输入为空，使用选中的菜单项
 		if input == "" {
 			input = fmt.Sprintf("%d", m.selectedLobbyIndex+1)
@@ -351,18 +428,18 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 		switch input {
 		case "1":
-			_ = m.client.CreateRoom()
+			m.phase = PhaseMatching
+			m.matchingStartTime = time.Now()
+			_ = m.client.QuickMatch()
 		case "2":
+			_ = m.client.CreateRoom()
+		case "3":
 			// 请求房间列表
 			m.phase = PhaseRoomList
 			m.selectedRoomIndex = 0
 			m.input.Placeholder = "或直接输入房间号..."
 			m.input.Focus()
 			_ = m.client.GetRoomList()
-		case "3":
-			m.phase = PhaseMatching
-			m.matchingStartTime = time.Now()
-			_ = m.client.QuickMatch()
 		case "4":
 			m.phase = PhaseLeaderboard
 			_ = m.client.GetLeaderboard("total", 0, 10)
