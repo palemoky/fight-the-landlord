@@ -92,6 +92,10 @@ type OnlineModel struct {
 	availableRooms    []protocol.RoomListItem
 	selectedRoomIndex int
 
+	// 记牌器
+	cardCounterEnabled bool
+	remainingCards     map[card.Rank]int
+
 	// 排行榜
 	myStats     *protocol.StatsResultPayload
 	leaderboard []protocol.LeaderboardEntry
@@ -184,6 +188,14 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selectedRoomIndex++
 				if m.selectedRoomIndex >= len(m.availableRooms) {
 					m.selectedRoomIndex = 0
+				}
+			}
+		case tea.KeyRunes:
+			// C 键切换记牌器
+			if len(msg.Runes) > 0 && (msg.Runes[0] == 'c' || msg.Runes[0] == 'C') {
+				if m.phase == PhaseBidding || m.phase == PhasePlaying {
+					m.cardCounterEnabled = !m.cardCounterEnabled
+					m.input.Reset() // 清空输入框中的 'C'
 				}
 			}
 		case tea.KeyEnter:

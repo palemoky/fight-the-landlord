@@ -280,6 +280,13 @@ func (m *OnlineModel) gameView() string {
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, landlordCardsView))
 	sb.WriteString("\n")
 
+	// 记牌器（如果启用）
+	if m.cardCounterEnabled {
+		cardCounter := m.renderCardCounter()
+		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, cardCounter))
+		sb.WriteString("\n")
+	}
+
 	// 中部：其他玩家信息和上家出牌
 	middleSection := m.renderMiddleSection()
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, middleSection))
@@ -313,6 +320,49 @@ func (m *OnlineModel) gameOverView() string {
 		Width(m.width).
 		Align(lipgloss.Center).
 		Render(msg)
+}
+
+func (m *OnlineModel) renderCardCounter() string {
+	if !m.cardCounterEnabled {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString("记牌器 (C)\n")
+	sb.WriteString(strings.Repeat("─", 44) + "\n")
+
+	// 定义牌的顺序：大王 小王 2 A K Q J 10 9 8 7 6 5 4 3
+	ranks := []card.Rank{
+		card.RankRedJoker, card.RankBlackJoker, card.Rank2,
+		card.RankA, card.RankK, card.RankQ, card.RankJ, card.Rank10,
+		card.Rank9, card.Rank8, card.Rank7, card.Rank6,
+		card.Rank5, card.Rank4, card.Rank3,
+	}
+
+	// 第一行：牌名
+	var names []string
+	for _, rank := range ranks {
+		name := rank.String()
+		switch rank {
+		case card.RankRedJoker:
+			name = "R"
+		case card.RankBlackJoker:
+			name = "B"
+		}
+		names = append(names, fmt.Sprintf("%-2s", name))
+	}
+	sb.WriteString(strings.Join(names, "│") + "\n")
+	sb.WriteString(strings.Repeat("─", 44) + "\n")
+
+	// 第二行：剩余数量
+	var counts []string
+	for _, rank := range ranks {
+		count := m.remainingCards[rank]
+		counts = append(counts, fmt.Sprintf("%-2d", count))
+	}
+	sb.WriteString(strings.Join(counts, "│"))
+
+	return boxStyle.Render(sb.String())
 }
 
 func (m *OnlineModel) renderLandlordCardsOnline() string {

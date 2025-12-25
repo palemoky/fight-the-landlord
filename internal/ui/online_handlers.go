@@ -240,6 +240,24 @@ func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 		m.players[i].CardsCount = 17
 	}
 
+	// 初始化记牌器
+	m.remainingCards = make(map[card.Rank]int)
+	// 3-A 和 2 各 4 张
+	for rank := card.Rank3; rank <= card.RankA; rank++ {
+		m.remainingCards[rank] = 4
+	}
+	m.remainingCards[card.Rank2] = 4
+	// 两个王各 1 张
+	m.remainingCards[card.RankBlackJoker] = 1
+	m.remainingCards[card.RankRedJoker] = 1
+
+	// 扣除自己的手牌
+	for _, c := range m.hand {
+		if m.remainingCards[c.Rank] > 0 {
+			m.remainingCards[c.Rank]--
+		}
+	}
+
 	return nil
 }
 
@@ -335,6 +353,14 @@ func (m *OnlineModel) handleMsgCardPlayed(msg *protocol.Message) tea.Cmd {
 	if payload.PlayerID == m.playerID {
 		m.hand = card.RemoveCards(m.hand, m.lastPlayed)
 	}
+
+	// 更新记牌器（扣除已出的牌）
+	for _, c := range m.lastPlayed {
+		if m.remainingCards[c.Rank] > 0 {
+			m.remainingCards[c.Rank]--
+		}
+	}
+
 	return nil
 }
 
