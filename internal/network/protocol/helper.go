@@ -1,13 +1,18 @@
 package protocol
 
-import "encoding/json"
+import (
+	"google.golang.org/protobuf/proto"
+
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/pb"
+)
 
 // NewMessage 创建一个新消息
 func NewMessage(msgType MessageType, payload any) (*Message, error) {
-	var data json.RawMessage
+	var data []byte
 	if payload != nil {
 		var err error
-		data, err = json.Marshal(payload)
+		// 使用 Protobuf 编码 payload
+		data, err = EncodePayload(msgType, payload)
 		if err != nil {
 			return nil, err
 		}
@@ -27,24 +32,32 @@ func MustNewMessage(msgType MessageType, payload any) *Message {
 	return msg
 }
 
-// Encode 将消息编码为 JSON 字节
+// Encode 将消息编码为 Protobuf 字节
 func (m *Message) Encode() ([]byte, error) {
-	return json.Marshal(m)
+	pbMsg := &pb.Message{
+		Type:    stringToProtoMessageType(string(m.Type)),
+		Payload: m.Payload, // Protobuf payload
+	}
+	return proto.Marshal(pbMsg)
 }
 
-// Decode 从 JSON 字节解码消息
+// Decode 从 Protobuf 字节解码消息
 func Decode(data []byte) (*Message, error) {
-	var msg Message
-	if err := json.Unmarshal(data, &msg); err != nil {
+	var pbMsg pb.Message
+	if err := proto.Unmarshal(data, &pbMsg); err != nil {
 		return nil, err
 	}
-	return &msg, nil
+
+	return &Message{
+		Type:    MessageType(protoMessageTypeToString(pbMsg.Type)),
+		Payload: pbMsg.Payload,
+	}, nil
 }
 
 // ParsePayload 解析消息的 Payload 到指定类型
 func ParsePayload[T any](msg *Message) (*T, error) {
 	var payload T
-	if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+	if err := DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil, err
 	}
 	return &payload, nil

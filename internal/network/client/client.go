@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"sync"
@@ -67,7 +66,8 @@ func NewClient(serverURL string) *Client {
 // Connect 连接服务器
 func (c *Client) Connect() error {
 	dialer := websocket.Dialer{
-		HandshakeTimeout: 10 * time.Second,
+		HandshakeTimeout:  10 * time.Second,
+		EnableCompression: true, // 启用压缩
 	}
 
 	conn, _, err := dialer.Dial(c.ServerURL, nil)
@@ -124,7 +124,7 @@ func (c *Client) readPump() {
 		// 处理连接成功消息
 		if msg.Type == protocol.MsgConnected {
 			var payload protocol.ConnectedPayload
-			if err := json.Unmarshal(msg.Payload, &payload); err == nil {
+			if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
 				c.PlayerID = payload.PlayerID
 				c.PlayerName = payload.PlayerName
 				c.ReconnectToken = payload.ReconnectToken
@@ -143,7 +143,7 @@ func (c *Client) readPump() {
 		// 处理 pong 消息计算延迟
 		if msg.Type == protocol.MsgPong {
 			var payload protocol.PongPayload
-			if err := json.Unmarshal(msg.Payload, &payload); err == nil {
+			if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
 				latency := time.Now().UnixMilli() - payload.ClientTimestamp
 				c.Latency = latency
 				if c.OnLatencyUpdate != nil {
@@ -182,7 +182,7 @@ func (c *Client) writePump() {
 				return
 			}
 
-			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			if err := c.conn.WriteMessage(websocket.BinaryMessage, message); err != nil {
 				return
 			}
 
@@ -387,7 +387,8 @@ func (c *Client) tryReconnect() {
 
 		// 创建新连接
 		dialer := websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
+			EnableCompression: true, // 启用压缩
 		}
 
 		conn, _, err := dialer.Dial(c.ServerURL, nil)

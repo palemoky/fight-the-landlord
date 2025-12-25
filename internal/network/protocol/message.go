@@ -31,9 +31,10 @@ const (
 	MsgPass      MessageType = "pass"       // 不出
 
 	// 排行榜
-	MsgGetStats       MessageType = "get_stats"       // 获取个人统计
-	MsgGetLeaderboard MessageType = "get_leaderboard" // 获取排行榜
-	MsgGetRoomList    MessageType = "get_room_list"   // 获取房间列表
+	MsgGetStats       MessageType = "get_stats"        // 获取个人统计
+	MsgGetLeaderboard MessageType = "get_leaderboard"  // 获取排行榜
+	MsgGetRoomList    MessageType = "get_room_list"    // 获取房间列表
+	MsgGetOnlineCount MessageType = "get_online_count" // 获取在线人数
 )
 
 // 服务端 → 客户端 消息类型
