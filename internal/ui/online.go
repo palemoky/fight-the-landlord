@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/client"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
@@ -67,60 +66,10 @@ type OnlineModel struct {
 	playerID   string
 	playerName string
 
-	// 房间信息
-	roomCode string
-	players  []protocol.PlayerInfo
-
-	// 游戏状态
-	hand           []card.Card
-	landlordCards  []card.Card
-	currentTurn    string // 当前回合玩家 ID
-	lastPlayedBy   string
-	lastPlayedName string
-	lastPlayed     []card.Card
-	lastHandType   string
-	mustPlay       bool
-	canBeat        bool
-	isLandlord     bool
-
-	// 叫地主
-	bidTurn string
-
-	// 游戏结束
-	winner           string
-	winnerIsLandlord bool
+	matchingStartTime time.Time // 匹配开始时间
 
 	// 网络状态
 	latency int64 // 延迟（毫秒）
-
-	// 提醒状态
-	bellPlayed     bool          // 是否已播放提示音
-	timerStartTime time.Time     // 计时器开始时间
-	timerDuration  time.Duration // 计时器总时长
-
-	// 匹配状态
-	matchingStartTime time.Time // 匹配开始时间
-
-	// 房间列表
-	availableRooms    []protocol.RoomListItem
-	selectedRoomIndex int
-
-	// 记牌器
-	cardCounterEnabled bool
-	remainingCards     map[card.Rank]int
-
-	// 排行榜
-	myStats     *protocol.StatsResultPayload
-	leaderboard []protocol.LeaderboardEntry
-
-	// 帮助系统
-	showingHelp bool // 游戏中是否显示帮助叠加层
-
-	// 大厅菜单导航
-	selectedLobbyIndex int // 当前选中的菜单项索引 (0-5)
-
-	// 在线人数
-	onlineCount int // 当前在线人数
 
 	// 重连状态
 	reconnecting      bool         // 是否正在重连
@@ -129,6 +78,10 @@ type OnlineModel struct {
 	reconnectSuccess  bool         // 重连是否成功
 	reconnectMessage  string       // 重连消息
 	reconnectChan     chan tea.Msg // 重连消息通道（可发送多种消息类型）
+
+	// Sub-models
+	lobby *LobbyModel
+	game  *GameModel
 
 	// UI 组件
 	input  textinput.Model
@@ -154,6 +107,8 @@ func NewOnlineModel(serverURL string) *OnlineModel {
 		input:             ti,
 		reconnectMaxTries: 5, // 最大重连次数
 		reconnectChan:     reconnectChan,
+		lobby:             NewLobbyModel(c, &ti), // Pass pointer to shared input
+		game:              NewGameModel(c, &ti),  // Pass pointer to shared input
 	}
 
 	// 设置重连回调 - 通过 channel 发送消息到 Bubble Tea
@@ -220,6 +175,10 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m.lobby.width = msg.Width
+		m.lobby.height = msg.Height
+		m.game.width = msg.Width
+		m.game.height = msg.Height
 
 	case tea.KeyMsg:
 		// 提取按键处理到独立方法
@@ -286,7 +245,7 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case timer.TickMsg:
 		// 检查是否需要播放提示音
 		if m.shouldPlayBell() {
-			m.bellPlayed = true
+			m.game.bellPlayed = true
 			cmds = append(cmds, m.playBell())
 		}
 	}
@@ -323,8 +282,8 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 // handleEscKey 处理 ESC 键
 func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
 	// 如果游戏中正在显示帮助，先关闭帮助
-	if m.showingHelp {
-		m.showingHelp = false
+	if m.game.showingHelp {
+		m.game.showingHelp = false
 		return true, nil
 	}
 	// 从特定页面返回大厅
@@ -342,32 +301,12 @@ func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
 
 // handleUpKey 处理上箭头键
 func (m *OnlineModel) handleUpKey() {
-	if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
-		m.selectedRoomIndex--
-		if m.selectedRoomIndex < 0 {
-			m.selectedRoomIndex = len(m.availableRooms) - 1
-		}
-	} else if m.phase == PhaseLobby {
-		m.selectedLobbyIndex--
-		if m.selectedLobbyIndex < 0 {
-			m.selectedLobbyIndex = 5 // 6 个菜单项，索引 0-5
-		}
-	}
+	m.lobby.handleUpKey(m.phase)
 }
 
 // handleDownKey 处理下箭头键
 func (m *OnlineModel) handleDownKey() {
-	if m.phase == PhaseRoomList && len(m.availableRooms) > 0 {
-		m.selectedRoomIndex++
-		if m.selectedRoomIndex >= len(m.availableRooms) {
-			m.selectedRoomIndex = 0
-		}
-	} else if m.phase == PhaseLobby {
-		m.selectedLobbyIndex++
-		if m.selectedLobbyIndex > 5 { // 6 个菜单项，索引 0-5
-			m.selectedLobbyIndex = 0
-		}
-	}
+	m.lobby.handleDownKey(m.phase)
 }
 
 // handleRuneKey 处理字符键（C/H 等）
@@ -379,7 +318,7 @@ func (m *OnlineModel) handleRuneKey(msg tea.KeyMsg) (bool, tea.Cmd) {
 	// C 键切换记牌器
 	if msg.Runes[0] == 'c' || msg.Runes[0] == 'C' {
 		if m.phase == PhaseBidding || m.phase == PhasePlaying {
-			m.cardCounterEnabled = !m.cardCounterEnabled
+			m.game.cardCounterEnabled = !m.game.cardCounterEnabled
 			// 直接返回，不让 textinput 处理这个按键
 			return true, nil
 		}
@@ -388,7 +327,7 @@ func (m *OnlineModel) handleRuneKey(msg tea.KeyMsg) (bool, tea.Cmd) {
 	// H 键切换帮助
 	if msg.Runes[0] == 'h' || msg.Runes[0] == 'H' {
 		if m.phase == PhaseBidding || m.phase == PhasePlaying {
-			m.showingHelp = !m.showingHelp
+			m.game.showingHelp = !m.game.showingHelp
 			// 直接返回，不让 textinput 处理这个按键
 			return true, nil
 		}
@@ -399,12 +338,12 @@ func (m *OnlineModel) handleRuneKey(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 // handleTimeout 处理超时消息
 func (m *OnlineModel) handleTimeout() {
-	if m.phase == PhaseBidding && m.bidTurn == m.playerID {
+	if m.phase == PhaseBidding && m.game.bidTurn == m.playerID {
 		_ = m.client.Bid(false) // 自动不叫
-	} else if m.phase == PhasePlaying && m.currentTurn == m.playerID {
-		if m.mustPlay && len(m.hand) > 0 {
+	} else if m.phase == PhasePlaying && m.game.currentTurn == m.playerID {
+		if m.game.mustPlay && len(m.game.hand) > 0 {
 			// 自动出最小的牌
-			minCard := m.hand[len(m.hand)-1]
+			minCard := m.game.hand[len(m.game.hand)-1]
 			_ = m.client.PlayCards([]protocol.CardInfo{protocol.CardToInfo(minCard)})
 		} else {
 			_ = m.client.Pass()
@@ -423,7 +362,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		// 大厅界面：1=快速匹配, 2=创建房间, 3=加入房间, 4=排行榜, 5=我的战绩, 6=游戏规则
 		// 如果输入为空，使用选中的菜单项
 		if input == "" {
-			input = fmt.Sprintf("%d", m.selectedLobbyIndex+1)
+			input = fmt.Sprintf("%d", m.lobby.selectedIndex+1)
 		}
 
 		switch input {
@@ -436,7 +375,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		case "3":
 			// 请求房间列表
 			m.phase = PhaseRoomList
-			m.selectedRoomIndex = 0
+			m.lobby.selectedRoomIdx = 0
 			m.input.Placeholder = "或直接输入房间号..."
 			m.input.Focus()
 			_ = m.client.GetRoomList()
@@ -459,8 +398,8 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		// 房间列表界面
 		if input == "" {
 			// 没有输入，加入选中的房间
-			if len(m.availableRooms) > 0 && m.selectedRoomIndex < len(m.availableRooms) {
-				roomCode := m.availableRooms[m.selectedRoomIndex].RoomCode
+			if len(m.lobby.availableRooms) > 0 && m.lobby.selectedRoomIdx < len(m.lobby.availableRooms) {
+				roomCode := m.lobby.availableRooms[m.lobby.selectedRoomIdx].RoomCode
 				_ = m.client.JoinRoom(roomCode)
 			}
 		} else {
@@ -476,7 +415,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 	case PhaseBidding:
 		// 叫地主：y=叫, n=不叫
-		if m.bidTurn == m.playerID {
+		if m.game.bidTurn == m.playerID {
 			switch strings.ToLower(input) {
 			case "y", "yes", "1":
 				_ = m.client.Bid(true)
@@ -487,7 +426,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 	case PhasePlaying:
 		// 出牌
-		if m.currentTurn == m.playerID {
+		if m.game.currentTurn == m.playerID {
 			upperInput := strings.ToUpper(input)
 			if upperInput == "PASS" || upperInput == "P" {
 				_ = m.client.Pass()
@@ -524,23 +463,23 @@ func (m *OnlineModel) View() string {
 	case PhaseConnecting:
 		content = m.connectingView()
 	case PhaseLobby:
-		content = m.lobbyView()
+		content = m.lobby.lobbyView(m)
 	case PhaseRoomList:
-		content = m.roomListView()
+		content = m.lobby.roomListView(m)
 	case PhaseMatching:
 		content = m.matchingView()
 	case PhaseWaiting:
-		content = m.waitingView()
+		content = m.game.waitingView(m)
 	case PhaseBidding, PhasePlaying:
-		content = m.gameView()
+		content = m.game.gameView(m)
 	case PhaseGameOver:
-		content = m.gameOverView()
+		content = m.game.gameOverView()
 	case PhaseLeaderboard:
-		content = m.leaderboardView()
+		content = m.lobby.leaderboardView()
 	case PhaseStats:
-		content = m.statsView()
+		content = m.lobby.statsView()
 	case PhaseRules:
-		content = m.rulesView()
+		content = m.game.rulesView()
 	}
 
 	return docStyle.Render(content)

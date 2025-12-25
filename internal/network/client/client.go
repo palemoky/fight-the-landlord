@@ -384,6 +384,9 @@ func (c *Client) tryReconnect() {
 	}
 	c.reconnecting.Store(true)
 
+	// 指数退避重连策略
+	backoff := reconnectInterval
+
 	for c.reconnectCount < maxReconnectAttempts {
 		c.reconnectCount++
 		// 通过回调通知 UI 正在重连
@@ -391,7 +394,13 @@ func (c *Client) tryReconnect() {
 			c.OnReconnecting(c.reconnectCount, maxReconnectAttempts)
 		}
 
-		time.Sleep(reconnectInterval)
+		time.Sleep(backoff)
+
+		// 计算下一次退避时间 (最大 30 秒)
+		backoff *= 2
+		if backoff > 30*time.Second {
+			backoff = 30 * time.Second
+		}
 
 		// 创建新连接
 		dialer := websocket.Dialer{
