@@ -118,48 +118,67 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 		menuLines = append(menuLines, prefix+item)
 	}
 
-	// Used chained naming as requested
-	menu := boxStyle.Padding(1, 2).Render(lipgloss.JoinVertical(lipgloss.Left, menuLines...))
-	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, menu))
-	sb.WriteString("\n\n")
+	// Build menu box
+	menu := boxStyle.Padding(0, 2).Render(lipgloss.JoinVertical(lipgloss.Left, menuLines...))
+	menuHeight := lipgloss.Height(menu)
 
-	m.input.Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
-	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
-	sb.WriteString(inputView)
-
-	// Render Chat Box (Bottom Right or similar)
-	// Render Chat Box (Bottom Right or similar)
-	var chatContent string
+	// Build chat box with input at bottom
+	var chatLines []string
 	if len(m.chatHistory) > 0 {
-		var chatBuilder strings.Builder
 		count := len(m.chatHistory)
 		start := 0
 		if count > 5 {
 			start = count - 5
 		}
 		for i := start; i < count; i++ {
-			chatBuilder.WriteString(m.chatHistory[i] + "\n")
+			chatLines = append(chatLines, m.chatHistory[i])
 		}
-		chatContent = chatBuilder.String()
 	} else {
-		chatContent = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("暂无消息...")
+		chatLines = append(chatLines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("暂无消息..."))
 	}
 
-	chatBox := boxStyle.Width(50).Height(5).Render(
-		lipgloss.JoinVertical(lipgloss.Left,
-			lipgloss.NewStyle().Bold(true).Render("💬 聊天室"),
-			chatContent,
-		),
-	)
-	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
-	sb.WriteString("\n")
-
-	// Always show chat input if focused or placeholder if not
-	chatView := m.chatInput.View()
+	// Chat input view
+	chatInputView := m.chatInput.View()
 	if !m.chatInput.Focused() {
-		chatView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天...")
+		chatInputView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天...")
 	}
-	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatView))
+
+	// Chat header
+	chatHeader := lipgloss.NewStyle().Bold(true).Render("💬 聊天室")
+
+	// Calculate inner height (menu height - 2 for top/bottom border)
+	innerHeight := menuHeight - 2
+
+	// Build content: header + messages
+	contentLines := []string{chatHeader}
+	contentLines = append(contentLines, chatLines...)
+
+	// Calculate how many empty lines needed to push input to bottom
+	// innerHeight = header(1) + messages + empty_lines + input(1)
+	usedLines := len(contentLines) + 1 // +1 for input line
+	emptyLines := innerHeight - usedLines
+	if emptyLines < 0 {
+		emptyLines = 0
+	}
+
+	// Add empty lines as spacer
+	for i := 0; i < emptyLines; i++ {
+		contentLines = append(contentLines, "")
+	}
+	// Add input at bottom
+	contentLines = append(contentLines, chatInputView)
+
+	chatBoxContent := lipgloss.JoinVertical(lipgloss.Left, contentLines...)
+	chatBox := boxStyle.Width(30).Height(innerHeight).Render(chatBoxContent)
+
+	// Place menu and chat side by side
+	mainContent := lipgloss.JoinHorizontal(lipgloss.Top, menu, "  ", chatBox)
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, mainContent))
+	sb.WriteString("\n\n")
+
+	m.input.Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
+	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
+	sb.WriteString(inputView)
 
 	if onlineModel.error != "" {
 		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
