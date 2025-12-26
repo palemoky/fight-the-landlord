@@ -4,7 +4,7 @@ package protocol;
 
 option go_package = "github.com/palemoky/fight-the-landlord/internal/network/protocol/pb";
 
-import "internal/network/protocol/common.proto";
+import "internal/network/protocol/proto/common.proto";
 
 // ========== 服务端响应消息 ==========
 

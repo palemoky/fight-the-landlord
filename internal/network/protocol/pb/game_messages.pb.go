@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.0
-// source: internal/network/protocol/game_messages.proto
+// source: internal/network/protocol/proto/game_messages.proto
 
 package pb
 
@@ -32,7 +32,7 @@ type RoomCreatedPayload struct {
 
 func (x *RoomCreatedPayload) Reset() {
 	*x = RoomCreatedPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[0]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *RoomCreatedPayload) String() string {
 func (*RoomCreatedPayload) ProtoMessage() {}
 
 func (x *RoomCreatedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[0]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +57,7 @@ func (x *RoomCreatedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoomCreatedPayload.ProtoReflect.Descriptor instead.
 func (*RoomCreatedPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{0}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *RoomCreatedPayload) GetRoomCode() string {
@@ -86,7 +86,7 @@ type RoomJoinedPayload struct {
 
 func (x *RoomJoinedPayload) Reset() {
 	*x = RoomJoinedPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[1]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -98,7 +98,7 @@ func (x *RoomJoinedPayload) String() string {
 func (*RoomJoinedPayload) ProtoMessage() {}
 
 func (x *RoomJoinedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[1]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -111,7 +111,7 @@ func (x *RoomJoinedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoomJoinedPayload.ProtoReflect.Descriptor instead.
 func (*RoomJoinedPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{1}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RoomJoinedPayload) GetRoomCode() string {
@@ -145,7 +145,7 @@ type PlayerJoinedPayload struct {
 
 func (x *PlayerJoinedPayload) Reset() {
 	*x = PlayerJoinedPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[2]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -157,7 +157,7 @@ func (x *PlayerJoinedPayload) String() string {
 func (*PlayerJoinedPayload) ProtoMessage() {}
 
 func (x *PlayerJoinedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[2]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -170,7 +170,7 @@ func (x *PlayerJoinedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerJoinedPayload.ProtoReflect.Descriptor instead.
 func (*PlayerJoinedPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{2}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PlayerJoinedPayload) GetPlayer() *PlayerInfo {
@@ -191,7 +191,7 @@ type PlayerLeftPayload struct {
 
 func (x *PlayerLeftPayload) Reset() {
 	*x = PlayerLeftPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[3]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -203,7 +203,7 @@ func (x *PlayerLeftPayload) String() string {
 func (*PlayerLeftPayload) ProtoMessage() {}
 
 func (x *PlayerLeftPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[3]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -216,7 +216,7 @@ func (x *PlayerLeftPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerLeftPayload.ProtoReflect.Descriptor instead.
 func (*PlayerLeftPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{3}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PlayerLeftPayload) GetPlayerId() string {
@@ -244,7 +244,7 @@ type PlayerReadyPayload struct {
 
 func (x *PlayerReadyPayload) Reset() {
 	*x = PlayerReadyPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[4]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -256,7 +256,7 @@ func (x *PlayerReadyPayload) String() string {
 func (*PlayerReadyPayload) ProtoMessage() {}
 
 func (x *PlayerReadyPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[4]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -269,7 +269,7 @@ func (x *PlayerReadyPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerReadyPayload.ProtoReflect.Descriptor instead.
 func (*PlayerReadyPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{4}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PlayerReadyPayload) GetPlayerId() string {
@@ -296,7 +296,7 @@ type GameStartPayload struct {
 
 func (x *GameStartPayload) Reset() {
 	*x = GameStartPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[5]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +308,7 @@ func (x *GameStartPayload) String() string {
 func (*GameStartPayload) ProtoMessage() {}
 
 func (x *GameStartPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[5]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +321,7 @@ func (x *GameStartPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameStartPayload.ProtoReflect.Descriptor instead.
 func (*GameStartPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{5}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GameStartPayload) GetPlayers() []*PlayerInfo {
@@ -342,7 +342,7 @@ type DealCardsPayload struct {
 
 func (x *DealCardsPayload) Reset() {
 	*x = DealCardsPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[6]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +354,7 @@ func (x *DealCardsPayload) String() string {
 func (*DealCardsPayload) ProtoMessage() {}
 
 func (x *DealCardsPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[6]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +367,7 @@ func (x *DealCardsPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DealCardsPayload.ProtoReflect.Descriptor instead.
 func (*DealCardsPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{6}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DealCardsPayload) GetCards() []*CardInfo {
@@ -395,7 +395,7 @@ type BidTurnPayload struct {
 
 func (x *BidTurnPayload) Reset() {
 	*x = BidTurnPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[7]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -407,7 +407,7 @@ func (x *BidTurnPayload) String() string {
 func (*BidTurnPayload) ProtoMessage() {}
 
 func (x *BidTurnPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[7]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +420,7 @@ func (x *BidTurnPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BidTurnPayload.ProtoReflect.Descriptor instead.
 func (*BidTurnPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{7}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BidTurnPayload) GetPlayerId() string {
@@ -449,7 +449,7 @@ type BidResultPayload struct {
 
 func (x *BidResultPayload) Reset() {
 	*x = BidResultPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[8]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +461,7 @@ func (x *BidResultPayload) String() string {
 func (*BidResultPayload) ProtoMessage() {}
 
 func (x *BidResultPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[8]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +474,7 @@ func (x *BidResultPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BidResultPayload.ProtoReflect.Descriptor instead.
 func (*BidResultPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{8}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *BidResultPayload) GetPlayerId() string {
@@ -510,7 +510,7 @@ type LandlordPayload struct {
 
 func (x *LandlordPayload) Reset() {
 	*x = LandlordPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[9]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -522,7 +522,7 @@ func (x *LandlordPayload) String() string {
 func (*LandlordPayload) ProtoMessage() {}
 
 func (x *LandlordPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[9]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -535,7 +535,7 @@ func (x *LandlordPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LandlordPayload.ProtoReflect.Descriptor instead.
 func (*LandlordPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{9}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *LandlordPayload) GetPlayerId() string {
@@ -572,7 +572,7 @@ type PlayTurnPayload struct {
 
 func (x *PlayTurnPayload) Reset() {
 	*x = PlayTurnPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[10]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -584,7 +584,7 @@ func (x *PlayTurnPayload) String() string {
 func (*PlayTurnPayload) ProtoMessage() {}
 
 func (x *PlayTurnPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[10]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -597,7 +597,7 @@ func (x *PlayTurnPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayTurnPayload.ProtoReflect.Descriptor instead.
 func (*PlayTurnPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{10}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PlayTurnPayload) GetPlayerId() string {
@@ -642,7 +642,7 @@ type CardPlayedPayload struct {
 
 func (x *CardPlayedPayload) Reset() {
 	*x = CardPlayedPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[11]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -654,7 +654,7 @@ func (x *CardPlayedPayload) String() string {
 func (*CardPlayedPayload) ProtoMessage() {}
 
 func (x *CardPlayedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[11]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -667,7 +667,7 @@ func (x *CardPlayedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CardPlayedPayload.ProtoReflect.Descriptor instead.
 func (*CardPlayedPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{11}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CardPlayedPayload) GetPlayerId() string {
@@ -716,7 +716,7 @@ type PlayerPassPayload struct {
 
 func (x *PlayerPassPayload) Reset() {
 	*x = PlayerPassPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[12]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -728,7 +728,7 @@ func (x *PlayerPassPayload) String() string {
 func (*PlayerPassPayload) ProtoMessage() {}
 
 func (x *PlayerPassPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[12]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -741,7 +741,7 @@ func (x *PlayerPassPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerPassPayload.ProtoReflect.Descriptor instead.
 func (*PlayerPassPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{12}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PlayerPassPayload) GetPlayerId() string {
@@ -771,7 +771,7 @@ type GameOverPayload struct {
 
 func (x *GameOverPayload) Reset() {
 	*x = GameOverPayload{}
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[13]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -783,7 +783,7 @@ func (x *GameOverPayload) String() string {
 func (*GameOverPayload) ProtoMessage() {}
 
 func (x *GameOverPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_game_messages_proto_msgTypes[13]
+	mi := &file_internal_network_protocol_proto_game_messages_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +796,7 @@ func (x *GameOverPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameOverPayload.ProtoReflect.Descriptor instead.
 func (*GameOverPayload) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_game_messages_proto_rawDescGZIP(), []int{13}
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GameOverPayload) GetWinnerId() string {
@@ -827,11 +827,11 @@ func (x *GameOverPayload) GetPlayerHands() []*PlayerHand {
 	return nil
 }
 
-var File_internal_network_protocol_game_messages_proto protoreflect.FileDescriptor
+var File_internal_network_protocol_proto_game_messages_proto protoreflect.FileDescriptor
 
-const file_internal_network_protocol_game_messages_proto_rawDesc = "" +
+const file_internal_network_protocol_proto_game_messages_proto_rawDesc = "" +
 	"\n" +
-	"-internal/network/protocol/game_messages.proto\x12\bprotocol\x1a&internal/network/protocol/common.proto\"_\n" +
+	"3internal/network/protocol/proto/game_messages.proto\x12\bprotocol\x1a,internal/network/protocol/proto/common.proto\"_\n" +
 	"\x12RoomCreatedPayload\x12\x1b\n" +
 	"\troom_code\x18\x01 \x01(\tR\broomCode\x12,\n" +
 	"\x06player\x18\x02 \x01(\v2\x14.protocol.PlayerInfoR\x06player\"\x8e\x01\n" +
@@ -892,19 +892,19 @@ const file_internal_network_protocol_game_messages_proto_rawDesc = "" +
 	"\fplayer_hands\x18\x04 \x03(\v2\x14.protocol.PlayerHandR\vplayerHandsBEZCgithub.com/palemoky/fight-the-landlord/internal/network/protocol/pbb\x06proto3"
 
 var (
-	file_internal_network_protocol_game_messages_proto_rawDescOnce sync.Once
-	file_internal_network_protocol_game_messages_proto_rawDescData []byte
+	file_internal_network_protocol_proto_game_messages_proto_rawDescOnce sync.Once
+	file_internal_network_protocol_proto_game_messages_proto_rawDescData []byte
 )
 
-func file_internal_network_protocol_game_messages_proto_rawDescGZIP() []byte {
-	file_internal_network_protocol_game_messages_proto_rawDescOnce.Do(func() {
-		file_internal_network_protocol_game_messages_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_network_protocol_game_messages_proto_rawDesc), len(file_internal_network_protocol_game_messages_proto_rawDesc)))
+func file_internal_network_protocol_proto_game_messages_proto_rawDescGZIP() []byte {
+	file_internal_network_protocol_proto_game_messages_proto_rawDescOnce.Do(func() {
+		file_internal_network_protocol_proto_game_messages_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_network_protocol_proto_game_messages_proto_rawDesc), len(file_internal_network_protocol_proto_game_messages_proto_rawDesc)))
 	})
-	return file_internal_network_protocol_game_messages_proto_rawDescData
+	return file_internal_network_protocol_proto_game_messages_proto_rawDescData
 }
 
-var file_internal_network_protocol_game_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
-var file_internal_network_protocol_game_messages_proto_goTypes = []any{
+var file_internal_network_protocol_proto_game_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_internal_network_protocol_proto_game_messages_proto_goTypes = []any{
 	(*RoomCreatedPayload)(nil),  // 0: protocol.RoomCreatedPayload
 	(*RoomJoinedPayload)(nil),   // 1: protocol.RoomJoinedPayload
 	(*PlayerJoinedPayload)(nil), // 2: protocol.PlayerJoinedPayload
@@ -923,7 +923,7 @@ var file_internal_network_protocol_game_messages_proto_goTypes = []any{
 	(*CardInfo)(nil),            // 15: protocol.CardInfo
 	(*PlayerHand)(nil),          // 16: protocol.PlayerHand
 }
-var file_internal_network_protocol_game_messages_proto_depIdxs = []int32{
+var file_internal_network_protocol_proto_game_messages_proto_depIdxs = []int32{
 	14, // 0: protocol.RoomCreatedPayload.player:type_name -> protocol.PlayerInfo
 	14, // 1: protocol.RoomJoinedPayload.player:type_name -> protocol.PlayerInfo
 	14, // 2: protocol.RoomJoinedPayload.players:type_name -> protocol.PlayerInfo
@@ -941,27 +941,27 @@ var file_internal_network_protocol_game_messages_proto_depIdxs = []int32{
 	0,  // [0:10] is the sub-list for field type_name
 }
 
-func init() { file_internal_network_protocol_game_messages_proto_init() }
-func file_internal_network_protocol_game_messages_proto_init() {
-	if File_internal_network_protocol_game_messages_proto != nil {
+func init() { file_internal_network_protocol_proto_game_messages_proto_init() }
+func file_internal_network_protocol_proto_game_messages_proto_init() {
+	if File_internal_network_protocol_proto_game_messages_proto != nil {
 		return
 	}
-	file_internal_network_protocol_common_proto_init()
+	file_internal_network_protocol_proto_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_network_protocol_game_messages_proto_rawDesc), len(file_internal_network_protocol_game_messages_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_network_protocol_proto_game_messages_proto_rawDesc), len(file_internal_network_protocol_proto_game_messages_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_internal_network_protocol_game_messages_proto_goTypes,
-		DependencyIndexes: file_internal_network_protocol_game_messages_proto_depIdxs,
-		MessageInfos:      file_internal_network_protocol_game_messages_proto_msgTypes,
+		GoTypes:           file_internal_network_protocol_proto_game_messages_proto_goTypes,
+		DependencyIndexes: file_internal_network_protocol_proto_game_messages_proto_depIdxs,
+		MessageInfos:      file_internal_network_protocol_proto_game_messages_proto_msgTypes,
 	}.Build()
-	File_internal_network_protocol_game_messages_proto = out.File
-	file_internal_network_protocol_game_messages_proto_goTypes = nil
-	file_internal_network_protocol_game_messages_proto_depIdxs = nil
+	File_internal_network_protocol_proto_game_messages_proto = out.File
+	file_internal_network_protocol_proto_game_messages_proto_goTypes = nil
+	file_internal_network_protocol_proto_game_messages_proto_depIdxs = nil
 }

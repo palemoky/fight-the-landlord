@@ -38,7 +38,7 @@ proto:  ## Regenerate Protocol Buffer code
 		echo "$(YELLOW)Install it with: brew install protobuf$(NC)"; \
 		exit 1; \
 	fi
-	protoc --proto_path=. --go_out=. --go_opt=module=github.com/palemoky/fight-the-landlord internal/network/protocol/*.proto
+	protoc --proto_path=. --go_out=. --go_opt=module=github.com/palemoky/fight-the-landlord internal/network/protocol/proto/*.proto
 	@echo "$(GREEN)✓ Protocol Buffer code regenerated$(NC)"
 
 ## release: 创建并推送版本标签

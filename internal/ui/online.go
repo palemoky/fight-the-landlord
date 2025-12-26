@@ -397,7 +397,7 @@ func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
 		return true, nil
 	}
 	// 从特定页面返回大厅（直接返回，无需额外操作）
-	if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats || m.phase == PhaseRules {
+	if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats || m.phase == PhaseRules || m.phase == PhaseGameOver {
 		m.enterLobby()
 		return true, nil
 	}

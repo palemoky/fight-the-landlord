@@ -24,6 +24,13 @@
 
 > **核心理念**：斗地主应该是运气与技巧的博弈，而不是算法与钱包的较量。
 
+## 📸 游戏截图
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/lobby.png" alt="Lobby" width="45%" />
+  <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/in-game.png" alt="In Game" width="45%" />
+</div>
+
 ## ✨ 功能特性
 
 | 功能        | 说明                                                |
@@ -33,6 +40,7 @@
 | 🔄 断线重连 | 网络波动时自动重连，游戏状态完整恢复                |
 | ⏸️ 离线等待 | 对手掉线时暂停计时，等待重连                        |
 | 🏆 排行榜   | 积分系统、胜率统计、实时排名                        |
+| 📲 聊天系统 | 支持大厅聊天、房间快捷消息，互动更便捷              |
 | 🔒 安全防护 | 来源验证、速率限制、IP 过滤                         |
 | 🐳 容器部署 | Docker Compose 一键部署                             |
 | ⚡ 流量优化 | Protocol Buffers + WebSocket 压缩，节省 60-80% 流量 |
@@ -253,6 +261,15 @@ func shuffle(cards []Card) {
 ## 🤝 贡献
 
 欢迎贡献代码、报告问题或提出建议！
+
+### 🎵 诚邀配乐师
+
+目前游戏还在使用简单的蜂鸣声效。如果你擅长使用 **GarageBand (库乐队)** 或其他音乐制作工具，欢迎为本项目制作背景音乐和音效！我们需要：
+
+- 轻松愉快的背景音乐 (BGM)
+- 发牌、出牌、胜利/失败的短音效
+
+期待你的 Pull Request 或直接联系我们！
 
 ## ⭐ Star History
 

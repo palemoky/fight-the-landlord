@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.0
-// source: internal/network/protocol/message.proto
+// source: internal/network/protocol/proto/message.proto
 
 package pb
 
@@ -176,11 +176,11 @@ func (x MessageType) String() string {
 }
 
 func (MessageType) Descriptor() protoreflect.EnumDescriptor {
-	return file_internal_network_protocol_message_proto_enumTypes[0].Descriptor()
+	return file_internal_network_protocol_proto_message_proto_enumTypes[0].Descriptor()
 }
 
 func (MessageType) Type() protoreflect.EnumType {
-	return &file_internal_network_protocol_message_proto_enumTypes[0]
+	return &file_internal_network_protocol_proto_message_proto_enumTypes[0]
 }
 
 func (x MessageType) Number() protoreflect.EnumNumber {
@@ -189,7 +189,7 @@ func (x MessageType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MessageType.Descriptor instead.
 func (MessageType) EnumDescriptor() ([]byte, []int) {
-	return file_internal_network_protocol_message_proto_rawDescGZIP(), []int{0}
+	return file_internal_network_protocol_proto_message_proto_rawDescGZIP(), []int{0}
 }
 
 // Message 所有消息的外层包装
@@ -203,7 +203,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_internal_network_protocol_message_proto_msgTypes[0]
+	mi := &file_internal_network_protocol_proto_message_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +215,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_message_proto_msgTypes[0]
+	mi := &file_internal_network_protocol_proto_message_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +228,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_message_proto_rawDescGZIP(), []int{0}
+	return file_internal_network_protocol_proto_message_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Message) GetType() MessageType {
@@ -245,11 +245,11 @@ func (x *Message) GetPayload() []byte {
 	return nil
 }
 
-var File_internal_network_protocol_message_proto protoreflect.FileDescriptor
+var File_internal_network_protocol_proto_message_proto protoreflect.FileDescriptor
 
-const file_internal_network_protocol_message_proto_rawDesc = "" +
+const file_internal_network_protocol_proto_message_proto_rawDesc = "" +
 	"\n" +
-	"'internal/network/protocol/message.proto\x12\bprotocol\x1a&internal/network/protocol/common.proto\x1a/internal/network/protocol/client_messages.proto\x1a/internal/network/protocol/server_messages.proto\x1a-internal/network/protocol/game_messages.proto\"N\n" +
+	"-internal/network/protocol/proto/message.proto\x12\bprotocol\"N\n" +
 	"\aMessage\x12)\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x15.protocol.MessageTypeR\x04type\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload*\xee\x06\n" +
@@ -300,24 +300,24 @@ const file_internal_network_protocol_message_proto_rawDesc = "" +
 	"\tMSG_ERROR\x10\xc8\x01BEZCgithub.com/palemoky/fight-the-landlord/internal/network/protocol/pbb\x06proto3"
 
 var (
-	file_internal_network_protocol_message_proto_rawDescOnce sync.Once
-	file_internal_network_protocol_message_proto_rawDescData []byte
+	file_internal_network_protocol_proto_message_proto_rawDescOnce sync.Once
+	file_internal_network_protocol_proto_message_proto_rawDescData []byte
 )
 
-func file_internal_network_protocol_message_proto_rawDescGZIP() []byte {
-	file_internal_network_protocol_message_proto_rawDescOnce.Do(func() {
-		file_internal_network_protocol_message_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_network_protocol_message_proto_rawDesc), len(file_internal_network_protocol_message_proto_rawDesc)))
+func file_internal_network_protocol_proto_message_proto_rawDescGZIP() []byte {
+	file_internal_network_protocol_proto_message_proto_rawDescOnce.Do(func() {
+		file_internal_network_protocol_proto_message_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_network_protocol_proto_message_proto_rawDesc), len(file_internal_network_protocol_proto_message_proto_rawDesc)))
 	})
-	return file_internal_network_protocol_message_proto_rawDescData
+	return file_internal_network_protocol_proto_message_proto_rawDescData
 }
 
-var file_internal_network_protocol_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_network_protocol_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_internal_network_protocol_message_proto_goTypes = []any{
+var file_internal_network_protocol_proto_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_internal_network_protocol_proto_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_internal_network_protocol_proto_message_proto_goTypes = []any{
 	(MessageType)(0), // 0: protocol.MessageType
 	(*Message)(nil),  // 1: protocol.Message
 }
-var file_internal_network_protocol_message_proto_depIdxs = []int32{
+var file_internal_network_protocol_proto_message_proto_depIdxs = []int32{
 	0, // 0: protocol.Message.type:type_name -> protocol.MessageType
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -326,31 +326,27 @@ var file_internal_network_protocol_message_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_internal_network_protocol_message_proto_init() }
-func file_internal_network_protocol_message_proto_init() {
-	if File_internal_network_protocol_message_proto != nil {
+func init() { file_internal_network_protocol_proto_message_proto_init() }
+func file_internal_network_protocol_proto_message_proto_init() {
+	if File_internal_network_protocol_proto_message_proto != nil {
 		return
 	}
-	file_internal_network_protocol_common_proto_init()
-	file_internal_network_protocol_client_messages_proto_init()
-	file_internal_network_protocol_server_messages_proto_init()
-	file_internal_network_protocol_game_messages_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_network_protocol_message_proto_rawDesc), len(file_internal_network_protocol_message_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_network_protocol_proto_message_proto_rawDesc), len(file_internal_network_protocol_proto_message_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_internal_network_protocol_message_proto_goTypes,
-		DependencyIndexes: file_internal_network_protocol_message_proto_depIdxs,
-		EnumInfos:         file_internal_network_protocol_message_proto_enumTypes,
-		MessageInfos:      file_internal_network_protocol_message_proto_msgTypes,
+		GoTypes:           file_internal_network_protocol_proto_message_proto_goTypes,
+		DependencyIndexes: file_internal_network_protocol_proto_message_proto_depIdxs,
+		EnumInfos:         file_internal_network_protocol_proto_message_proto_enumTypes,
+		MessageInfos:      file_internal_network_protocol_proto_message_proto_msgTypes,
 	}.Build()
-	File_internal_network_protocol_message_proto = out.File
-	file_internal_network_protocol_message_proto_goTypes = nil
-	file_internal_network_protocol_message_proto_depIdxs = nil
+	File_internal_network_protocol_proto_message_proto = out.File
+	file_internal_network_protocol_proto_message_proto_goTypes = nil
+	file_internal_network_protocol_proto_message_proto_depIdxs = nil
 }

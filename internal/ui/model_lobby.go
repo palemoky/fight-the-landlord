@@ -185,7 +185,8 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 		sb.WriteString(errorView)
 	}
 
-	return sb.String()
+	content := sb.String()
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func (m *LobbyModel) roomListView(onlineModel *OnlineModel) string {
