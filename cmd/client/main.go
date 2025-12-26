@@ -45,6 +45,6 @@ func main() {
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		logger.LogError("Client error: %v", err)
-		log.Fatalf("启动客户端时出错: %v", err)
+		log.Printf("启动客户端时出错: %v", err)
 	}
 }

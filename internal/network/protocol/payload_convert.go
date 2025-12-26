@@ -238,6 +238,8 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 }
 
 // DecodePayload 从 protobuf bytes 解码为 Go struct
+//
+//nolint:gocyclo // Payload decoding function with many message types
 func DecodePayload(msgType MessageType, data []byte, target any) error {
 	if len(data) == 0 {
 		return nil
