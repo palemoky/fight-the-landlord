@@ -705,7 +705,7 @@ var (
 	ErrGameNotStart = &RoomError{Code: protocol.ErrCodeGameNotStart, Message: "游戏尚未开始"}
 	ErrNotYourTurn  = &RoomError{Code: protocol.ErrCodeNotYourTurn, Message: "还没轮到您"}
 	ErrInvalidCards = &RoomError{Code: protocol.ErrCodeInvalidCards, Message: "无效的牌型"}
-	ErrCannotBeat   = &RoomError{Code: protocol.ErrCodeCannotBeat, Message: "您的牌打不过上家"}
+	ErrCannotBeat   = &RoomError{Code: protocol.ErrCodeCannotBeat, Message: "您的牌大不过上家"}
 	ErrMustPlay     = &RoomError{Code: protocol.ErrCodeMustPlay, Message: "您必须出牌"}
 )
 

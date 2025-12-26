@@ -365,6 +365,6 @@ var ErrorMessages = map[int]string{
 	ErrCodeGameNotStart: "游戏尚未开始",
 	ErrCodeNotYourTurn:  "还没轮到您",
 	ErrCodeInvalidCards: "无效的牌型",
-	ErrCodeCannotBeat:   "您的牌打不过上家",
+	ErrCodeCannotBeat:   "您的牌大不过上家",
 	ErrCodeMustPlay:     "您必须出牌",
 }

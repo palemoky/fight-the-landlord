@@ -57,6 +57,9 @@ type ReconnectSuccessMsg struct{}
 // ClearReconnectMsg 清除重连消息
 type ClearReconnectMsg struct{}
 
+// ClearErrorMsg 清除错误消息
+type ClearErrorMsg struct{}
+
 // OnlineModel 联网模式的 model
 type OnlineModel struct {
 	client *client.Client
@@ -239,6 +242,9 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.reconnectSuccess = false
 		m.reconnectMessage = ""
 
+	case ClearErrorMsg:
+		m.error = ""
+
 	case ServerMessage:
 		cmd = m.handleServerMessage(msg.Msg)
 		if cmd != nil {
@@ -381,6 +387,15 @@ func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
 		m.input.Focus()
 		return true, nil
 	}
+	// 在游戏中（等待、叫地主、出牌）时，ESC 不退出游戏，避免误操作
+	if m.phase == PhaseWaiting || m.phase == PhaseBidding || m.phase == PhasePlaying {
+		// 显示提示信息，3秒后自动消失
+		m.error = "游戏进行中，无法退出！"
+		return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+			return ClearErrorMsg{}
+		})
+	}
+	// 其他情况（大厅、游戏结束等）可以退出
 	m.client.Close()
 	return true, tea.Quit
 }
@@ -410,8 +425,8 @@ func (m *OnlineModel) handleRuneKey(msg tea.KeyMsg) (bool, tea.Cmd) {
 		}
 	}
 
-	// R 键切换规则
-	if msg.Runes[0] == 'r' || msg.Runes[0] == 'R' {
+	// H 键切查看帮助（R 会与大王键冲突）
+	if msg.Runes[0] == 'h' || msg.Runes[0] == 'H' {
 		if m.phase == PhaseBidding || m.phase == PhasePlaying {
 			m.game.showingHelp = !m.game.showingHelp
 			// 直接返回，不让 textinput 处理这个按键
