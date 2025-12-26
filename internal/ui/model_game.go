@@ -194,7 +194,7 @@ func (m *GameModel) gameOverView() string {
 		winnerType = "地主"
 	}
 
-	msg := fmt.Sprintf("🎮 游戏结束!\n\n🏆 %s (%s) 获胜!\n\n按回车返回大厅", m.winner, winnerType)
+	msg := fmt.Sprintf("🎮 游戏结束!\n\n🏆 %s (%s) 获胜!\n\n按 ESC 返回大厅", m.winner, winnerType)
 
 	return lipgloss.NewStyle().
 		Width(m.width).
