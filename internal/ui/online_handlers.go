@@ -135,6 +135,17 @@ func (m *OnlineModel) handleMsgPong(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgError(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ErrorPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+
+	// 在游戏阶段（叫地主、出牌），将错误显示在 placeholder 中
+	if m.phase == PhaseBidding || m.phase == PhasePlaying {
+		m.input.Placeholder = payload.Message
+		// 3秒后恢复原 placeholder
+		return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+			return ClearInputErrorMsg{}
+		})
+	}
+
+	// 其他阶段显示在错误区域
 	m.error = payload.Message
 	return nil
 }

@@ -159,7 +159,8 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 	}
 
 	if onlineModel.error != "" {
-		sb.WriteString("\n" + errorStyle.Render(onlineModel.error))
+		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
+		sb.WriteString(errorView)
 	}
 
 	gameContent := sb.String()
@@ -421,6 +422,7 @@ func (m *GameModel) renderGameRules() string {
 
 	sb.WriteString("【快捷键】\n")
 	sb.WriteString("• C：切换记牌器（游戏中）\n")
+	sb.WriteString("• T：切换快捷消息（游戏中）\n")
 	sb.WriteString("• H：显示/隐藏帮助（游戏中）\n")
 	sb.WriteString("• ESC：返回上一级或退出\n")
 

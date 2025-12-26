@@ -60,6 +60,9 @@ type ClearReconnectMsg struct{}
 // ClearErrorMsg 清除错误消息
 type ClearErrorMsg struct{}
 
+// ClearInputErrorMsg 清除输入框错误消息
+type ClearInputErrorMsg struct{}
+
 // OnlineModel 联网模式的 model
 type OnlineModel struct {
 	client *client.Client
@@ -244,6 +247,21 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case ClearErrorMsg:
 		m.error = ""
+
+	case ClearInputErrorMsg:
+		// 恢复游戏阶段的默认 placeholder
+		if m.phase == PhaseBidding && m.game.bidTurn == m.playerID {
+			m.input.Placeholder = "叫地主? (Y/N)"
+		} else if m.phase == PhasePlaying && m.game.currentTurn == m.playerID {
+			switch {
+			case m.game.mustPlay:
+				m.input.Placeholder = "你必须出牌 (如 33344)"
+			case m.game.canBeat:
+				m.input.Placeholder = "出牌或 PASS"
+			default:
+				m.input.Placeholder = "没有能大过上家的牌，输入 PASS"
+			}
+		}
 
 	case ServerMessage:
 		cmd = m.handleServerMessage(msg.Msg)
@@ -535,7 +553,11 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 				// 解析出牌
 				cards, err := m.parseCardsInput(input)
 				if err != nil {
-					m.error = err.Error()
+					// 显示在 placeholder，3秒后清除
+					m.input.Placeholder = err.Error()
+					return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+						return ClearInputErrorMsg{}
+					})
 				} else {
 					_ = m.client.PlayCards(protocol.CardsToInfos(cards))
 				}
