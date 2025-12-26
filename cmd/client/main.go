@@ -4,22 +4,47 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/palemoky/fight-the-landlord/internal/logger"
 	"github.com/palemoky/fight-the-landlord/internal/ui"
 )
 
 func main() {
+	// Initialize logger
+	if err := logger.Init(); err != nil {
+		log.Printf("Failed to initialize logger: %v", err)
+	}
+	defer logger.Close()
+
+	// Panic recovery to ensure terminal state is restored
+	defer func() {
+		if r := recover(); r != nil {
+			// Log panic to file
+			logger.LogPanic(r)
+
+			// Clear screen and restore terminal
+			fmt.Print("\033[2J\033[H") // Clear screen
+			fmt.Print("\033[?25h")     // Show cursor
+			fmt.Fprintf(os.Stderr, "\n[PANIC] 客户端崩溃: %v\n\n", r)
+			fmt.Fprintf(os.Stderr, "详细日志已保存到: %s\n", logger.GetLogPath())
+			os.Exit(1)
+		}
+	}()
+
 	serverAddr := flag.String("server", "localhost:1780", "服务器地址")
 	flag.Parse()
 
 	serverURL := fmt.Sprintf("ws://%s/ws", *serverAddr)
+	logger.LogInfo("Connecting to server: %s", serverURL)
 
 	model := ui.NewOnlineModel(serverURL)
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
+		logger.LogError("Client error: %v", err)
 		log.Fatalf("启动客户端时出错: %v", err)
 	}
 }

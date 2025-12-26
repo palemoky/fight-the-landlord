@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/palemoky/fight-the-landlord/internal/logger"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
@@ -88,6 +89,10 @@ func (c *Client) Connect() error {
 // readPump 从服务器读取消息
 func (c *Client) readPump() {
 	defer func() {
+		if r := recover(); r != nil {
+			logger.LogPanic(r)
+			log.Printf("[PANIC] readPump panic recovered: %v", r)
+		}
 		// 尝试重连
 		if c.ReconnectToken != "" && !c.reconnecting.Load() {
 			go c.tryReconnect()
@@ -174,6 +179,10 @@ func (c *Client) readPump() {
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		if r := recover(); r != nil {
+			logger.LogPanic(r)
+			log.Printf("[PANIC] writePump panic recovered: %v", r)
+		}
 		ticker.Stop()
 		_ = c.conn.Close()
 	}()
@@ -379,6 +388,14 @@ func (c *Client) StartHeartbeat() {
 
 // tryReconnect 尝试重连
 func (c *Client) tryReconnect() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.LogPanic(r)
+			log.Printf("[PANIC] tryReconnect panic recovered: %v", r)
+			c.reconnecting.Store(false)
+		}
+	}()
+
 	if c.reconnecting.Load() {
 		return
 	}
