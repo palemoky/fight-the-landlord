@@ -204,7 +204,7 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case ConnectedMsg:
-		m.phase = PhaseLobby
+		m.enterLobby()
 		m.playerID = m.client.PlayerID
 		m.playerName = m.client.PlayerName
 		// 启动心跳
@@ -398,11 +398,7 @@ func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
 	}
 	// 从特定页面返回大厅
 	if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats || m.phase == PhaseRules {
-		m.phase = PhaseLobby
-		m.error = ""
-		m.input.Reset()
-		m.input.Placeholder = "输入选项 (1-6) 或房间号"
-		m.input.Focus()
+		m.enterLobby()
 		return true, nil
 	}
 	// 在游戏中（等待、叫地主、出牌）时，ESC 不退出游戏，避免误操作
@@ -566,9 +562,7 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 	case PhaseGameOver:
 		// 游戏结束：输入任意键返回大厅
-		m.phase = PhaseLobby
-		m.input.Placeholder = "输入选项 (1-5) 或房间号"
-		m.input.Focus()
+		m.enterLobby()
 		m.resetGameState()
 	}
 
@@ -606,4 +600,15 @@ func (m *OnlineModel) View() string {
 	}
 
 	return docStyle.Render(content)
+}
+
+// enterLobby enters the lobby phase and requests online count
+func (m *OnlineModel) enterLobby() {
+	m.phase = PhaseLobby
+	m.error = ""
+	m.input.Reset()
+	m.input.Placeholder = "输入选项 (1-6) 或房间号"
+	m.input.Focus()
+	// Request online count when entering lobby
+	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
 }

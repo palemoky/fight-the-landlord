@@ -7,12 +7,11 @@
 package pb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -904,29 +903,26 @@ func file_internal_network_protocol_game_messages_proto_rawDescGZIP() []byte {
 	return file_internal_network_protocol_game_messages_proto_rawDescData
 }
 
-var (
-	file_internal_network_protocol_game_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
-	file_internal_network_protocol_game_messages_proto_goTypes  = []any{
-		(*RoomCreatedPayload)(nil),  // 0: protocol.RoomCreatedPayload
-		(*RoomJoinedPayload)(nil),   // 1: protocol.RoomJoinedPayload
-		(*PlayerJoinedPayload)(nil), // 2: protocol.PlayerJoinedPayload
-		(*PlayerLeftPayload)(nil),   // 3: protocol.PlayerLeftPayload
-		(*PlayerReadyPayload)(nil),  // 4: protocol.PlayerReadyPayload
-		(*GameStartPayload)(nil),    // 5: protocol.GameStartPayload
-		(*DealCardsPayload)(nil),    // 6: protocol.DealCardsPayload
-		(*BidTurnPayload)(nil),      // 7: protocol.BidTurnPayload
-		(*BidResultPayload)(nil),    // 8: protocol.BidResultPayload
-		(*LandlordPayload)(nil),     // 9: protocol.LandlordPayload
-		(*PlayTurnPayload)(nil),     // 10: protocol.PlayTurnPayload
-		(*CardPlayedPayload)(nil),   // 11: protocol.CardPlayedPayload
-		(*PlayerPassPayload)(nil),   // 12: protocol.PlayerPassPayload
-		(*GameOverPayload)(nil),     // 13: protocol.GameOverPayload
-		(*PlayerInfo)(nil),          // 14: protocol.PlayerInfo
-		(*CardInfo)(nil),            // 15: protocol.CardInfo
-		(*PlayerHand)(nil),          // 16: protocol.PlayerHand
-	}
-)
-
+var file_internal_network_protocol_game_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_internal_network_protocol_game_messages_proto_goTypes = []any{
+	(*RoomCreatedPayload)(nil),  // 0: protocol.RoomCreatedPayload
+	(*RoomJoinedPayload)(nil),   // 1: protocol.RoomJoinedPayload
+	(*PlayerJoinedPayload)(nil), // 2: protocol.PlayerJoinedPayload
+	(*PlayerLeftPayload)(nil),   // 3: protocol.PlayerLeftPayload
+	(*PlayerReadyPayload)(nil),  // 4: protocol.PlayerReadyPayload
+	(*GameStartPayload)(nil),    // 5: protocol.GameStartPayload
+	(*DealCardsPayload)(nil),    // 6: protocol.DealCardsPayload
+	(*BidTurnPayload)(nil),      // 7: protocol.BidTurnPayload
+	(*BidResultPayload)(nil),    // 8: protocol.BidResultPayload
+	(*LandlordPayload)(nil),     // 9: protocol.LandlordPayload
+	(*PlayTurnPayload)(nil),     // 10: protocol.PlayTurnPayload
+	(*CardPlayedPayload)(nil),   // 11: protocol.CardPlayedPayload
+	(*PlayerPassPayload)(nil),   // 12: protocol.PlayerPassPayload
+	(*GameOverPayload)(nil),     // 13: protocol.GameOverPayload
+	(*PlayerInfo)(nil),          // 14: protocol.PlayerInfo
+	(*CardInfo)(nil),            // 15: protocol.CardInfo
+	(*PlayerHand)(nil),          // 16: protocol.PlayerHand
+}
 var file_internal_network_protocol_game_messages_proto_depIdxs = []int32{
 	14, // 0: protocol.RoomCreatedPayload.player:type_name -> protocol.PlayerInfo
 	14, // 1: protocol.RoomJoinedPayload.player:type_name -> protocol.PlayerInfo

@@ -86,8 +86,14 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ConnectedPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+
 	m.playerID = payload.PlayerID
 	m.playerName = payload.PlayerName
+	m.client.ReconnectToken = payload.ReconnectToken
+
+	// Request online count on connect
+	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+
 	m.input.Placeholder = "输入选项 (1-5) 或房间号"
 	m.input.Focus()
 	m.soundManager.Play("login")

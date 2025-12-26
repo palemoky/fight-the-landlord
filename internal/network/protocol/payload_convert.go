@@ -53,6 +53,9 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 			Offset: int32(p.Offset),
 			Limit:  int32(p.Limit),
 		}
+	case MsgGetOnlineCount:
+		// No payload needed for this message
+		return nil, nil
 
 	// 服务端响应
 	case MsgConnected:

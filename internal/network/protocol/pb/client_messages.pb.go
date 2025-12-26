@@ -7,12 +7,11 @@
 package pb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -350,19 +349,16 @@ func file_internal_network_protocol_client_messages_proto_rawDescGZIP() []byte {
 	return file_internal_network_protocol_client_messages_proto_rawDescData
 }
 
-var (
-	file_internal_network_protocol_client_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-	file_internal_network_protocol_client_messages_proto_goTypes  = []any{
-		(*ReconnectPayload)(nil),      // 0: protocol.ReconnectPayload
-		(*PingPayload)(nil),           // 1: protocol.PingPayload
-		(*JoinRoomPayload)(nil),       // 2: protocol.JoinRoomPayload
-		(*BidPayload)(nil),            // 3: protocol.BidPayload
-		(*PlayCardsPayload)(nil),      // 4: protocol.PlayCardsPayload
-		(*GetLeaderboardPayload)(nil), // 5: protocol.GetLeaderboardPayload
-		(*CardInfo)(nil),              // 6: protocol.CardInfo
-	}
-)
-
+var file_internal_network_protocol_client_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_internal_network_protocol_client_messages_proto_goTypes = []any{
+	(*ReconnectPayload)(nil),      // 0: protocol.ReconnectPayload
+	(*PingPayload)(nil),           // 1: protocol.PingPayload
+	(*JoinRoomPayload)(nil),       // 2: protocol.JoinRoomPayload
+	(*BidPayload)(nil),            // 3: protocol.BidPayload
+	(*PlayCardsPayload)(nil),      // 4: protocol.PlayCardsPayload
+	(*GetLeaderboardPayload)(nil), // 5: protocol.GetLeaderboardPayload
+	(*CardInfo)(nil),              // 6: protocol.CardInfo
+}
 var file_internal_network_protocol_client_messages_proto_depIdxs = []int32{
 	6, // 0: protocol.PlayCardsPayload.cards:type_name -> protocol.CardInfo
 	1, // [1:1] is the sub-list for method output_type

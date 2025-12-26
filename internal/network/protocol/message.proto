@@ -30,6 +30,8 @@ enum MessageType {
   MSG_GET_STATS = 12;
   MSG_GET_LEADERBOARD = 13;
   MSG_GET_ROOM_LIST = 14;
+  MSG_GET_ONLINE_COUNT = 15;
+  MSG_CHAT = 16;
 
   // 服务端 -> 客户端
   MSG_CONNECTED = 100;

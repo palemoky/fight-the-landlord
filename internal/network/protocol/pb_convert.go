@@ -37,6 +37,10 @@ func stringToProtoMessageType(s string) pb.MessageType {
 		return pb.MessageType_MSG_GET_LEADERBOARD
 	case "get_room_list":
 		return pb.MessageType_MSG_GET_ROOM_LIST
+	case "get_online_count":
+		return pb.MessageType_MSG_GET_ONLINE_COUNT
+	case "chat":
+		return pb.MessageType_MSG_CHAT
 	case "connected":
 		return pb.MessageType_MSG_CONNECTED
 	case "reconnected":
@@ -127,6 +131,10 @@ func protoMessageTypeToString(t pb.MessageType) string {
 		return "get_leaderboard"
 	case pb.MessageType_MSG_GET_ROOM_LIST:
 		return "get_room_list"
+	case pb.MessageType_MSG_GET_ONLINE_COUNT:
+		return "get_online_count"
+	case pb.MessageType_MSG_CHAT:
+		return "chat"
 	case pb.MessageType_MSG_CONNECTED:
 		return "connected"
 	case pb.MessageType_MSG_RECONNECTED:

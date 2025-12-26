@@ -7,12 +7,11 @@
 package pb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -555,18 +554,15 @@ func file_internal_network_protocol_common_proto_rawDescGZIP() []byte {
 	return file_internal_network_protocol_common_proto_rawDescData
 }
 
-var (
-	file_internal_network_protocol_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-	file_internal_network_protocol_common_proto_goTypes  = []any{
-		(*CardInfo)(nil),         // 0: protocol.CardInfo
-		(*PlayerInfo)(nil),       // 1: protocol.PlayerInfo
-		(*PlayerHand)(nil),       // 2: protocol.PlayerHand
-		(*GameStateDTO)(nil),     // 3: protocol.GameStateDTO
-		(*LeaderboardEntry)(nil), // 4: protocol.LeaderboardEntry
-		(*RoomListItem)(nil),     // 5: protocol.RoomListItem
-	}
-)
-
+var file_internal_network_protocol_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_internal_network_protocol_common_proto_goTypes = []any{
+	(*CardInfo)(nil),         // 0: protocol.CardInfo
+	(*PlayerInfo)(nil),       // 1: protocol.PlayerInfo
+	(*PlayerHand)(nil),       // 2: protocol.PlayerHand
+	(*GameStateDTO)(nil),     // 3: protocol.GameStateDTO
+	(*LeaderboardEntry)(nil), // 4: protocol.LeaderboardEntry
+	(*RoomListItem)(nil),     // 5: protocol.RoomListItem
+}
 var file_internal_network_protocol_common_proto_depIdxs = []int32{
 	0, // 0: protocol.PlayerHand.cards:type_name -> protocol.CardInfo
 	1, // 1: protocol.GameStateDTO.players:type_name -> protocol.PlayerInfo

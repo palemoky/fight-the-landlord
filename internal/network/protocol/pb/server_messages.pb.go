@@ -7,12 +7,11 @@
 package pb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -735,25 +734,22 @@ func file_internal_network_protocol_server_messages_proto_rawDescGZIP() []byte {
 	return file_internal_network_protocol_server_messages_proto_rawDescData
 }
 
-var (
-	file_internal_network_protocol_server_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
-	file_internal_network_protocol_server_messages_proto_goTypes  = []any{
-		(*ConnectedPayload)(nil),         // 0: protocol.ConnectedPayload
-		(*ReconnectedPayload)(nil),       // 1: protocol.ReconnectedPayload
-		(*PongPayload)(nil),              // 2: protocol.PongPayload
-		(*PlayerOfflinePayload)(nil),     // 3: protocol.PlayerOfflinePayload
-		(*PlayerOnlinePayload)(nil),      // 4: protocol.PlayerOnlinePayload
-		(*OnlineCountPayload)(nil),       // 5: protocol.OnlineCountPayload
-		(*ErrorPayload)(nil),             // 6: protocol.ErrorPayload
-		(*StatsResultPayload)(nil),       // 7: protocol.StatsResultPayload
-		(*LeaderboardResultPayload)(nil), // 8: protocol.LeaderboardResultPayload
-		(*RoomListResultPayload)(nil),    // 9: protocol.RoomListResultPayload
-		(*GameStateDTO)(nil),             // 10: protocol.GameStateDTO
-		(*LeaderboardEntry)(nil),         // 11: protocol.LeaderboardEntry
-		(*RoomListItem)(nil),             // 12: protocol.RoomListItem
-	}
-)
-
+var file_internal_network_protocol_server_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_internal_network_protocol_server_messages_proto_goTypes = []any{
+	(*ConnectedPayload)(nil),         // 0: protocol.ConnectedPayload
+	(*ReconnectedPayload)(nil),       // 1: protocol.ReconnectedPayload
+	(*PongPayload)(nil),              // 2: protocol.PongPayload
+	(*PlayerOfflinePayload)(nil),     // 3: protocol.PlayerOfflinePayload
+	(*PlayerOnlinePayload)(nil),      // 4: protocol.PlayerOnlinePayload
+	(*OnlineCountPayload)(nil),       // 5: protocol.OnlineCountPayload
+	(*ErrorPayload)(nil),             // 6: protocol.ErrorPayload
+	(*StatsResultPayload)(nil),       // 7: protocol.StatsResultPayload
+	(*LeaderboardResultPayload)(nil), // 8: protocol.LeaderboardResultPayload
+	(*RoomListResultPayload)(nil),    // 9: protocol.RoomListResultPayload
+	(*GameStateDTO)(nil),             // 10: protocol.GameStateDTO
+	(*LeaderboardEntry)(nil),         // 11: protocol.LeaderboardEntry
+	(*RoomListItem)(nil),             // 12: protocol.RoomListItem
+}
 var file_internal_network_protocol_server_messages_proto_depIdxs = []int32{
 	10, // 0: protocol.ReconnectedPayload.game_state:type_name -> protocol.GameStateDTO
 	11, // 1: protocol.LeaderboardResultPayload.entries:type_name -> protocol.LeaderboardEntry

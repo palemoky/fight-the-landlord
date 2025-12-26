@@ -1,4 +1,4 @@
-.PHONY: help release test coverage lint fmt clean build install
+.PHONY: help release test coverage lint fmt clean build install proto
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -29,6 +29,17 @@ coverage:  ## Generate test coverage report
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "$(GREEN)✓ Coverage report generated: coverage.html$(NC)"
+
+## proto: 重新生成 Protocol Buffer 代码
+proto:  ## Regenerate Protocol Buffer code
+	@echo "$(BLUE)Regenerating Protocol Buffer code...$(NC)"
+	@if ! command -v protoc >/dev/null 2>&1; then \
+		echo "$(RED)Error: protoc not found$(NC)"; \
+		echo "$(YELLOW)Install it with: brew install protobuf$(NC)"; \
+		exit 1; \
+	fi
+	protoc --proto_path=. --go_out=. --go_opt=module=github.com/palemoky/fight-the-landlord internal/network/protocol/*.proto
+	@echo "$(GREEN)✓ Protocol Buffer code regenerated$(NC)"
 
 ## release: 创建并推送版本标签
 release:  ## Create and push version tag

@@ -7,12 +7,11 @@
 package pb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -27,20 +26,22 @@ type MessageType int32
 const (
 	MessageType_MSG_UNKNOWN MessageType = 0
 	// 客户端 -> 服务端
-	MessageType_MSG_RECONNECT       MessageType = 1
-	MessageType_MSG_PING            MessageType = 2
-	MessageType_MSG_CREATE_ROOM     MessageType = 3
-	MessageType_MSG_JOIN_ROOM       MessageType = 4
-	MessageType_MSG_LEAVE_ROOM      MessageType = 5
-	MessageType_MSG_QUICK_MATCH     MessageType = 6
-	MessageType_MSG_READY           MessageType = 7
-	MessageType_MSG_CANCEL_READY    MessageType = 8
-	MessageType_MSG_BID             MessageType = 9
-	MessageType_MSG_PLAY_CARDS      MessageType = 10
-	MessageType_MSG_PASS            MessageType = 11
-	MessageType_MSG_GET_STATS       MessageType = 12
-	MessageType_MSG_GET_LEADERBOARD MessageType = 13
-	MessageType_MSG_GET_ROOM_LIST   MessageType = 14
+	MessageType_MSG_RECONNECT        MessageType = 1
+	MessageType_MSG_PING             MessageType = 2
+	MessageType_MSG_CREATE_ROOM      MessageType = 3
+	MessageType_MSG_JOIN_ROOM        MessageType = 4
+	MessageType_MSG_LEAVE_ROOM       MessageType = 5
+	MessageType_MSG_QUICK_MATCH      MessageType = 6
+	MessageType_MSG_READY            MessageType = 7
+	MessageType_MSG_CANCEL_READY     MessageType = 8
+	MessageType_MSG_BID              MessageType = 9
+	MessageType_MSG_PLAY_CARDS       MessageType = 10
+	MessageType_MSG_PASS             MessageType = 11
+	MessageType_MSG_GET_STATS        MessageType = 12
+	MessageType_MSG_GET_LEADERBOARD  MessageType = 13
+	MessageType_MSG_GET_ROOM_LIST    MessageType = 14
+	MessageType_MSG_GET_ONLINE_COUNT MessageType = 15
+	MessageType_MSG_CHAT             MessageType = 16
 	// 服务端 -> 客户端
 	MessageType_MSG_CONNECTED          MessageType = 100
 	MessageType_MSG_RECONNECTED        MessageType = 101
@@ -88,6 +89,8 @@ var (
 		12:  "MSG_GET_STATS",
 		13:  "MSG_GET_LEADERBOARD",
 		14:  "MSG_GET_ROOM_LIST",
+		15:  "MSG_GET_ONLINE_COUNT",
+		16:  "MSG_CHAT",
 		100: "MSG_CONNECTED",
 		101: "MSG_RECONNECTED",
 		102: "MSG_PONG",
@@ -131,6 +134,8 @@ var (
 		"MSG_GET_STATS":          12,
 		"MSG_GET_LEADERBOARD":    13,
 		"MSG_GET_ROOM_LIST":      14,
+		"MSG_GET_ONLINE_COUNT":   15,
+		"MSG_CHAT":               16,
 		"MSG_CONNECTED":          100,
 		"MSG_RECONNECTED":        101,
 		"MSG_PONG":               102,
@@ -247,7 +252,7 @@ const file_internal_network_protocol_message_proto_rawDesc = "" +
 	"'internal/network/protocol/message.proto\x12\bprotocol\x1a&internal/network/protocol/common.proto\x1a/internal/network/protocol/client_messages.proto\x1a/internal/network/protocol/server_messages.proto\x1a-internal/network/protocol/game_messages.proto\"N\n" +
 	"\aMessage\x12)\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x15.protocol.MessageTypeR\x04type\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload*\xc6\x06\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload*\xee\x06\n" +
 	"\vMessageType\x12\x0f\n" +
 	"\vMSG_UNKNOWN\x10\x00\x12\x11\n" +
 	"\rMSG_RECONNECT\x10\x01\x12\f\n" +
@@ -264,7 +269,9 @@ const file_internal_network_protocol_message_proto_rawDesc = "" +
 	"\bMSG_PASS\x10\v\x12\x11\n" +
 	"\rMSG_GET_STATS\x10\f\x12\x17\n" +
 	"\x13MSG_GET_LEADERBOARD\x10\r\x12\x15\n" +
-	"\x11MSG_GET_ROOM_LIST\x10\x0e\x12\x11\n" +
+	"\x11MSG_GET_ROOM_LIST\x10\x0e\x12\x18\n" +
+	"\x14MSG_GET_ONLINE_COUNT\x10\x0f\x12\f\n" +
+	"\bMSG_CHAT\x10\x10\x12\x11\n" +
 	"\rMSG_CONNECTED\x10d\x12\x13\n" +
 	"\x0fMSG_RECONNECTED\x10e\x12\f\n" +
 	"\bMSG_PONG\x10f\x12\x16\n" +
@@ -304,15 +311,12 @@ func file_internal_network_protocol_message_proto_rawDescGZIP() []byte {
 	return file_internal_network_protocol_message_proto_rawDescData
 }
 
-var (
-	file_internal_network_protocol_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-	file_internal_network_protocol_message_proto_msgTypes  = make([]protoimpl.MessageInfo, 1)
-	file_internal_network_protocol_message_proto_goTypes   = []any{
-		(MessageType)(0), // 0: protocol.MessageType
-		(*Message)(nil),  // 1: protocol.Message
-	}
-)
-
+var file_internal_network_protocol_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_internal_network_protocol_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_internal_network_protocol_message_proto_goTypes = []any{
+	(MessageType)(0), // 0: protocol.MessageType
+	(*Message)(nil),  // 1: protocol.Message
+}
 var file_internal_network_protocol_message_proto_depIdxs = []int32{
 	0, // 0: protocol.Message.type:type_name -> protocol.MessageType
 	1, // [1:1] is the sub-list for method output_type
