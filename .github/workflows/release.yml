@@ -60,3 +60,25 @@ jobs:
           sbom: true
           build-args: |
             VERSION=${{ github.ref_name }}
+
+      - name: Update Docker Hub description
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKER_IMAGE }}
+          readme-filepath: ./README.md
+
+      - name: Notify via Xiaomi Speaker
+        if: always()
+        uses: palemoky/xiaomi-speaker-action@v1
+        with:
+          webhook_url: ${{ vars.SPEAKER_WEBHOOK_URL }}
+          api_secret: ${{ secrets.SPEAKER_API_SECRET }}
+          cf_client_id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          cf_client_secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          success_message: "Ship it! ${{ github.event.repository.name }} is live."
+          failure_message: "Mayday! Mayday! ${{ github.event.repository.name }} is broken, I repeat, ${{ github.event.repository.name }} is broken!"
+          max_retries: 3
+          timeout: 5000
