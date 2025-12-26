@@ -354,11 +354,11 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *time
 
 	if phase == PhaseBidding {
 		if m.bidTurn == myPlayerID {
-			sb.WriteString(fmt.Sprintf("⏳ %s | 轮到你叫地主!\n", timer.View()))
+			fmt.Fprintf(&sb, "⏳ %s | 轮到你叫地主!\n", timer.View())
 		} else {
 			for _, p := range m.players {
 				if p.ID == m.bidTurn {
-					sb.WriteString(fmt.Sprintf("等待 %s 叫地主...\n", p.Name))
+					fmt.Fprintf(&sb, "等待 %s 叫地主...\n", p.Name)
 					break
 				}
 			}
@@ -369,11 +369,11 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *time
 			if m.isLandlord {
 				icon = LandlordIcon
 			}
-			sb.WriteString(fmt.Sprintf("⏳ %s | 轮到你出牌! %s\n", timer.View(), icon))
+			fmt.Fprintf(&sb, "⏳ %s | 轮到你出牌! %s\n", timer.View(), icon)
 		} else {
 			for _, p := range m.players {
 				if p.ID == m.currentTurn {
-					sb.WriteString(fmt.Sprintf("等待 %s 出牌...\n", p.Name))
+					fmt.Fprintf(&sb, "等待 %s 出牌...\n", p.Name)
 					break
 				}
 			}

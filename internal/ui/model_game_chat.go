@@ -22,7 +22,7 @@ func (m *GameModel) renderQuickMsgMenu() string {
 	sb.WriteString(strings.Repeat("─", 30) + "\n")
 
 	for i, msg := range quickMessages {
-		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, msg))
+		fmt.Fprintf(&sb, "%d. %s\n", i+1, msg)
 	}
 	sb.WriteString(strings.Repeat("─", 30) + "\n")
 	sb.WriteString("ESC 关闭")

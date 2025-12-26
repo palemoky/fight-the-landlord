@@ -291,12 +291,12 @@ func (m *LobbyModel) renderMyStatsTable() string {
 	if s.Rank > 0 {
 		rankStr = fmt.Sprintf("#%d", s.Rank)
 	}
-	sb.WriteString(fmt.Sprintf("排名: %s  |  积分: %d\n", rankStr, s.Score))
+	fmt.Fprintf(&sb, "排名: %s  |  积分: %d\n", rankStr, s.Score)
 	sb.WriteString(strings.Repeat("─", 40) + "\n")
 
 	// 总战绩
-	sb.WriteString(fmt.Sprintf("总场次: %d  胜: %d  负: %d  胜率: %.1f%%\n",
-		s.TotalGames, s.Wins, s.Losses, s.WinRate))
+	fmt.Fprintf(&sb, "总场次: %d  胜: %d  负: %d  胜率: %.1f%%\n",
+		s.TotalGames, s.Wins, s.Losses, s.WinRate)
 
 	// 地主/农民分开
 	landlordRate := 0.0
@@ -308,9 +308,9 @@ func (m *LobbyModel) renderMyStatsTable() string {
 		farmerRate = float64(s.FarmerWins) / float64(s.FarmerGames) * 100
 	}
 
-	sb.WriteString(fmt.Sprintf("地主: %d胜/%d场 (%.1f%%)  |  农民: %d胜/%d场 (%.1f%%)\n",
+	fmt.Fprintf(&sb, "地主: %d胜/%d场 (%.1f%%)  |  农民: %d胜/%d场 (%.1f%%)\n",
 		s.LandlordWins, s.LandlordGames, landlordRate,
-		s.FarmerWins, s.FarmerGames, farmerRate))
+		s.FarmerWins, s.FarmerGames, farmerRate)
 
 	streakStr := ""
 	if s.CurrentStreak > 0 {
