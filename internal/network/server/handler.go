@@ -185,7 +185,7 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 			Seat:       p.Seat,
 			IsLandlord: p.IsLandlord,
 			CardsCount: len(p.Hand),
-			Online:     true, // TODO: 从会话管理器获取
+			Online:     h.server.sessionManager.IsOnline(p.ID),
 		}
 	}
 

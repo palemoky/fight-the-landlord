@@ -523,8 +523,11 @@ func (r *Room) GetGameSession() *GameSession {
 }
 
 // SaveToRedis 保存房间状态到 Redis
+// SaveToRedis 保存房间状态到 Redis
 func (r *Room) SaveToRedis(ctx context.Context) error {
-	// TODO: 实现 Redis 持久化
+	if r.server != nil && r.server.redisStore != nil {
+		return r.server.redisStore.SaveRoom(ctx, r)
+	}
 	return nil
 }
 

@@ -408,8 +408,12 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 		PlayerHands: playerHands,
 	}))
 
+	role := "农民"
+	if winner.IsLandlord {
+		role = "地主"
+	}
 	log.Printf("🎮 游戏结束！房间 %s，获胜者: %s (%s)",
-		gs.room.Code, winner.Name, ternary(winner.IsLandlord, "地主", "农民"))
+		gs.room.Code, winner.Name, role)
 
 	// 记录游戏结果到排行榜
 	gs.recordGameResults(winner)
@@ -708,11 +712,3 @@ var (
 	ErrCannotBeat   = &RoomError{Code: protocol.ErrCodeCannotBeat, Message: "您的牌大不过上家"}
 	ErrMustPlay     = &RoomError{Code: protocol.ErrCodeMustPlay, Message: "您必须出牌"}
 )
-
-// ternary 三元表达式
-func ternary[T any](cond bool, a, b T) T {
-	if cond {
-		return a
-	}
-	return b
-}
