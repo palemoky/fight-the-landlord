@@ -234,25 +234,23 @@ func (m *LobbyModel) leaderboardView() string {
 
 func (m *LobbyModel) renderLeaderboardTable() string {
 	var sb strings.Builder
-	sb.WriteString("🏆 排行榜 TOP 10\n")
+
+	// Center the title
+	title := "🏆 排行榜 TOP 10"
+	titleLine := lipgloss.PlaceHorizontal(50, lipgloss.Center, title)
+	sb.WriteString(titleLine + "\n")
 	sb.WriteString(strings.Repeat("─", 50) + "\n")
-	sb.WriteString(fmt.Sprintf("%-4s %-12s %8s %6s %8s\n", "排名", "玩家", "积分", "胜场", "胜率"))
+
+	// Header - use tabs for alignment
+	sb.WriteString("排名\t玩家\t\t积分\t胜场\t胜率\n")
 	sb.WriteString(strings.Repeat("─", 50) + "\n")
 
 	for _, e := range m.leaderboard {
-		rankIcon := ""
-		switch e.Rank {
-		case 1:
-			rankIcon = "🥇"
-		case 2:
-			rankIcon = "🥈"
-		case 3:
-			rankIcon = "🥉"
-		default:
-			rankIcon = fmt.Sprintf("%2d.", e.Rank)
-		}
-		sb.WriteString(fmt.Sprintf("%-4s %-12s %8d %6d %7.1f%%\n",
-			rankIcon, truncateName(e.PlayerName, 10), e.Score, e.Wins, e.WinRate))
+		rankStr := fmt.Sprintf("%2d.", e.Rank)
+
+		// Use tabs for alignment - works better with Chinese characters
+		fmt.Fprintf(&sb, "%s\t%s\t\t%d\t%d\t%.1f%%\n",
+			rankStr, truncateName(e.PlayerName, 10), e.Score, e.Wins, e.WinRate)
 	}
 
 	return boxStyle.Render(sb.String())
