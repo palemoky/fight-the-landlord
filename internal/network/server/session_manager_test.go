@@ -52,32 +52,66 @@ func TestSessionManager_OnlineStatus(t *testing.T) {
 func TestSessionManager_CanReconnect(t *testing.T) {
 	sm := NewSessionManager()
 	session := sm.CreateSession("p1", "Player1")
-	token := session.ReconnectToken
+	validToken := session.ReconnectToken
 
-	// Case 1: Online player cannot match "reconnect" conditions usually (or implementation allows it?)
-	// Implementation: if !session.IsOnline && time.Since ...
-	// Wait, Check implementation:
-	// func (sm *SessionManager) CanReconnect(token, playerID string) bool {
-	//      // ...
-	// 		if !session.IsOnline && time.Since(session.DisconnectedAt) > reconnectTimeout { return false }
-	//      return true
-	// }
-	// So if online, it returns true? Let's check logic.
-	// If it returns true, it means token matches.
-	assert.True(t, sm.CanReconnect(token, "p1"))
+	tests := []struct {
+		name     string
+		token    string
+		playerID string
+		setup    func()
+		expected bool
+	}{
+		{
+			name:     "Valid reconnection (online)",
+			token:    validToken,
+			playerID: "p1",
+			setup:    func() {}, // Already online
+			expected: true,
+		},
+		{
+			name:     "Valid reconnection (offline)",
+			token:    validToken,
+			playerID: "p1",
+			setup: func() {
+				sm.SetOffline("p1")
+			},
+			expected: true,
+		},
+		{
+			name:     "Invalid token",
+			token:    "wrong-token",
+			playerID: "p1",
+			setup:    func() {},
+			expected: false,
+		},
+		{
+			name:     "Wrong player ID",
+			token:    validToken,
+			playerID: "p2",
+			setup:    func() {},
+			expected: false,
+		},
+		{
+			name:     "Expired session",
+			token:    validToken,
+			playerID: "p1",
+			setup: func() {
+				sm.SetOffline("p1")
+				// Hack internal time for testing
+				session.mu.Lock()
+				session.DisconnectedAt = time.Now().Add(-3 * time.Minute)
+				session.mu.Unlock()
+			},
+			expected: false,
+		},
+	}
 
-	// Case 2: Offline within limits
-	sm.SetOffline("p1")
-	assert.True(t, sm.CanReconnect(token, "p1"))
-
-	// Case 3: Wrong token
-	assert.False(t, sm.CanReconnect("wrong-token", "p1"))
-
-	// Case 4: Wrong PlayerID
-	assert.False(t, sm.CanReconnect(token, "p2"))
-
-	// Case 5: Timed out
-	// Manually hack DisconnectedAt to be in the past
-	session.DisconnectedAt = time.Now().Add(-3 * time.Minute) // Timeout is 2 mins
-	assert.False(t, sm.CanReconnect(token, "p1"))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+			assert.Equal(t, tt.expected, sm.CanReconnect(tt.token, tt.playerID))
+		})
+	}
 }

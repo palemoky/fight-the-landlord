@@ -23,23 +23,62 @@ func TestRateLimiter_Allow(t *testing.T) {
 }
 
 func TestIPFilter(t *testing.T) {
-	filter := NewIPFilter()
-	ip := "192.168.1.1"
+	tests := []struct {
+		name    string
+		ip      string
+		setup   func(*IPFilter)
+		allowed bool
+	}{
+		{
+			name:    "Default allow",
+			ip:      "192.168.1.1",
+			setup:   func(f *IPFilter) {},
+			allowed: true,
+		},
+		{
+			name: "Blacklisted IP",
+			ip:   "192.168.1.2",
+			setup: func(f *IPFilter) {
+				f.AddToBlacklist("192.168.1.2")
+			},
+			allowed: false,
+		},
+		{
+			name: "Removed from blacklist",
+			ip:   "192.168.1.3",
+			setup: func(f *IPFilter) {
+				f.AddToBlacklist("192.168.1.3")
+				f.RemoveFromBlacklist("192.168.1.3")
+			},
+			allowed: true,
+		},
+		{
+			name: "Whitelist enforcement (IP not in whitelist)",
+			ip:   "192.168.1.4",
+			setup: func(f *IPFilter) {
+				f.AddToWhitelist("10.0.0.1")
+			},
+			allowed: false,
+		},
+		{
+			name: "Whitelist enforcement (IP in whitelist)",
+			ip:   "10.0.0.1",
+			setup: func(f *IPFilter) {
+				f.AddToWhitelist("10.0.0.1")
+			},
+			allowed: true,
+		},
+	}
 
-	// Default allow
-	assert.True(t, filter.IsAllowed(ip))
-
-	// Blacklist
-	filter.AddToBlacklist(ip)
-	assert.False(t, filter.IsAllowed(ip))
-
-	filter.RemoveFromBlacklist(ip)
-	assert.True(t, filter.IsAllowed(ip))
-
-	// Whitelist (only whitelist allowed if present)
-	filter.AddToWhitelist("10.0.0.1")
-	assert.False(t, filter.IsAllowed(ip))
-	assert.True(t, filter.IsAllowed("10.0.0.1"))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := NewIPFilter()
+			if tt.setup != nil {
+				tt.setup(f)
+			}
+			assert.Equal(t, tt.allowed, f.IsAllowed(tt.ip))
+		})
+	}
 }
 
 func TestMessageRateLimiter(t *testing.T) {

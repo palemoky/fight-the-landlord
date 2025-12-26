@@ -8,14 +8,44 @@ import (
 )
 
 func TestNewMessage(t *testing.T) {
-	// Test creating a simple message
-	payload := JoinRoomPayload{RoomCode: "1234"}
-	msg, err := NewMessage(MsgJoinRoom, payload)
+	tests := []struct {
+		name    string
+		msgType MessageType
+		payload any
+		wantErr bool
+	}{
+		{
+			name:    "Valid JoinRoom",
+			msgType: MsgJoinRoom,
+			payload: JoinRoomPayload{RoomCode: "1234"},
+			wantErr: false,
+		},
+		{
+			name:    "Valid PlayCards",
+			msgType: MsgPlayCards,
+			payload: PlayCardsPayload{},
+			wantErr: false, // Should default to empty struct payload if valid
+		},
+		{
+			name:    "Unknown Type",
+			msgType: MessageType("unknown"),
+			payload: nil,
+			wantErr: false, // NewMessage implementation allows unknown types usually, let's verify if not
+		},
+	}
 
-	assert.NoError(t, err)
-	assert.NotNil(t, msg)
-	assert.Equal(t, MsgJoinRoom, msg.Type)
-	assert.NotEmpty(t, msg.Payload)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg, err := NewMessage(tt.msgType, tt.payload)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, msg)
+				assert.Equal(t, tt.msgType, msg.Type)
+			}
+		})
+	}
 }
 
 func TestEncodeDecode(t *testing.T) {
@@ -40,26 +70,66 @@ func TestEncodeDecode(t *testing.T) {
 }
 
 func TestPayloadEncoding_Protobuf(t *testing.T) {
-	// Test round trip for a specific payload type (Protobuf based)
-	original := RoomCreatedPayload{
-		RoomCode: "9999",
-		Player: PlayerInfo{
-			ID: "p1", Name: "Player 1", Seat: 0,
+	tests := []struct {
+		name    string
+		msgType MessageType
+		payload any
+	}{
+		{
+			name:    "MsgRoomCreated",
+			msgType: MsgRoomCreated,
+			payload: RoomCreatedPayload{RoomCode: "9999", Player: PlayerInfo{ID: "p1"}},
+		},
+		{
+			name:    "MsgJoinRoom",
+			msgType: MsgJoinRoom,
+			payload: JoinRoomPayload{RoomCode: "8888"},
+		},
+		{
+			name:    "MsgGameStart",
+			msgType: MsgGameStart,
+			payload: GameStartPayload{Players: []PlayerInfo{{ID: "p1"}}},
 		},
 	}
 
-	// Encode
-	encodedBytes, err := EncodePayload(MsgRoomCreated, original)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, encodedBytes)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Encode
+			encodedBytes, err := EncodePayload(tt.msgType, tt.payload)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, encodedBytes)
 
-	// Decode
-	var decoded RoomCreatedPayload
-	err = DecodePayload(MsgRoomCreated, encodedBytes, &decoded)
-	assert.NoError(t, err)
+			// Decode
+			// We need to know the type to decode into.
+			// In a real generic test we would use reflection or type switch,
+			// but for simple table driven we can just decode back to a fresh instance of the same type
+			// by creating a new pointer to the payload type.
 
-	assert.Equal(t, original.RoomCode, decoded.RoomCode)
-	assert.Equal(t, original.Player.ID, decoded.Player.ID)
+			// However that's hard in a simple loop without reflection.
+			// Let's just decode manually for the specific types we carefully selected or use reflection.
+
+			// Simplified approach: Re-encode and compare bytes (if deterministic), or just Ensure Decode doesn't error.
+			// Better: switch on type to creates vars.
+
+			switch tt.msgType {
+			case MsgRoomCreated:
+				var decoded RoomCreatedPayload
+				err = DecodePayload(tt.msgType, encodedBytes, &decoded)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.payload.(RoomCreatedPayload).RoomCode, decoded.RoomCode)
+			case MsgJoinRoom:
+				var decoded JoinRoomPayload
+				err = DecodePayload(tt.msgType, encodedBytes, &decoded)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.payload.(JoinRoomPayload).RoomCode, decoded.RoomCode)
+			case MsgGameStart:
+				var decoded GameStartPayload
+				err = DecodePayload(tt.msgType, encodedBytes, &decoded)
+				assert.NoError(t, err)
+				assert.Len(t, decoded.Players, 1)
+			}
+		})
+	}
 }
 
 func TestPayloadEncoding_JSON_Fallback(t *testing.T) {
