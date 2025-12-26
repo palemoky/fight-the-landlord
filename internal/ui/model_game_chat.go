@@ -19,13 +19,13 @@ var quickMessages = []string{
 func (m *GameModel) renderQuickMsgMenu() string {
 	var sb strings.Builder
 	sb.WriteString("💬 快捷消息 (数字键选择)\n")
-	sb.WriteString(strings.Repeat("─", 30) + "\n")
+	sb.WriteString(strings.Repeat("─", 40) + "\n")
 
 	for i, msg := range quickMessages {
 		fmt.Fprintf(&sb, "%d. %s\n", i+1, msg)
 	}
-	sb.WriteString(strings.Repeat("─", 30) + "\n")
-	sb.WriteString("ESC 关闭")
+	// sb.WriteString(strings.Repeat("─", 30) + "\n")
+	// sb.WriteString("ESC 关闭")
 
 	return boxStyle.Render(sb.String())
 }

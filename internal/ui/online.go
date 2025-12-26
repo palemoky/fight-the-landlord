@@ -305,16 +305,21 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 		}
 	}
 
-	// 游戏内 Chat / Quick Message
+	// 游戏内 Quick Message (no chat input, only quick messages)
 	isInGame := m.phase == PhaseWaiting || m.phase == PhaseBidding || m.phase == PhasePlaying
 	if isInGame {
-		// 1. 处理快捷消息菜单
+		// 处理快捷消息菜单
 		if m.game.showQuickMsgMenu {
 			switch msg.Type {
 			case tea.KeyEsc:
 				m.game.showQuickMsgMenu = false
 				return true, nil
 			case tea.KeyRunes:
+				// T 键关闭菜单
+				if msg.String() == "t" || msg.String() == "T" {
+					m.game.showQuickMsgMenu = false
+					return true, nil
+				}
 				// 数字键选择 1-8
 				if msg.String() >= "1" && msg.String() <= "8" {
 					idx := int(msg.Runes[0] - '1')
@@ -335,47 +340,9 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 			return true, nil // 吞掉其他按键，模态
 		}
 
-		// 2. 处理聊天输入
-		if m.game.chatInput.Focused() {
-			switch msg.Type {
-			case tea.KeyEnter:
-				content := m.game.chatInput.Value()
-				if content != "" {
-					chatMsg := protocol.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
-						Content: content,
-						Scope:   "room",
-					})
-					if err := m.client.SendMessage(chatMsg); err != nil {
-						m.error = fmt.Sprintf("发送消息失败: %v", err)
-					}
-					m.game.chatInput.SetValue("")
-					m.game.chatInput.Blur()
-				}
-				return true, nil
-			case tea.KeyEsc:
-				m.game.chatInput.Blur()
-				return true, nil
-			default:
-				var cmd tea.Cmd
-				m.game.chatInput, cmd = m.game.chatInput.Update(msg)
-				return true, cmd
-			}
-		}
-
-		// 3. 触发快捷键
-		// 只有在没有聚焦主输入框时才触发 (注意：主输入框一直在聚焦状态除非显示菜单/聊天)
-		// 但这是个 TUI，我们得小心冲突。
-		// 简单起见：
-		// / -> 聚焦聊天
-		// T -> 打开快捷消息
-		// ESC -> 取消 (已处理)
-
-		if msg.String() == "/" {
-			m.game.chatInput.Focus()
-			return true, nil
-		}
+		// T 键切换快捷消息菜单
 		if msg.String() == "t" || msg.String() == "T" {
-			m.game.showQuickMsgMenu = true
+			m.game.showQuickMsgMenu = !m.game.showQuickMsgMenu
 			return true, nil
 		}
 	}
@@ -443,8 +410,8 @@ func (m *OnlineModel) handleRuneKey(msg tea.KeyMsg) (bool, tea.Cmd) {
 		}
 	}
 
-	// H 键切换帮助
-	if msg.Runes[0] == 'h' || msg.Runes[0] == 'H' {
+	// R 键切换规则
+	if msg.Runes[0] == 'r' || msg.Runes[0] == 'R' {
 		if m.phase == PhaseBidding || m.phase == PhasePlaying {
 			m.game.showingHelp = !m.game.showingHelp
 			// 直接返回，不让 textinput 处理这个按键

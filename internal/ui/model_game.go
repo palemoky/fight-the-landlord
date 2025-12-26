@@ -125,14 +125,6 @@ func (m *GameModel) waitingView(onlineModel *OnlineModel) string {
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
 	}
 
-	// Chat Input
-	chatInputView := m.chatInput.View()
-	if !m.chatInput.Focused() {
-		chatInputView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天...")
-	}
-	sb.WriteString("\n")
-	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatInputView))
-
 	if onlineModel.error != "" {
 		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
 		sb.WriteString(errorView)
@@ -165,14 +157,6 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 		sb.WriteString("\n")
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
 	}
-
-	// Chat Input
-	chatInputView := m.chatInput.View()
-	if !m.chatInput.Focused() {
-		chatInputView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天, T 键快捷消息")
-	}
-	sb.WriteString("\n")
-	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatInputView))
 
 	if onlineModel.error != "" {
 		sb.WriteString("\n" + errorStyle.Render(onlineModel.error))
@@ -352,6 +336,15 @@ func (m *GameModel) renderPlayerHand(hand []card.Card) string {
 func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *timer.Model) string {
 	var sb strings.Builder
 
+	// Determine if it's player's turn
+	isMyTurn := false
+	switch phase {
+	case PhaseBidding:
+		isMyTurn = m.bidTurn == myPlayerID
+	case PhasePlaying:
+		isMyTurn = m.currentTurn == myPlayerID
+	}
+
 	if phase == PhaseBidding {
 		if m.bidTurn == myPlayerID {
 			fmt.Fprintf(&sb, "⏳ %s | 轮到你叫地主!\n", timer.View())
@@ -380,7 +373,15 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *time
 		}
 	}
 
-	sb.WriteString(m.input.View())
+	// Show input or quick message hint
+	if isMyTurn {
+		sb.WriteString(m.input.View())
+	} else {
+		// When waiting, show quick message hint
+		quickMsgHint := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("C 键记牌器, T 键快捷消息, R 键规则")
+		sb.WriteString(quickMsgHint)
+	}
+
 	return promptStyle.Render(sb.String())
 }
 
