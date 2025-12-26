@@ -185,7 +185,7 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 		return helpOverlay
 	}
 
-	return gameContent
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, gameContent)
 }
 
 func (m *GameModel) gameOverView() string {
