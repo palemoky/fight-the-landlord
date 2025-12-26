@@ -40,7 +40,7 @@ func NewLobbyModel(c *client.Client, input *textinput.Model) *LobbyModel {
 	chatInput := textinput.New()
 	chatInput.Placeholder = "按 / 键聊天..."
 	chatInput.CharLimit = 50
-	chatInput.Width = 30
+	chatInput.Width = 25
 
 	return &LobbyModel{
 		client:    c,
