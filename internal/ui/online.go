@@ -329,8 +329,8 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 		}
 	}
 
-	// 游戏内 Quick Message (no chat input, only quick messages)
-	isInGame := m.phase == PhaseWaiting || m.phase == PhaseBidding || m.phase == PhasePlaying
+	// 游戏内 Quick Message (only during actual gameplay, not waiting)
+	isInGame := m.phase == PhaseBidding || m.phase == PhasePlaying
 	if isInGame {
 		// 处理快捷消息菜单
 		if m.game.showQuickMsgMenu {
@@ -396,13 +396,19 @@ func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
 		m.game.showingHelp = false
 		return true, nil
 	}
-	// 从特定页面返回大厅
+	// 从特定页面返回大厅（直接返回，无需额外操作）
 	if m.phase == PhaseRoomList || m.phase == PhaseMatching || m.phase == PhaseLeaderboard || m.phase == PhaseStats || m.phase == PhaseRules {
 		m.enterLobby()
 		return true, nil
 	}
-	// 在游戏中（等待、叫地主、出牌）时，ESC 不退出游戏，避免误操作
-	if m.phase == PhaseWaiting || m.phase == PhaseBidding || m.phase == PhasePlaying {
+	// 从等待房间返回大厅（需要先通知服务器离开房间）
+	if m.phase == PhaseWaiting {
+		_ = m.client.LeaveRoom()
+		m.enterLobby()
+		return true, nil
+	}
+	// 在游戏中（叫地主、出牌）时，ESC 不退出游戏，避免误操作
+	if m.phase == PhaseBidding || m.phase == PhasePlaying {
 		// 显示提示信息，3秒后自动消失
 		m.error = "游戏进行中，无法退出！"
 		return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
