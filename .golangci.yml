@@ -9,13 +9,6 @@ run:
   build-tags:
     - fts5
 
-issues:
-  # Skip sound package in CI (requires ALSA on Linux)
-  exclude-rules:
-    - path: internal/sound
-      linters:
-        - typecheck
-
 linters:
   enable:
     - govet # 官方静态分析
@@ -36,6 +29,10 @@ linters:
           - errcheck
           - dupl
       - path: internal/graph/generated/
+        linters:
+          - all
+      # Skip sound package in CI (requires ALSA on Linux)
+      - path: internal/sound
         linters:
           - all
 
