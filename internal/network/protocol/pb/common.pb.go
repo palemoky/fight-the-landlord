@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.0
-// source: internal/network/protocol/common.proto
+// source: internal/network/protocol/proto/common.proto
 
 package pb
 
@@ -33,7 +33,7 @@ type CardInfo struct {
 
 func (x *CardInfo) Reset() {
 	*x = CardInfo{}
-	mi := &file_internal_network_protocol_common_proto_msgTypes[0]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +45,7 @@ func (x *CardInfo) String() string {
 func (*CardInfo) ProtoMessage() {}
 
 func (x *CardInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_common_proto_msgTypes[0]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +58,7 @@ func (x *CardInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CardInfo.ProtoReflect.Descriptor instead.
 func (*CardInfo) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_common_proto_rawDescGZIP(), []int{0}
+	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CardInfo) GetSuit() int32 {
@@ -98,7 +98,7 @@ type PlayerInfo struct {
 
 func (x *PlayerInfo) Reset() {
 	*x = PlayerInfo{}
-	mi := &file_internal_network_protocol_common_proto_msgTypes[1]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -110,7 +110,7 @@ func (x *PlayerInfo) String() string {
 func (*PlayerInfo) ProtoMessage() {}
 
 func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_common_proto_msgTypes[1]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -123,7 +123,7 @@ func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerInfo.ProtoReflect.Descriptor instead.
 func (*PlayerInfo) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_common_proto_rawDescGZIP(), []int{1}
+	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PlayerInfo) GetId() string {
@@ -187,7 +187,7 @@ type PlayerHand struct {
 
 func (x *PlayerHand) Reset() {
 	*x = PlayerHand{}
-	mi := &file_internal_network_protocol_common_proto_msgTypes[2]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -199,7 +199,7 @@ func (x *PlayerHand) String() string {
 func (*PlayerHand) ProtoMessage() {}
 
 func (x *PlayerHand) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_common_proto_msgTypes[2]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -212,7 +212,7 @@ func (x *PlayerHand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerHand.ProtoReflect.Descriptor instead.
 func (*PlayerHand) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_common_proto_rawDescGZIP(), []int{2}
+	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PlayerHand) GetPlayerId() string {
@@ -254,7 +254,7 @@ type GameStateDTO struct {
 
 func (x *GameStateDTO) Reset() {
 	*x = GameStateDTO{}
-	mi := &file_internal_network_protocol_common_proto_msgTypes[3]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -266,7 +266,7 @@ func (x *GameStateDTO) String() string {
 func (*GameStateDTO) ProtoMessage() {}
 
 func (x *GameStateDTO) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_common_proto_msgTypes[3]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -279,7 +279,7 @@ func (x *GameStateDTO) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameStateDTO.ProtoReflect.Descriptor instead.
 func (*GameStateDTO) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_common_proto_rawDescGZIP(), []int{3}
+	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GameStateDTO) GetPhase() string {
@@ -360,7 +360,7 @@ type LeaderboardEntry struct {
 
 func (x *LeaderboardEntry) Reset() {
 	*x = LeaderboardEntry{}
-	mi := &file_internal_network_protocol_common_proto_msgTypes[4]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -372,7 +372,7 @@ func (x *LeaderboardEntry) String() string {
 func (*LeaderboardEntry) ProtoMessage() {}
 
 func (x *LeaderboardEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_common_proto_msgTypes[4]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -385,7 +385,7 @@ func (x *LeaderboardEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaderboardEntry.ProtoReflect.Descriptor instead.
 func (*LeaderboardEntry) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_common_proto_rawDescGZIP(), []int{4}
+	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LeaderboardEntry) GetRank() int32 {
@@ -442,7 +442,7 @@ type RoomListItem struct {
 
 func (x *RoomListItem) Reset() {
 	*x = RoomListItem{}
-	mi := &file_internal_network_protocol_common_proto_msgTypes[5]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -454,7 +454,7 @@ func (x *RoomListItem) String() string {
 func (*RoomListItem) ProtoMessage() {}
 
 func (x *RoomListItem) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_network_protocol_common_proto_msgTypes[5]
+	mi := &file_internal_network_protocol_proto_common_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -467,7 +467,7 @@ func (x *RoomListItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoomListItem.ProtoReflect.Descriptor instead.
 func (*RoomListItem) Descriptor() ([]byte, []int) {
-	return file_internal_network_protocol_common_proto_rawDescGZIP(), []int{5}
+	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RoomListItem) GetRoomCode() string {
@@ -491,11 +491,11 @@ func (x *RoomListItem) GetMaxPlayers() int32 {
 	return 0
 }
 
-var File_internal_network_protocol_common_proto protoreflect.FileDescriptor
+var File_internal_network_protocol_proto_common_proto protoreflect.FileDescriptor
 
-const file_internal_network_protocol_common_proto_rawDesc = "" +
+const file_internal_network_protocol_proto_common_proto_rawDesc = "" +
 	"\n" +
-	"&internal/network/protocol/common.proto\x12\bprotocol\"H\n" +
+	",internal/network/protocol/proto/common.proto\x12\bprotocol\"H\n" +
 	"\bCardInfo\x12\x12\n" +
 	"\x04suit\x18\x01 \x01(\x05R\x04suit\x12\x12\n" +
 	"\x04rank\x18\x02 \x01(\x05R\x04rank\x12\x14\n" +
@@ -543,19 +543,19 @@ const file_internal_network_protocol_common_proto_rawDesc = "" +
 	"maxPlayersBEZCgithub.com/palemoky/fight-the-landlord/internal/network/protocol/pbb\x06proto3"
 
 var (
-	file_internal_network_protocol_common_proto_rawDescOnce sync.Once
-	file_internal_network_protocol_common_proto_rawDescData []byte
+	file_internal_network_protocol_proto_common_proto_rawDescOnce sync.Once
+	file_internal_network_protocol_proto_common_proto_rawDescData []byte
 )
 
-func file_internal_network_protocol_common_proto_rawDescGZIP() []byte {
-	file_internal_network_protocol_common_proto_rawDescOnce.Do(func() {
-		file_internal_network_protocol_common_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_network_protocol_common_proto_rawDesc), len(file_internal_network_protocol_common_proto_rawDesc)))
+func file_internal_network_protocol_proto_common_proto_rawDescGZIP() []byte {
+	file_internal_network_protocol_proto_common_proto_rawDescOnce.Do(func() {
+		file_internal_network_protocol_proto_common_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_network_protocol_proto_common_proto_rawDesc), len(file_internal_network_protocol_proto_common_proto_rawDesc)))
 	})
-	return file_internal_network_protocol_common_proto_rawDescData
+	return file_internal_network_protocol_proto_common_proto_rawDescData
 }
 
-var file_internal_network_protocol_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_internal_network_protocol_common_proto_goTypes = []any{
+var file_internal_network_protocol_proto_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_internal_network_protocol_proto_common_proto_goTypes = []any{
 	(*CardInfo)(nil),         // 0: protocol.CardInfo
 	(*PlayerInfo)(nil),       // 1: protocol.PlayerInfo
 	(*PlayerHand)(nil),       // 2: protocol.PlayerHand
@@ -563,7 +563,7 @@ var file_internal_network_protocol_common_proto_goTypes = []any{
 	(*LeaderboardEntry)(nil), // 4: protocol.LeaderboardEntry
 	(*RoomListItem)(nil),     // 5: protocol.RoomListItem
 }
-var file_internal_network_protocol_common_proto_depIdxs = []int32{
+var file_internal_network_protocol_proto_common_proto_depIdxs = []int32{
 	0, // 0: protocol.PlayerHand.cards:type_name -> protocol.CardInfo
 	1, // 1: protocol.GameStateDTO.players:type_name -> protocol.PlayerInfo
 	0, // 2: protocol.GameStateDTO.hand:type_name -> protocol.CardInfo
@@ -576,26 +576,26 @@ var file_internal_network_protocol_common_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_internal_network_protocol_common_proto_init() }
-func file_internal_network_protocol_common_proto_init() {
-	if File_internal_network_protocol_common_proto != nil {
+func init() { file_internal_network_protocol_proto_common_proto_init() }
+func file_internal_network_protocol_proto_common_proto_init() {
+	if File_internal_network_protocol_proto_common_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_network_protocol_common_proto_rawDesc), len(file_internal_network_protocol_common_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_network_protocol_proto_common_proto_rawDesc), len(file_internal_network_protocol_proto_common_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_internal_network_protocol_common_proto_goTypes,
-		DependencyIndexes: file_internal_network_protocol_common_proto_depIdxs,
-		MessageInfos:      file_internal_network_protocol_common_proto_msgTypes,
+		GoTypes:           file_internal_network_protocol_proto_common_proto_goTypes,
+		DependencyIndexes: file_internal_network_protocol_proto_common_proto_depIdxs,
+		MessageInfos:      file_internal_network_protocol_proto_common_proto_msgTypes,
 	}.Build()
-	File_internal_network_protocol_common_proto = out.File
-	file_internal_network_protocol_common_proto_goTypes = nil
-	file_internal_network_protocol_common_proto_depIdxs = nil
+	File_internal_network_protocol_proto_common_proto = out.File
+	file_internal_network_protocol_proto_common_proto_goTypes = nil
+	file_internal_network_protocol_proto_common_proto_depIdxs = nil
 }

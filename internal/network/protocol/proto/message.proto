@@ -4,11 +4,7 @@ package protocol;
 
 option go_package = "github.com/palemoky/fight-the-landlord/internal/network/protocol/pb";
 
-// 导入所有子模块
-import "internal/network/protocol/common.proto";
-import "internal/network/protocol/client_messages.proto";
-import "internal/network/protocol/server_messages.proto";
-import "internal/network/protocol/game_messages.proto";
+
 
 // ========== 消息类型枚举 ==========
 
