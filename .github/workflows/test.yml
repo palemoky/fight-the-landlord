@@ -40,9 +40,11 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
+          args: --build-tags=ci
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        # Use ci tag to skip sound tests/deps
+        run: go test -tags=ci -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Save Go cache
         uses: actions/cache/save@v5

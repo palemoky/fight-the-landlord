@@ -31,10 +31,6 @@ linters:
       - path: internal/graph/generated/
         linters:
           - all
-      # Skip sound package in CI (requires ALSA on Linux)
-      - path: internal/sound
-        linters:
-          - all
 
 formatters:
   enable:
