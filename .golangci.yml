@@ -6,9 +6,6 @@ version: "2"
 run:
   timeout: 5m
   tests: true
-  # Skip sound package in CI (requires ALSA on Linux)
-  skip-dirs:
-    - internal/sound
   build-tags:
     - fts5
 

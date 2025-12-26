@@ -1,3 +1,5 @@
+//go:build !ci
+
 package sound
 
 import (
