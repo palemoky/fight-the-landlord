@@ -11,8 +11,10 @@ run:
 
 issues:
   # Skip sound package in CI (requires ALSA on Linux)
-  exclude-dirs:
-    - internal/sound
+  exclude-rules:
+    - path: internal/sound
+      linters:
+        - typecheck
 
 linters:
   enable:
