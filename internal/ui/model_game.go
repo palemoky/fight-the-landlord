@@ -22,7 +22,6 @@ type GameModel struct {
 	height int
 
 	input *textinput.Model
-	timer timer.Model
 
 	// Game Data
 	roomCode         string
@@ -157,7 +156,7 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, myHand))
 	sb.WriteString("\n")
 
-	prompt := m.renderPrompt(onlineModel.playerID, onlineModel.phase)
+	prompt := m.renderPrompt(onlineModel.playerID, onlineModel.phase, &onlineModel.timer)
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, prompt))
 
 	// Chat Rendering
@@ -350,12 +349,12 @@ func (m *GameModel) renderPlayerHand(hand []card.Card) string {
 	return boxStyle.Render(content)
 }
 
-func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase) string {
+func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *timer.Model) string {
 	var sb strings.Builder
 
 	if phase == PhaseBidding {
 		if m.bidTurn == myPlayerID {
-			sb.WriteString(fmt.Sprintf("⏳ %s | 轮到你叫地主!\n", m.timer.View()))
+			sb.WriteString(fmt.Sprintf("⏳ %s | 轮到你叫地主!\n", timer.View()))
 		} else {
 			for _, p := range m.players {
 				if p.ID == m.bidTurn {
@@ -370,7 +369,7 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase) string {
 			if m.isLandlord {
 				icon = LandlordIcon
 			}
-			sb.WriteString(fmt.Sprintf("⏳ %s | 轮到你出牌! %s\n", m.timer.View(), icon))
+			sb.WriteString(fmt.Sprintf("⏳ %s | 轮到你出牌! %s\n", timer.View(), icon))
 		} else {
 			for _, p := range m.players {
 				if p.ID == m.currentTurn {
