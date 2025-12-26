@@ -311,8 +311,6 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *time
 
 func (m *GameModel) renderGameRules() string {
 	var sb strings.Builder
-	sb.WriteString("📖 斗地主游戏规则\n")
-	sb.WriteString(strings.Repeat("─", 60) + "\n\n")
 
 	sb.WriteString("【游戏目标】\n")
 	sb.WriteString("地主：先出完手中所有牌\n")
