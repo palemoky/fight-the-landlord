@@ -128,6 +128,8 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 	sb.WriteString(inputView)
 
 	// Render Chat Box (Bottom Right or similar)
+	// Render Chat Box (Bottom Right or similar)
+	var chatContent string
 	if len(m.chatHistory) > 0 {
 		var chatBuilder strings.Builder
 		count := len(m.chatHistory)
@@ -138,10 +140,19 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 		for i := start; i < count; i++ {
 			chatBuilder.WriteString(m.chatHistory[i] + "\n")
 		}
-		chatBox := boxStyle.Width(40).Render(chatBuilder.String())
-		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
-		sb.WriteString("\n")
+		chatContent = chatBuilder.String()
+	} else {
+		chatContent = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("暂无消息...")
 	}
+
+	chatBox := boxStyle.Width(50).Height(5).Render(
+		lipgloss.JoinVertical(lipgloss.Left,
+			lipgloss.NewStyle().Bold(true).Render("💬 聊天室"),
+			chatContent,
+		),
+	)
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
+	sb.WriteString("\n")
 
 	// Always show chat input if focused or placeholder if not
 	chatView := m.chatInput.View()

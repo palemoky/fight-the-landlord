@@ -21,6 +21,6 @@ func (m *OnlineModel) connectingView() string {
 // matchingView 显示匹配中状态
 func (m *OnlineModel) matchingView() string {
 	elapsed := time.Since(m.matchingStartTime).Seconds()
-	msg := fmt.Sprintf("🔍 正在寻找对手...\n\n已等待: %.0f 秒\n\n按 ESC 取消", elapsed)
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, boxStyle.Render(msg))
+	msg := fmt.Sprintf("🔍 正在匹配玩家...\n\n已等待: %.0f 秒\n\n按 ESC 取消", elapsed)
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, msg)
 }

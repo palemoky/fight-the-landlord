@@ -11,6 +11,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/client"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/sound"
 )
 
 // 游戏阶段
@@ -83,8 +84,11 @@ type OnlineModel struct {
 	lobby *LobbyModel
 	game  *GameModel
 
+	// Audio
+	soundManager *sound.SoundManager
+
 	// UI 组件
-	input  textinput.Model
+	input  *textinput.Model
 	timer  timer.Model
 	width  int
 	height int
@@ -104,11 +108,12 @@ func NewOnlineModel(serverURL string) *OnlineModel {
 	m := &OnlineModel{
 		client:            c,
 		phase:             PhaseConnecting,
-		input:             ti,
+		input:             &ti,
 		reconnectMaxTries: 5, // 最大重连次数
 		reconnectChan:     reconnectChan,
 		lobby:             NewLobbyModel(c, &ti), // Pass pointer to shared input
 		game:              NewGameModel(c, &ti),  // Pass pointer to shared input
+		soundManager:      sound.NewSoundManager(),
 	}
 
 	// 设置重连回调 - 通过 channel 发送消息到 Bubble Tea
@@ -131,6 +136,11 @@ func NewOnlineModel(serverURL string) *OnlineModel {
 }
 
 func (m *OnlineModel) Init() tea.Cmd {
+	// Initialize sound
+	go func() {
+		_ = m.soundManager.Init()
+	}()
+
 	return tea.Batch(
 		m.connectToServer(),
 		textinput.Blink,
@@ -253,7 +263,9 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.timer, cmd = m.timer.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.input, cmd = m.input.Update(msg)
+	// Update the input model (dereference the pointer)
+	newInput, cmd := m.input.Update(msg)
+	*m.input = newInput // Update the value at the pointer address
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)

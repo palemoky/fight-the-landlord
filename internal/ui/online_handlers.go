@@ -90,6 +90,7 @@ func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 	m.playerName = payload.PlayerName
 	m.input.Placeholder = "输入选项 (1-5) 或房间号"
 	m.input.Focus()
+	m.soundManager.Play("login")
 	return nil
 }
 
@@ -165,6 +166,7 @@ func (m *OnlineModel) handleMsgRoomJoined(msg *protocol.Message) tea.Cmd {
 	m.game.players = payload.Players
 	m.phase = PhaseWaiting
 	m.input.Placeholder = "输入 R 准备"
+	m.soundManager.Play("join")
 	return nil
 }
 
@@ -282,6 +284,7 @@ func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 		}
 	}
 
+	m.soundManager.Play("deal")
 	return nil
 }
 
@@ -324,6 +327,7 @@ func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 	if payload.PlayerID == m.playerID {
 		m.game.isLandlord = true
 	}
+	m.soundManager.Play("landlord")
 	return nil
 }
 
@@ -345,6 +349,7 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 			m.input.Placeholder = "没有能大过上家的牌，输入 PASS"
 		}
 		m.input.Focus()
+		m.soundManager.Play("turn")
 	} else {
 		// 不是自己的回合，显示等待提示
 		for _, p := range m.game.players {
@@ -385,6 +390,7 @@ func (m *OnlineModel) handleMsgCardPlayed(msg *protocol.Message) tea.Cmd {
 		}
 	}
 
+	m.soundManager.Play("play")
 	return nil
 }
 
@@ -395,6 +401,20 @@ func (m *OnlineModel) handleMsgGameOver(msg *protocol.Message) tea.Cmd {
 	m.game.winner = payload.WinnerName
 	m.game.winnerIsLandlord = payload.IsLandlord
 	m.input.Placeholder = "按回车返回大厅"
+
+	isWinner := false
+	if m.game.isLandlord && m.game.winnerIsLandlord {
+		isWinner = true
+	} else if !m.game.isLandlord && !m.game.winnerIsLandlord {
+		isWinner = true
+	}
+
+	if isWinner {
+		m.soundManager.Play("win")
+	} else {
+		m.soundManager.Play("lose")
+	}
+
 	return nil
 }
 
