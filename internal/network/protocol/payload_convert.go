@@ -331,6 +331,212 @@ func DecodePayload(msgType MessageType, data []byte, target any) error {
 			Code:    int(pb.Code),
 			Message: pb.Message,
 		}
+	case MsgReconnected:
+		var pbMsg pb.ReconnectedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		var gameState *GameStateDTO
+		if pbMsg.GameState != nil {
+			gameState = protoToGameStateDTO(pbMsg.GameState)
+		}
+		*target.(*ReconnectedPayload) = ReconnectedPayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+			RoomCode:   pbMsg.RoomCode,
+			GameState:  gameState,
+		}
+	case MsgPlayerOffline:
+		var pbMsg pb.PlayerOfflinePayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*PlayerOfflinePayload) = PlayerOfflinePayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+			Timeout:    int(pbMsg.Timeout),
+		}
+	case MsgPlayerOnline:
+		var pbMsg pb.PlayerOnlinePayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*PlayerOnlinePayload) = PlayerOnlinePayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+		}
+	case MsgRoomCreated:
+		var pbMsg pb.RoomCreatedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*RoomCreatedPayload) = RoomCreatedPayload{
+			RoomCode: pbMsg.RoomCode,
+			Player:   protoToPlayerInfo(pbMsg.Player),
+		}
+	case MsgRoomJoined:
+		var pbMsg pb.RoomJoinedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*RoomJoinedPayload) = RoomJoinedPayload{
+			RoomCode: pbMsg.RoomCode,
+			Player:   protoToPlayerInfo(pbMsg.Player),
+			Players:  protoToPlayerInfos(pbMsg.Players),
+		}
+	case MsgPlayerJoined:
+		var pbMsg pb.PlayerJoinedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*PlayerJoinedPayload) = PlayerJoinedPayload{
+			Player: protoToPlayerInfo(pbMsg.Player),
+		}
+	case MsgPlayerLeft:
+		var pbMsg pb.PlayerLeftPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*PlayerLeftPayload) = PlayerLeftPayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+		}
+	case MsgPlayerReady:
+		var pbMsg pb.PlayerReadyPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*PlayerReadyPayload) = PlayerReadyPayload{
+			PlayerID: pbMsg.PlayerId,
+			Ready:    pbMsg.Ready,
+		}
+	case MsgGameStart:
+		var pbMsg pb.GameStartPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*GameStartPayload) = GameStartPayload{
+			Players: protoToPlayerInfos(pbMsg.Players),
+		}
+	case MsgDealCards:
+		var pbMsg pb.DealCardsPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*DealCardsPayload) = DealCardsPayload{
+			Cards:         protoToCards(pbMsg.Cards),
+			LandlordCards: protoToCards(pbMsg.LandlordCards),
+		}
+	case MsgBidTurn:
+		var pbMsg pb.BidTurnPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*BidTurnPayload) = BidTurnPayload{
+			PlayerID: pbMsg.PlayerId,
+			Timeout:  int(pbMsg.Timeout),
+		}
+	case MsgBidResult:
+		var pbMsg pb.BidResultPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*BidResultPayload) = BidResultPayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+			Bid:        pbMsg.Bid,
+		}
+	case MsgLandlord:
+		var pbMsg pb.LandlordPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*LandlordPayload) = LandlordPayload{
+			PlayerID:      pbMsg.PlayerId,
+			PlayerName:    pbMsg.PlayerName,
+			LandlordCards: protoToCards(pbMsg.LandlordCards),
+		}
+	case MsgPlayTurn:
+		var pbMsg pb.PlayTurnPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*PlayTurnPayload) = PlayTurnPayload{
+			PlayerID: pbMsg.PlayerId,
+			Timeout:  int(pbMsg.Timeout),
+			MustPlay: pbMsg.MustPlay,
+			CanBeat:  pbMsg.CanBeat,
+		}
+	case MsgCardPlayed:
+		var pbMsg pb.CardPlayedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*CardPlayedPayload) = CardPlayedPayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+			Cards:      protoToCards(pbMsg.Cards),
+			CardsLeft:  int(pbMsg.CardsLeft),
+			HandType:   pbMsg.HandType,
+		}
+	case MsgPlayerPass:
+		var pbMsg pb.PlayerPassPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*PlayerPassPayload) = PlayerPassPayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+		}
+	case MsgGameOver:
+		var pbMsg pb.GameOverPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*GameOverPayload) = GameOverPayload{
+			WinnerID:    pbMsg.WinnerId,
+			WinnerName:  pbMsg.WinnerName,
+			IsLandlord:  pbMsg.IsLandlord,
+			PlayerHands: protoToPlayerHands(pbMsg.PlayerHands),
+		}
+	case MsgStatsResult:
+		var pbMsg pb.StatsResultPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*StatsResultPayload) = StatsResultPayload{
+			PlayerID:      pbMsg.PlayerId,
+			PlayerName:    pbMsg.PlayerName,
+			TotalGames:    int(pbMsg.TotalGames),
+			Wins:          int(pbMsg.Wins),
+			Losses:        int(pbMsg.Losses),
+			WinRate:       pbMsg.WinRate,
+			LandlordGames: int(pbMsg.LandlordGames),
+			LandlordWins:  int(pbMsg.LandlordWins),
+			FarmerGames:   int(pbMsg.FarmerGames),
+			FarmerWins:    int(pbMsg.FarmerWins),
+			Score:         int(pbMsg.Score),
+			Rank:          int(pbMsg.Rank),
+			CurrentStreak: int(pbMsg.CurrentStreak),
+			MaxWinStreak:  int(pbMsg.MaxWinStreak),
+		}
+	case MsgLeaderboardResult:
+		var pbMsg pb.LeaderboardResultPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*LeaderboardResultPayload) = LeaderboardResultPayload{
+			Type:    pbMsg.Type,
+			Entries: protoToLeaderboardEntries(pbMsg.Entries),
+		}
+	case MsgRoomListResult:
+		var pbMsg pb.RoomListResultPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*RoomListResultPayload) = RoomListResultPayload{
+			Rooms: protoToRoomListItems(pbMsg.Rooms),
+		}
 
 	default:
 		// 未知类型，回退到 JSON
@@ -441,6 +647,85 @@ func roomListItemsToProto(rooms []RoomListItem) []*pb.RoomListItem {
 			RoomCode:    r.RoomCode,
 			PlayerCount: int32(r.PlayerCount),
 			MaxPlayers:  int32(r.MaxPlayers),
+		}
+	}
+	return result
+}
+
+// protoToPlayerInfo converts protobuf PlayerInfo to Go struct
+func protoToPlayerInfo(pb *pb.PlayerInfo) PlayerInfo {
+	return PlayerInfo{
+		ID:         pb.Id,
+		Name:       pb.Name,
+		Seat:       int(pb.Seat),
+		Ready:      pb.Ready,
+		IsLandlord: pb.IsLandlord,
+		CardsCount: int(pb.CardsCount),
+		Online:     pb.Online,
+	}
+}
+
+// protoToPlayerInfos converts protobuf PlayerInfo slice to Go struct slice
+func protoToPlayerInfos(pbs []*pb.PlayerInfo) []PlayerInfo {
+	result := make([]PlayerInfo, len(pbs))
+	for i, pb := range pbs {
+		result[i] = protoToPlayerInfo(pb)
+	}
+	return result
+}
+
+// protoToGameStateDTO converts protobuf GameStateDTO to Go struct
+func protoToGameStateDTO(pb *pb.GameStateDTO) *GameStateDTO {
+	return &GameStateDTO{
+		Phase:         pb.Phase,
+		Players:       protoToPlayerInfos(pb.Players),
+		Hand:          protoToCards(pb.Hand),
+		LandlordCards: protoToCards(pb.LandlordCards),
+		CurrentTurn:   pb.CurrentTurn,
+		LastPlayed:    protoToCards(pb.LastPlayed),
+		LastPlayerID:  pb.LastPlayerId,
+		MustPlay:      pb.MustPlay,
+		CanBeat:       pb.CanBeat,
+	}
+}
+
+// protoToPlayerHands converts protobuf PlayerHand slice to Go struct slice
+func protoToPlayerHands(pbs []*pb.PlayerHand) []PlayerHand {
+	result := make([]PlayerHand, len(pbs))
+	for i, pb := range pbs {
+		result[i] = PlayerHand{
+			PlayerID:   pb.PlayerId,
+			PlayerName: pb.PlayerName,
+			Cards:      protoToCards(pb.Cards),
+		}
+	}
+	return result
+}
+
+// protoToLeaderboardEntries converts protobuf LeaderboardEntry slice to Go struct slice
+func protoToLeaderboardEntries(pbs []*pb.LeaderboardEntry) []LeaderboardEntry {
+	result := make([]LeaderboardEntry, len(pbs))
+	for i, pb := range pbs {
+		result[i] = LeaderboardEntry{
+			Rank:       int(pb.Rank),
+			PlayerID:   pb.PlayerId,
+			PlayerName: pb.PlayerName,
+			Score:      int(pb.Score),
+			Wins:       int(pb.Wins),
+			WinRate:    pb.WinRate,
+		}
+	}
+	return result
+}
+
+// protoToRoomListItems converts protobuf RoomListItem slice to Go struct slice
+func protoToRoomListItems(pbs []*pb.RoomListItem) []RoomListItem {
+	result := make([]RoomListItem, len(pbs))
+	for i, pb := range pbs {
+		result[i] = RoomListItem{
+			RoomCode:    pb.RoomCode,
+			PlayerCount: int(pb.PlayerCount),
+			MaxPlayers:  int(pb.MaxPlayers),
 		}
 	}
 	return result
