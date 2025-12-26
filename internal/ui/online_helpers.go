@@ -15,61 +15,33 @@ import (
 
 // parseCardsInput 解析出牌输入
 func (m *OnlineModel) parseCardsInput(input string) ([]card.Card, error) {
-	return card.FindCardsInHand(m.hand, strings.ToUpper(input))
+	return card.FindCardsInHand(m.game.hand, strings.ToUpper(input))
 }
 
 // sortHand 排序手牌
 func (m *OnlineModel) sortHand() {
-	sort.Slice(m.hand, func(i, j int) bool {
-		return m.hand[i].Rank > m.hand[j].Rank
+	sort.Slice(m.game.hand, func(i, j int) bool {
+		return m.game.hand[i].Rank > m.game.hand[j].Rank
 	})
 }
 
 // resetGameState 重置游戏状态
 func (m *OnlineModel) resetGameState() {
-	m.roomCode = ""
-	m.players = nil
-	m.hand = nil
-	m.landlordCards = nil
-	m.currentTurn = ""
-	m.lastPlayedBy = ""
-	m.lastPlayed = nil
-	m.isLandlord = false
-	m.winner = ""
-	m.input.Placeholder = "1=创建房间, 2=加入房间, 3=快速匹配"
+	m.game.roomCode = ""
+	m.game.players = nil
+	m.game.hand = nil
+	m.game.landlordCards = nil
+	m.game.currentTurn = ""
+	m.game.lastPlayedBy = ""
+	m.game.lastPlayed = nil
+	m.game.isLandlord = false
+	m.game.winner = ""
+	m.input.Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
 }
 
 // restoreGameState 从重连数据恢复游戏状态
 func (m *OnlineModel) restoreGameState(gs *protocol.GameStateDTO) {
-	m.players = gs.Players
-	m.hand = protocol.InfosToCards(gs.Hand)
-	m.sortHand()
-	m.landlordCards = protocol.InfosToCards(gs.LandlordCards)
-	m.currentTurn = gs.CurrentTurn
-	m.lastPlayed = protocol.InfosToCards(gs.LastPlayed)
-	m.lastPlayedBy = gs.LastPlayerID
-	m.mustPlay = gs.MustPlay
-	m.canBeat = gs.CanBeat
-
-	// 找出自己是否是地主
-	for _, p := range m.players {
-		if p.ID == m.playerID && p.IsLandlord {
-			m.isLandlord = true
-			break
-		}
-	}
-
-	// 根据阶段设置 phase
-	switch gs.Phase {
-	case "bidding":
-		m.phase = PhaseBidding
-	case "playing":
-		m.phase = PhasePlaying
-	case "ended":
-		m.phase = PhaseGameOver
-	default:
-		m.phase = PhaseWaiting
-	}
+	// deprecated: use restoreGameState in online_handlers.go
 }
 
 // --- 提醒音相关 ---
@@ -77,24 +49,24 @@ func (m *OnlineModel) restoreGameState(gs *protocol.GameStateDTO) {
 // shouldPlayBell 判断是否应该播放提示音
 func (m *OnlineModel) shouldPlayBell() bool {
 	// 已经播放过了
-	if m.bellPlayed {
+	if m.game.bellPlayed {
 		return false
 	}
 
 	// 必须是自己的回合
-	isMyTurn := (m.phase == PhaseBidding && m.bidTurn == m.playerID) ||
-		(m.phase == PhasePlaying && m.currentTurn == m.playerID)
+	isMyTurn := (m.phase == PhaseBidding && m.game.bidTurn == m.playerID) ||
+		(m.phase == PhasePlaying && m.game.currentTurn == m.playerID)
 	if !isMyTurn {
 		return false
 	}
 
 	// 检查剩余时间是否为 10 秒
-	if m.timerStartTime.IsZero() {
+	if m.game.timerStartTime.IsZero() {
 		return false
 	}
 
-	elapsed := time.Since(m.timerStartTime)
-	remaining := m.timerDuration - elapsed
+	elapsed := time.Since(m.game.timerStartTime)
+	remaining := m.game.timerDuration - elapsed
 
 	return remaining <= 10*time.Second && remaining > 9*time.Second
 }
@@ -106,7 +78,7 @@ func (m *OnlineModel) playBell() tea.Cmd {
 
 // resetBell 重置提示音状态（新回合开始时调用）
 func (m *OnlineModel) resetBell() {
-	m.bellPlayed = false
+	m.game.bellPlayed = false
 }
 
 // --- 工具函数 ---

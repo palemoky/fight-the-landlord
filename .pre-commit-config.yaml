@@ -26,6 +26,7 @@ repos:
         types: [go]
         stages: [pre-commit]
         pass_filenames: true
+        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
       # Format Go imports
       - id: goimports
@@ -35,6 +36,7 @@ repos:
         types: [go]
         stages: [pre-commit]
         pass_filenames: true
+        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
       # Run go mod tidy
       - id: go-mod-tidy

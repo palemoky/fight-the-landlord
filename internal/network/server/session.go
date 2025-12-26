@@ -311,11 +311,18 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 	// 从手牌中移除
 	currentPlayer.Hand = card.RemoveCards(currentPlayer.Hand, cards)
 
+	// 对出的牌进行排序（从大到小），确保显示顺序正确
+	sortedCards := make([]card.Card, len(cards))
+	copy(sortedCards, cards)
+	sort.Slice(sortedCards, func(i, j int) bool {
+		return sortedCards[i].Rank > sortedCards[j].Rank
+	})
+
 	// 广播出牌信息
 	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgCardPlayed, protocol.CardPlayedPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
-		Cards:      cardInfos,
+		Cards:      protocol.CardsToInfos(sortedCards), // 使用排序后的牌
 		CardsLeft:  len(currentPlayer.Hand),
 		HandType:   handToPlay.Type.String(),
 	}))
@@ -698,7 +705,7 @@ var (
 	ErrGameNotStart = &RoomError{Code: protocol.ErrCodeGameNotStart, Message: "游戏尚未开始"}
 	ErrNotYourTurn  = &RoomError{Code: protocol.ErrCodeNotYourTurn, Message: "还没轮到您"}
 	ErrInvalidCards = &RoomError{Code: protocol.ErrCodeInvalidCards, Message: "无效的牌型"}
-	ErrCannotBeat   = &RoomError{Code: protocol.ErrCodeCannotBeat, Message: "您的牌打不过上家"}
+	ErrCannotBeat   = &RoomError{Code: protocol.ErrCodeCannotBeat, Message: "您的牌大不过上家"}
 	ErrMustPlay     = &RoomError{Code: protocol.ErrCodeMustPlay, Message: "您必须出牌"}
 )
 

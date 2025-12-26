@@ -21,6 +21,9 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // 允许所有来源，生产环境需要限制
 	},
+	// 启用 permessage-deflate 压缩扩展
+	// 可减少 40-70% 流量，gorilla/websocket 会自动协商压缩参数
+	EnableCompression: true,
 }
 
 // Server WebSocket 服务器
@@ -177,6 +180,23 @@ func (s *Server) unregisterClient(client *Client) {
 	if _, ok := s.clients[client.ID]; ok {
 		delete(s.clients, client.ID)
 		log.Printf("❌ 玩家 %s (%s) 已断开", client.Name, client.ID)
+	}
+}
+
+// GetOnlineCount 获取在线人数（按需调用）
+func (s *Server) GetOnlineCount() int {
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+	return len(s.clients)
+}
+
+// Broadcast 广播消息给所有客户端
+func (s *Server) Broadcast(msg *protocol.Message) {
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+
+	for _, client := range s.clients {
+		client.SendMessage(msg)
 	}
 }
 

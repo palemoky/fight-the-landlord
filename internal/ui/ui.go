@@ -313,13 +313,13 @@ func (m model) renderTurnPrompt() string {
 	// 根据轮到谁来显示不同的提示和计时器
 	prompt := fmt.Sprintf("⏳ %s", m.timer.View())
 	if m.game.CurrentTurn == 0 {
-		sb.WriteString(fmt.Sprintf("轮到你了, %s! %s\n", currentPlayer.Name, prompt))
+		fmt.Fprintf(&sb, "轮到你了, %s! %s\n", currentPlayer.Name, prompt)
 		sb.WriteString(m.input.View())
 		if m.error != "" {
 			sb.WriteString("\n" + errorStyle.Render(m.error))
 		}
 	} else { // 等待其他玩家
-		sb.WriteString(fmt.Sprintf("等待 %s 出牌...", currentPlayer.Name))
+		fmt.Fprintf(&sb, "等待 %s 出牌...", currentPlayer.Name)
 	}
 	return promptStyle.Render(sb.String())
 }

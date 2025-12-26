@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"sync"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/palemoky/fight-the-landlord/internal/logger"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
@@ -42,11 +42,12 @@ type Client struct {
 	Latency int64
 
 	// 回调
-	OnMessage       func(*protocol.Message) // 消息回调
-	OnError         func(error)             // 错误回调
-	OnClose         func()                  // 关闭回调
-	OnReconnect     func()                  // 重连成功回调
-	OnLatencyUpdate func(int64)             // 延迟更新回调
+	OnMessage       func(*protocol.Message)     // 消息回调
+	OnError         func(error)                 // 错误回调
+	OnClose         func()                      // 关闭回调
+	OnReconnecting  func(attempt, maxTries int) // 正在重连回调
+	OnReconnect     func()                      // 重连成功回调
+	OnLatencyUpdate func(int64)                 // 延迟更新回调
 
 	mu             sync.RWMutex
 	closed         bool
@@ -67,7 +68,8 @@ func NewClient(serverURL string) *Client {
 // Connect 连接服务器
 func (c *Client) Connect() error {
 	dialer := websocket.Dialer{
-		HandshakeTimeout: 10 * time.Second,
+		HandshakeTimeout:  10 * time.Second,
+		EnableCompression: true, // 启用压缩
 	}
 
 	conn, _, err := dialer.Dial(c.ServerURL, nil)
@@ -87,6 +89,10 @@ func (c *Client) Connect() error {
 // readPump 从服务器读取消息
 func (c *Client) readPump() {
 	defer func() {
+		if r := recover(); r != nil {
+			logger.LogPanic(r)
+			log.Printf("[PANIC] readPump panic recovered: %v", r)
+		}
 		// 尝试重连
 		if c.ReconnectToken != "" && !c.reconnecting.Load() {
 			go c.tryReconnect()
@@ -124,26 +130,25 @@ func (c *Client) readPump() {
 		// 处理连接成功消息
 		if msg.Type == protocol.MsgConnected {
 			var payload protocol.ConnectedPayload
-			if err := json.Unmarshal(msg.Payload, &payload); err == nil {
+			if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
 				c.PlayerID = payload.PlayerID
 				c.PlayerName = payload.PlayerName
 				c.ReconnectToken = payload.ReconnectToken
 			}
 		}
 
-		// 处理重连成功消息
+		// 处理重连成功消息 - 标记状态但不立即回调
+		isReconnected := false
 		if msg.Type == protocol.MsgReconnected {
 			c.reconnecting.Store(false)
 			c.reconnectCount = 0
-			if c.OnReconnect != nil {
-				c.OnReconnect()
-			}
+			isReconnected = true
 		}
 
 		// 处理 pong 消息计算延迟
 		if msg.Type == protocol.MsgPong {
 			var payload protocol.PongPayload
-			if err := json.Unmarshal(msg.Payload, &payload); err == nil {
+			if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
 				latency := time.Now().UnixMilli() - payload.ClientTimestamp
 				c.Latency = latency
 				if c.OnLatencyUpdate != nil {
@@ -162,6 +167,11 @@ func (c *Client) readPump() {
 		case c.receive <- msg:
 		default:
 		}
+
+		// 重连成功回调放在最后，确保消息已经发送到 channel
+		if isReconnected && c.OnReconnect != nil {
+			c.OnReconnect()
+		}
 	}
 }
 
@@ -169,6 +179,10 @@ func (c *Client) readPump() {
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		if r := recover(); r != nil {
+			logger.LogPanic(r)
+			log.Printf("[PANIC] writePump panic recovered: %v", r)
+		}
 		ticker.Stop()
 		_ = c.conn.Close()
 	}()
@@ -182,7 +196,7 @@ func (c *Client) writePump() {
 				return
 			}
 
-			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			if err := c.conn.WriteMessage(websocket.BinaryMessage, message); err != nil {
 				return
 			}
 
@@ -374,25 +388,45 @@ func (c *Client) StartHeartbeat() {
 
 // tryReconnect 尝试重连
 func (c *Client) tryReconnect() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.LogPanic(r)
+			log.Printf("[PANIC] tryReconnect panic recovered: %v", r)
+			c.reconnecting.Store(false)
+		}
+	}()
+
 	if c.reconnecting.Load() {
 		return
 	}
 	c.reconnecting.Store(true)
 
+	// 指数退避重连策略
+	backoff := reconnectInterval
+
 	for c.reconnectCount < maxReconnectAttempts {
 		c.reconnectCount++
-		log.Printf("🔄 尝试重连 (%d/%d)...", c.reconnectCount, maxReconnectAttempts)
+		// 通过回调通知 UI 正在重连
+		if c.OnReconnecting != nil {
+			c.OnReconnecting(c.reconnectCount, maxReconnectAttempts)
+		}
 
-		time.Sleep(reconnectInterval)
+		time.Sleep(backoff)
+
+		// 计算下一次退避时间 (最大 30 秒)
+		backoff *= 2
+		if backoff > 30*time.Second {
+			backoff = 30 * time.Second
+		}
 
 		// 创建新连接
 		dialer := websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
+			EnableCompression: true, // 启用压缩
 		}
 
 		conn, _, err := dialer.Dial(c.ServerURL, nil)
 		if err != nil {
-			log.Printf("重连失败: %v", err)
 			continue
 		}
 
@@ -412,17 +446,15 @@ func (c *Client) tryReconnect() {
 		// 发送重连请求
 		time.Sleep(100 * time.Millisecond)
 		if err := c.Reconnect(); err != nil {
-			log.Printf("发送重连请求失败: %v", err)
 			_ = c.conn.Close()
 			continue
 		}
 
-		log.Printf("✅ 重连成功")
+		// 重连成功（通过 MsgReconnected 消息通知 UI）
 		return
 	}
 
 	// 重连失败
-	log.Printf("❌ 重连失败，已达最大尝试次数")
 	c.reconnecting.Store(false)
 	c.Close()
 	if c.OnClose != nil {

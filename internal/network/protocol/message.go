@@ -31,9 +31,11 @@ const (
 	MsgPass      MessageType = "pass"       // 不出
 
 	// 排行榜
-	MsgGetStats       MessageType = "get_stats"       // 获取个人统计
-	MsgGetLeaderboard MessageType = "get_leaderboard" // 获取排行榜
-	MsgGetRoomList    MessageType = "get_room_list"   // 获取房间列表
+	MsgGetStats       MessageType = "get_stats"        // 获取个人统计
+	MsgGetLeaderboard MessageType = "get_leaderboard"  // 获取排行榜
+	MsgGetRoomList    MessageType = "get_room_list"    // 获取房间列表
+	MsgGetOnlineCount MessageType = "get_online_count" // 获取在线人数
+	MsgChat           MessageType = "chat"             // 聊天消息
 )
 
 // 服务端 → 客户端 消息类型
@@ -44,6 +46,7 @@ const (
 	MsgPong          MessageType = "pong"           // 心跳 pong
 	MsgPlayerOffline MessageType = "player_offline" // 玩家掉线通知
 	MsgPlayerOnline  MessageType = "player_online"  // 玩家上线通知
+	MsgOnlineCount   MessageType = "online_count"   // 在线人数更新
 
 	// 房间相关
 	MsgRoomCreated  MessageType = "room_created"  // 房间创建成功
@@ -156,6 +159,11 @@ type PlayerOfflinePayload struct {
 type PlayerOnlinePayload struct {
 	PlayerID   string `json:"player_id"`
 	PlayerName string `json:"player_name"`
+}
+
+// OnlineCountPayload 在线人数更新
+type OnlineCountPayload struct {
+	Count int `json:"count"` // 当前在线人数
 }
 
 // RoomCreatedPayload 房间创建成功响应
@@ -357,6 +365,6 @@ var ErrorMessages = map[int]string{
 	ErrCodeGameNotStart: "游戏尚未开始",
 	ErrCodeNotYourTurn:  "还没轮到您",
 	ErrCodeInvalidCards: "无效的牌型",
-	ErrCodeCannotBeat:   "您的牌打不过上家",
+	ErrCodeCannotBeat:   "您的牌大不过上家",
 	ErrCodeMustPlay:     "您必须出牌",
 }

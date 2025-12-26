@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package protocol;
+
+option go_package = "github.com/palemoky/fight-the-landlord/internal/network/protocol/pb";
+
+import "internal/network/protocol/common.proto";
+
+// ========== 服务端响应消息 ==========
+
+// ConnectedPayload 连接成功响应
+message ConnectedPayload {
+  string player_id = 1;
+  string player_name = 2;
+  string reconnect_token = 3;
+}
+
+// ReconnectedPayload 重连成功响应
+message ReconnectedPayload {
+  string player_id = 1;
+  string player_name = 2;
+  string room_code = 3;
+  GameStateDTO game_state = 4;
+}
+
+// PongPayload 心跳响应
+message PongPayload {
+  int64 client_timestamp = 1;
+  int64 server_timestamp = 2;
+}
+
+// PlayerOfflinePayload 玩家掉线通知
+message PlayerOfflinePayload {
+  string player_id = 1;
+  string player_name = 2;
+  int32 timeout = 3;
+}
+
+// PlayerOnlinePayload 玩家上线通知
+message PlayerOnlinePayload {
+  string player_id = 1;
+  string player_name = 2;
+}
+
+// OnlineCountPayload 在线人数更新
+message OnlineCountPayload {
+  int32 count = 1;
+}
+
+// ErrorPayload 错误响应
+message ErrorPayload {
+  int32 code = 1;
+  string message = 2;
+}
+
+// StatsResultPayload 个人统计结果
+message StatsResultPayload {
+  string player_id = 1;
+  string player_name = 2;
+  int32 total_games = 3;
+  int32 wins = 4;
+  int32 losses = 5;
+  double win_rate = 6;
+  int32 landlord_games = 7;
+  int32 landlord_wins = 8;
+  int32 farmer_games = 9;
+  int32 farmer_wins = 10;
+  int32 score = 11;
+  int32 rank = 12;
+  int32 current_streak = 13;
+  int32 max_win_streak = 14;
+}
+
+// LeaderboardResultPayload 排行榜结果
+message LeaderboardResultPayload {
+  string type = 1;
+  repeated LeaderboardEntry entries = 2;
+}
+
+// RoomListResultPayload 房间列表结果
+message RoomListResultPayload {
+  repeated RoomListItem rooms = 1;
+}

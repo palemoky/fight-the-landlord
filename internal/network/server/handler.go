@@ -56,6 +56,10 @@ func (h *Handler) Handle(client *Client, msg *protocol.Message) {
 		h.handleGetLeaderboard(client, msg)
 	case protocol.MsgGetRoomList:
 		h.handleGetRoomList(client)
+	case protocol.MsgGetOnlineCount:
+		h.handleGetOnlineCount(client)
+	case protocol.MsgChat:
+		h.handleChat(client, msg)
 
 	default:
 		log.Printf("未知消息类型: %s", msg.Type)
@@ -480,5 +484,14 @@ func (h *Handler) handleGetRoomList(client *Client) {
 
 	client.SendMessage(protocol.MustNewMessage(protocol.MsgRoomListResult, protocol.RoomListResultPayload{
 		Rooms: rooms,
+	}))
+}
+
+// handleGetOnlineCount 获取在线人数（按需）
+func (h *Handler) handleGetOnlineCount(client *Client) {
+	count := h.server.GetOnlineCount()
+
+	client.SendMessage(protocol.MustNewMessage(protocol.MsgOnlineCount, protocol.OnlineCountPayload{
+		Count: count,
 	}))
 }

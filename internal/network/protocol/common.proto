@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package protocol;
+
+option go_package = "github.com/palemoky/fight-the-landlord/internal/network/protocol/pb";
+
+// ========== 通用数据结构 ==========
+
+// CardInfo 牌信息
+message CardInfo {
+  int32 suit = 1;  // 花色: 0=黑桃, 1=红心, 2=梅花, 3=方块, 4=王
+  int32 rank = 2;  // 点数: 3-17 (3-2, 小王=16, 大王=17)
+  int32 color = 3; // 颜色: 0=黑, 1=红
+}
+
+// PlayerInfo 玩家信息
+message PlayerInfo {
+  string id = 1;
+  string name = 2;
+  int32 seat = 3;        // 座位号 0-2
+  bool ready = 4;        // 是否准备
+  bool is_landlord = 5;  // 是否是地主
+  int32 cards_count = 6; // 手牌数量
+  bool online = 7;       // 是否在线
+}
+
+// PlayerHand 玩家手牌信息（用于游戏结束展示）
+message PlayerHand {
+  string player_id = 1;
+  string player_name = 2;
+  repeated CardInfo cards = 3;
+}
+
+// GameStateDTO 游戏状态数据传输对象（用于重连恢复）
+message GameStateDTO {
+  string phase = 1;                      // bidding/playing
+  repeated PlayerInfo players = 2;       // 所有玩家信息
+  repeated CardInfo hand = 3;            // 自己的手牌
+  repeated CardInfo landlord_cards = 4;  // 底牌
+  string current_turn = 5;               // 当前回合玩家 ID
+  repeated CardInfo last_played = 6;     // 上家出的牌
+  string last_player_id = 7;             // 上家 ID
+  bool must_play = 8;                    // 是否必须出牌
+  bool can_beat = 9;                     // 是否能打过
+}
+
+// LeaderboardEntry 排行榜条目
+message LeaderboardEntry {
+  int32 rank = 1;
+  string player_id = 2;
+  string player_name = 3;
+  int32 score = 4;
+  int32 wins = 5;
+  double win_rate = 6;
+}
+
+// RoomListItem 房间列表项
+message RoomListItem {
+  string room_code = 1;
+  int32 player_count = 2;
+  int32 max_players = 3;
+}
