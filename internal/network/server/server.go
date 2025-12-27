@@ -290,16 +290,16 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 	for time.Now().Before(deadline) {
 		activeGames := s.roomManager.GetActiveGamesCount()
 		if activeGames == 0 {
-			log.Println("✅ 所有游戏已结束")
+			log.Println("✅ 所有房间已结束")
 			break
 		}
-		log.Printf("⏳ 等待 %d 个游戏结束...", activeGames)
+		log.Printf("⏳ 等待 %d 个房间结束...", activeGames)
 		<-ticker.C
 	}
 
 	// 3. 超时检查
 	if activeGames := s.roomManager.GetActiveGamesCount(); activeGames > 0 {
-		log.Printf("⚠️ 超时，仍有 %d 个游戏进行中，强制关闭", activeGames)
+		log.Printf("⚠️ 超时，仍有 %d 个房间进行中，强制关闭", activeGames)
 	}
 
 	// 4. 发送通知（如果配置了）
