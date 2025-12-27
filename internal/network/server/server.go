@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -300,8 +302,56 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 		log.Printf("⚠️ 超时，仍有 %d 个游戏进行中，强制关闭", activeGames)
 	}
 
-	// 4. 关闭服务器
+	// 4. 发送通知（如果配置了）
+	s.sendShutdownNotification()
+
+	// 5. 关闭服务器
 	s.Shutdown()
+}
+
+// sendShutdownNotification 发送关闭通知到小米音箱
+func (s *Server) sendShutdownNotification() {
+	// 从环境变量读取小米音箱配置
+	speakerURL := os.Getenv("XIAOMI_SPEAKER_URL")
+	if speakerURL == "" {
+		return // 未配置，跳过
+	}
+
+	message := "斗地主服务器已优雅关闭，开始升级吧！"
+
+	// 发送 POST 请求
+	payload := fmt.Sprintf(`{"text":"%s"}`, message)
+	req, err := http.NewRequest("POST", speakerURL, strings.NewReader(payload))
+	if err != nil {
+		log.Printf("创建通知请求失败: %v", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	// 添加认证 Headers（如果配置了）
+	if apiSecret := os.Getenv("XIAOMI_SPEAKER_API_SECRET"); apiSecret != "" {
+		req.Header.Set("Speaker-API-Secret", apiSecret)
+	}
+	if cfClientID := os.Getenv("XIAOMI_SPEAKER_CF_CLIENT_ID"); cfClientID != "" {
+		req.Header.Set("CF-Access-Client-Id", cfClientID)
+	}
+	if cfClientSecret := os.Getenv("XIAOMI_SPEAKER_CF_CLIENT_SECRET"); cfClientSecret != "" {
+		req.Header.Set("CF-Access-Client-Secret", cfClientSecret)
+	}
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("发送通知失败: %v", err)
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusOK {
+		log.Println("🔔 已发送关闭通知到小米音箱")
+	} else {
+		log.Printf("通知响应异常: %d", resp.StatusCode)
+	}
 }
 
 // Shutdown 关闭服务器
