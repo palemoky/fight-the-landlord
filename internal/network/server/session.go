@@ -415,7 +415,7 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 
 	// 延迟 30 秒后清理房间，让玩家有时间查看结果
 	go func() {
-		time.Sleep(30 * time.Second)
+		time.Sleep(gs.room.server.config.Game.RoomCleanupDelayDuration())
 
 		// 让所有玩家离开房间
 		gs.room.mu.RLock()

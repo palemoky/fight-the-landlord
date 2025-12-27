@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -33,9 +34,12 @@ type RedisConfig struct {
 
 // GameConfig 游戏配置
 type GameConfig struct {
-	TurnTimeout int `yaml:"turn_timeout"` // 出牌超时（秒）
-	BidTimeout  int `yaml:"bid_timeout"`  // 叫地主超时（秒）
-	RoomTimeout int `yaml:"room_timeout"` // 房间等待超时（分钟）
+	TurnTimeout           int `yaml:"turn_timeout"`            // 出牌超时（秒）
+	BidTimeout            int `yaml:"bid_timeout"`             // 叫地主超时（秒）
+	RoomTimeout           int `yaml:"room_timeout"`            // 房间等待超时（分钟）
+	ShutdownTimeout       int `yaml:"shutdown_timeout"`        // 优雅关闭超时（分钟）
+	ShutdownCheckInterval int `yaml:"shutdown_check_interval"` // 优雅关闭检测间隔（秒）
+	RoomCleanupDelay      int `yaml:"room_cleanup_delay"`      // 游戏结束后房间清理延迟（秒）
 }
 
 // SecurityConfig 安全配置
@@ -70,6 +74,21 @@ func (c *GameConfig) BidTimeoutDuration() time.Duration {
 // RoomTimeoutDuration 返回房间等待超时时长
 func (c *GameConfig) RoomTimeoutDuration() time.Duration {
 	return time.Duration(c.RoomTimeout) * time.Minute
+}
+
+// ShutdownTimeoutDuration 返回优雅关闭超时时长
+func (c *GameConfig) ShutdownTimeoutDuration() time.Duration {
+	return time.Duration(c.ShutdownTimeout) * time.Minute
+}
+
+// ShutdownCheckIntervalDuration 返回优雅关闭检测间隔
+func (c *GameConfig) ShutdownCheckIntervalDuration() time.Duration {
+	return time.Duration(c.ShutdownCheckInterval) * time.Second
+}
+
+// RoomCleanupDelayDuration 返回房间清理延迟时长
+func (c *GameConfig) RoomCleanupDelayDuration() time.Duration {
+	return time.Duration(c.RoomCleanupDelay) * time.Second
 }
 
 // BanDurationTime 返回封禁时长
@@ -139,6 +158,26 @@ func loadFromEnv(cfg *Config) {
 			cfg.Game.BidTimeout = t
 		}
 	}
+	if v := os.Getenv("GAME_ROOM_TIMEOUT"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.RoomTimeout = t
+		}
+	}
+	if v := os.Getenv("GAME_SHUTDOWN_TIMEOUT"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.ShutdownTimeout = t
+		}
+	}
+	if v := os.Getenv("GAME_SHUTDOWN_CHECK_INTERVAL"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.ShutdownCheckInterval = t
+		}
+	}
+	if v := os.Getenv("GAME_ROOM_CLEANUP_DELAY"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.RoomCleanupDelay = t
+		}
+	}
 
 	// Security
 	if v := os.Getenv("SECURITY_ALLOWED_ORIGINS"); v != "" {
@@ -179,6 +218,15 @@ func setDefaults(cfg *Config) {
 	if cfg.Game.RoomTimeout == 0 {
 		cfg.Game.RoomTimeout = 10
 	}
+	if cfg.Game.ShutdownTimeout == 0 {
+		cfg.Game.ShutdownTimeout = 30
+	}
+	if cfg.Game.ShutdownCheckInterval == 0 {
+		cfg.Game.ShutdownCheckInterval = 15
+	}
+	if cfg.Game.RoomCleanupDelay == 0 {
+		cfg.Game.RoomCleanupDelay = 30
+	}
 	// 安全配置默认值
 	if len(cfg.Security.AllowedOrigins) == 0 {
 		cfg.Security.AllowedOrigins = []string{"*"}
@@ -198,8 +246,17 @@ func setDefaults(cfg *Config) {
 }
 
 // Default 返回默认配置
+// 优先加载 configs/config.yaml，如果失败则使用最小默认值
 func Default() *Config {
-	cfg := &Config{
+	// 尝试加载默认配置文件
+	cfg, err := Load("configs/config.yaml")
+	if err == nil {
+		return cfg
+	}
+
+	// 如果加载失败，使用最小默认值（确保服务器能启动）
+	log.Printf("无法加载默认配置文件，使用最小默认值: %v", err)
+	return &Config{
 		Server: ServerConfig{
 			Host:           "0.0.0.0",
 			Port:           1780,
@@ -209,9 +266,12 @@ func Default() *Config {
 			Addr: "localhost:6379",
 		},
 		Game: GameConfig{
-			TurnTimeout: 30,
-			BidTimeout:  15,
-			RoomTimeout: 10,
+			TurnTimeout:           30,
+			BidTimeout:            15,
+			RoomTimeout:           10,
+			ShutdownTimeout:       30,
+			ShutdownCheckInterval: 15,
+			RoomCleanupDelay:      30,
 		},
 		Security: SecurityConfig{
 			AllowedOrigins: []string{"*"},
@@ -225,5 +285,4 @@ func Default() *Config {
 			},
 		},
 	}
-	return cfg
 }
