@@ -292,6 +292,7 @@ func shuffle(cards []Card) {
 
 ## 鸣谢
 
+- [Bubble Tea](https://github.com/charmbracelet/bubbletea) 提供 TUI 框架
 - [Google Cloud Compute Engine](https://cloud.google.com/compute) 提供计算资源
 - [Cloudflare](https://www.cloudflare.com/) 提供 CDN 服务
 - [Flaticon](https://www.flaticon.com/) 提供游戏图标
