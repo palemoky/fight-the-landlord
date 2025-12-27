@@ -12,6 +12,13 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
+const (
+	// 聊天框宽度
+	chatBoxWidth = 50
+	// 聊天输入框宽度（比聊天框窄一点，留出边框和内边距）
+	chatInputWidth = chatBoxWidth - 5
+)
+
 // LobbyModel handles the lobby interface (Menu, Room List, Leaderboard, Stats)
 type LobbyModel struct {
 	client *client.Client
@@ -40,7 +47,7 @@ func NewLobbyModel(c *client.Client, input *textinput.Model) *LobbyModel {
 	chatInput := textinput.New()
 	chatInput.Placeholder = "按 / 键聊天..."
 	chatInput.CharLimit = 50
-	chatInput.Width = 25
+	chatInput.Width = chatInputWidth
 
 	return &LobbyModel{
 		client:    c,
@@ -161,20 +168,17 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 	// Calculate how many empty lines needed to push input to bottom
 	// innerHeight = header(1) + messages + empty_lines + input(1)
 	usedLines := len(contentLines) + 1 // +1 for input line
-	emptyLines := innerHeight - usedLines
-	if emptyLines < 0 {
-		emptyLines = 0
-	}
+	emptyLines := max(innerHeight-usedLines, 0)
 
 	// Add empty lines as spacer
-	for i := 0; i < emptyLines; i++ {
+	for range emptyLines {
 		contentLines = append(contentLines, "")
 	}
 	// Add input at bottom
 	contentLines = append(contentLines, chatInputView)
 
 	chatBoxContent := lipgloss.JoinVertical(lipgloss.Left, contentLines...)
-	chatBox := boxStyle.Width(30).Height(innerHeight).Render(chatBoxContent)
+	chatBox := boxStyle.Width(chatBoxWidth).Height(innerHeight).Render(chatBoxContent)
 
 	// Place menu and chat side by side
 	mainContent := lipgloss.JoinHorizontal(lipgloss.Top, menu, "  ", chatBox)
@@ -219,7 +223,7 @@ func (m *LobbyModel) roomListView(onlineModel *OnlineModel) string {
 			if i == m.selectedRoomIdx {
 				prefix = "▶ "
 			}
-			roomList.WriteString(fmt.Sprintf("%s房间 %s  (%d/3)\n", prefix, room.RoomCode, room.PlayerCount))
+			fmt.Fprintf(&roomList, "%s房间 %s  (%d/3)\n", prefix, room.RoomCode, room.PlayerCount)
 		}
 
 		roomList.WriteString("\n↑↓ 选择  回车加入  ESC 返回")
