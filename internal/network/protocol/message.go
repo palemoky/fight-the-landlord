@@ -31,11 +31,12 @@ const (
 	MsgPass      MessageType = "pass"       // 不出
 
 	// 排行榜
-	MsgGetStats       MessageType = "get_stats"        // 获取个人统计
-	MsgGetLeaderboard MessageType = "get_leaderboard"  // 获取排行榜
-	MsgGetRoomList    MessageType = "get_room_list"    // 获取房间列表
-	MsgGetOnlineCount MessageType = "get_online_count" // 获取在线人数
-	MsgChat           MessageType = "chat"             // 聊天消息
+	MsgGetStats             MessageType = "get_stats"              // 获取个人统计
+	MsgGetLeaderboard       MessageType = "get_leaderboard"        // 获取排行榜
+	MsgGetRoomList          MessageType = "get_room_list"          // 获取房间列表
+	MsgGetOnlineCount       MessageType = "get_online_count"       // 获取在线人数
+	MsgGetMaintenanceStatus MessageType = "get_maintenance_status" // 获取维护状态
+	MsgChat                 MessageType = "chat"                   // 聊天消息
 )
 
 // 服务端 → 客户端 消息类型
@@ -72,6 +73,10 @@ const (
 	MsgStatsResult       MessageType = "stats_result"       // 个人统计结果
 	MsgLeaderboardResult MessageType = "leaderboard_result" // 排行榜结果
 	MsgRoomListResult    MessageType = "room_list_result"   // 房间列表结果
+
+	// 系统通知
+	MsgMaintenance       MessageType = "maintenance"        // 维护模式通知
+	MsgMaintenanceStatus MessageType = "maintenance_status" // 维护状态响应
 
 	// 错误
 	MsgError MessageType = "error" // 错误消息
@@ -265,6 +270,16 @@ type PlayerHand struct {
 	Cards      []CardInfo `json:"cards"`
 }
 
+// MaintenancePayload 维护模式通知
+type MaintenancePayload struct {
+	Message string `json:"message"`
+}
+
+// MaintenanceStatusPayload 维护状态响应
+type MaintenanceStatusPayload struct {
+	Maintenance bool `json:"maintenance"` // 是否在维护模式
+}
+
 // ErrorPayload 错误响应
 type ErrorPayload struct {
 	Code    int    `json:"code"`
@@ -339,32 +354,34 @@ type CardInfo struct {
 
 // --- 错误码 ---
 const (
-	ErrCodeUnknown      = 1000
-	ErrCodeInvalidMsg   = 1001
-	ErrCodeRateLimit    = 1002 // 速率限制
-	ErrCodeRoomNotFound = 2001
-	ErrCodeRoomFull     = 2002
-	ErrCodeNotInRoom    = 2003
-	ErrCodeGameStarted  = 2004 // 游戏已开始
-	ErrCodeGameNotStart = 3001
-	ErrCodeNotYourTurn  = 3002
-	ErrCodeInvalidCards = 3003
-	ErrCodeCannotBeat   = 3004
-	ErrCodeMustPlay     = 3005
+	ErrCodeUnknown           = 1000
+	ErrCodeInvalidMsg        = 1001
+	ErrCodeRateLimit         = 1002 // 速率限制
+	ErrCodeRoomNotFound      = 2001
+	ErrCodeRoomFull          = 2002
+	ErrCodeNotInRoom         = 2003
+	ErrCodeGameStarted       = 2004 // 游戏已开始
+	ErrCodeGameNotStart      = 3001
+	ErrCodeNotYourTurn       = 3002
+	ErrCodeInvalidCards      = 3003
+	ErrCodeCannotBeat        = 3004
+	ErrCodeMustPlay          = 3005
+	ErrCodeServerMaintenance = 5003 // 服务器维护中
 )
 
 // ErrorMessages 错误码对应的消息
 var ErrorMessages = map[int]string{
-	ErrCodeUnknown:      "未知错误",
-	ErrCodeInvalidMsg:   "无效的消息格式",
-	ErrCodeRateLimit:    "请求过于频繁",
-	ErrCodeRoomNotFound: "房间不存在",
-	ErrCodeRoomFull:     "房间已满",
-	ErrCodeNotInRoom:    "您不在房间中",
-	ErrCodeGameStarted:  "游戏已开始",
-	ErrCodeGameNotStart: "游戏尚未开始",
-	ErrCodeNotYourTurn:  "还没轮到您",
-	ErrCodeInvalidCards: "无效的牌型",
-	ErrCodeCannotBeat:   "您的牌大不过上家",
-	ErrCodeMustPlay:     "您必须出牌",
+	ErrCodeUnknown:           "未知错误",
+	ErrCodeInvalidMsg:        "无效的消息格式",
+	ErrCodeRateLimit:         "请求过于频繁",
+	ErrCodeRoomNotFound:      "房间不存在",
+	ErrCodeRoomFull:          "房间已满",
+	ErrCodeNotInRoom:         "您不在房间中",
+	ErrCodeGameStarted:       "游戏已开始",
+	ErrCodeGameNotStart:      "游戏尚未开始",
+	ErrCodeNotYourTurn:       "还没轮到您",
+	ErrCodeInvalidCards:      "无效的牌型",
+	ErrCodeCannotBeat:        "您的牌大不过上家",
+	ErrCodeMustPlay:          "您必须出牌",
+	ErrCodeServerMaintenance: "服务器维护中",
 }

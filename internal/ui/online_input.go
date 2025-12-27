@@ -203,12 +203,27 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 		switch input {
 		case "1":
+			// 快速匹配
+			if m.maintenanceMode {
+				m.error = "服务器维护中，暂停快速匹配"
+				return nil
+			}
 			m.phase = PhaseMatching
 			m.matchingStartTime = time.Now()
 			_ = m.client.QuickMatch()
 		case "2":
+			// 创建房间
+			if m.maintenanceMode {
+				m.error = "服务器维护中，暂停创建房间"
+				return nil
+			}
 			_ = m.client.CreateRoom()
 		case "3":
+			// 加入房间
+			if m.maintenanceMode {
+				m.error = "服务器维护中，暂停加入房间"
+				return nil
+			}
 			// 请求房间列表
 			m.phase = PhaseRoomList
 			m.lobby.selectedRoomIdx = 0
@@ -226,12 +241,20 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 		default:
 			// 可能是房间号
 			if len(input) > 0 {
+				if m.maintenanceMode {
+					m.error = "服务器维护中，暂停加入房间"
+					return nil
+				}
 				_ = m.client.JoinRoom(input)
 			}
 		}
 
 	case PhaseRoomList:
 		// 房间列表界面
+		if m.maintenanceMode {
+			m.error = "服务器维护中，暂停加入房间"
+			return nil
+		}
 		if input == "" {
 			// 没有输入，加入选中的房间
 			if len(m.lobby.availableRooms) > 0 && m.lobby.selectedRoomIdx < len(m.lobby.availableRooms) {

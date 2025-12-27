@@ -76,6 +76,12 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 	// Chat
 	case protocol.MsgChat:
 		return m.handleMsgChat(msg)
+
+	// System notifications
+	case protocol.MsgMaintenance:
+		return m.handleMsgMaintenance(msg)
+	case protocol.MsgMaintenanceStatus:
+		return m.handleMsgMaintenanceStatus(msg)
 	}
 
 	return nil
@@ -91,8 +97,9 @@ func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 	m.playerName = payload.PlayerName
 	m.client.ReconnectToken = payload.ReconnectToken
 
-	// Request online count on connect
+	// Request online count and maintenance status on connect
 	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
 
 	m.input.Placeholder = "输入选项 (1-5) 或房间号"
 	m.input.Focus()
@@ -141,6 +148,11 @@ func (m *OnlineModel) handleMsgPong(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgError(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ErrorPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+
+	// 检测维护模式错误码
+	if payload.Code == protocol.ErrCodeServerMaintenance {
+		m.maintenanceMode = true
+	}
 
 	// 在游戏阶段（叫地主、出牌），将错误显示在 placeholder 中
 	if m.phase == PhaseBidding || m.phase == PhasePlaying {

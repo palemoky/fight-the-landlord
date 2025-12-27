@@ -86,6 +86,9 @@ type OnlineModel struct {
 	reconnectMessage  string       // 重连消息
 	reconnectChan     chan tea.Msg // 重连消息通道（可发送多种消息类型）
 
+	// 维护模式
+	maintenanceMode bool // 服务器是否在维护模式
+
 	// Sub-models
 	lobby *LobbyModel
 	game  *GameModel

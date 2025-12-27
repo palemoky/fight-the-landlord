@@ -427,6 +427,23 @@ func (rm *RoomManager) cleanup() {
 	}
 }
 
+// GetActiveGamesCount 获取进行中的游戏数量
+func (rm *RoomManager) GetActiveGamesCount() int {
+	rm.mu.RLock()
+	defer rm.mu.RUnlock()
+
+	count := 0
+	for _, room := range rm.rooms {
+		room.mu.RLock()
+		// 统计正在游戏中的房间（叫地主或出牌阶段）
+		if room.State == RoomStateBidding || room.State == RoomStatePlaying {
+			count++
+		}
+		room.mu.RUnlock()
+	}
+	return count
+}
+
 // --- Room 方法 ---
 
 // Broadcast 广播消息给房间内所有玩家

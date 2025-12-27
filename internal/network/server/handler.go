@@ -58,6 +58,8 @@ func (h *Handler) Handle(client *Client, msg *protocol.Message) {
 		h.handleGetRoomList(client)
 	case protocol.MsgGetOnlineCount:
 		h.handleGetOnlineCount(client)
+	case protocol.MsgGetMaintenanceStatus:
+		h.handleGetMaintenanceStatus(client)
 	case protocol.MsgChat:
 		h.handleChat(client, msg)
 
@@ -232,6 +234,13 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 
 // handleCreateRoom 处理创建房间
 func (h *Handler) handleCreateRoom(client *Client) {
+	// 维护模式检查
+	if h.server.IsMaintenanceMode() {
+		client.SendMessage(protocol.NewErrorMessageWithText(
+			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停创建房间"))
+		return
+	}
+
 	// 如果已在房间中，先离开
 	if client.GetRoom() != "" {
 		h.server.roomManager.LeaveRoom(client)
@@ -251,6 +260,13 @@ func (h *Handler) handleCreateRoom(client *Client) {
 
 // handleJoinRoom 处理加入房间
 func (h *Handler) handleJoinRoom(client *Client, msg *protocol.Message) {
+	// 维护模式检查
+	if h.server.IsMaintenanceMode() {
+		client.SendMessage(protocol.NewErrorMessageWithText(
+			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停加入房间"))
+		return
+	}
+
 	payload, err := protocol.ParsePayload[protocol.JoinRoomPayload](msg)
 	if err != nil {
 		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeInvalidMsg))
@@ -286,6 +302,13 @@ func (h *Handler) handleLeaveRoom(client *Client) {
 
 // handleQuickMatch 处理快速匹配
 func (h *Handler) handleQuickMatch(client *Client) {
+	// 维护模式检查
+	if h.server.IsMaintenanceMode() {
+		client.SendMessage(protocol.NewErrorMessageWithText(
+			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停快速匹配"))
+		return
+	}
+
 	// 如果已在房间中，先离开
 	if client.GetRoom() != "" {
 		h.server.roomManager.LeaveRoom(client)
@@ -493,5 +516,14 @@ func (h *Handler) handleGetOnlineCount(client *Client) {
 
 	client.SendMessage(protocol.MustNewMessage(protocol.MsgOnlineCount, protocol.OnlineCountPayload{
 		Count: count,
+	}))
+}
+
+// handleGetMaintenanceStatus 获取维护状态
+func (h *Handler) handleGetMaintenanceStatus(client *Client) {
+	maintenance := h.server.IsMaintenanceMode()
+
+	client.SendMessage(protocol.MustNewMessage(protocol.MsgMaintenanceStatus, protocol.MaintenanceStatusPayload{
+		Maintenance: maintenance,
 	}))
 }

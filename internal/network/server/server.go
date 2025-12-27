@@ -50,6 +50,10 @@ type Server struct {
 	// 连接控制
 	maxConnections int
 	semaphore      chan struct{} // 信号量控制并发连接数
+
+	// 维护模式
+	maintenanceMode bool
+	maintenanceMu   sync.RWMutex
 }
 
 // NewServer 创建服务器实例
@@ -121,6 +125,14 @@ func (s *Server) Start() error {
 // handleWebSocket 处理 WebSocket 连接
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	clientIP := GetClientIP(r)
+
+	// 维护模式检查（最优先）
+	if s.IsMaintenanceMode() {
+		log.Printf("🔧 维护模式，拒绝新连接: %s", clientIP)
+		http.Error(w, "Server is under maintenance, please try again later",
+			http.StatusServiceUnavailable)
+		return
+	}
 
 	// 连接数限制检查
 	select {
@@ -243,6 +255,53 @@ func (s *Server) monitorStats() {
 			s.maxConnections,
 			float64(m.Alloc)/1024/1024)
 	}
+}
+
+// EnterMaintenanceMode 进入维护模式
+func (s *Server) EnterMaintenanceMode() {
+	s.maintenanceMu.Lock()
+	s.maintenanceMode = true
+	s.maintenanceMu.Unlock()
+
+	log.Println("🔧 进入维护模式：停止新连接和房间创建")
+}
+
+// IsMaintenanceMode 检查是否在维护模式
+func (s *Server) IsMaintenanceMode() bool {
+	s.maintenanceMu.RLock()
+	defer s.maintenanceMu.RUnlock()
+	return s.maintenanceMode
+}
+
+// GracefulShutdown 优雅关闭服务器
+func (s *Server) GracefulShutdown(timeout time.Duration) {
+	log.Println("📢 开始优雅关闭...")
+
+	// 1. 进入维护模式
+	s.EnterMaintenanceMode()
+
+	// 2. 等待游戏结束
+	deadline := time.Now().Add(timeout)
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for time.Now().Before(deadline) {
+		activeGames := s.roomManager.GetActiveGamesCount()
+		if activeGames == 0 {
+			log.Println("✅ 所有游戏已结束")
+			break
+		}
+		log.Printf("⏳ 等待 %d 个游戏结束...", activeGames)
+		<-ticker.C
+	}
+
+	// 3. 超时检查
+	if activeGames := s.roomManager.GetActiveGamesCount(); activeGames > 0 {
+		log.Printf("⚠️ 超时，仍有 %d 个游戏进行中，强制关闭", activeGames)
+	}
+
+	// 4. 关闭服务器
+	s.Shutdown()
 }
 
 // Shutdown 关闭服务器
