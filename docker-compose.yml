@@ -1,37 +1,22 @@
 services:
   # 游戏服务器
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  poker-server:
+    image: palemoky/fight-the-landlord:latest
     container_name: poker-server
     restart: unless-stopped
-    ports:
-      - "1780:1780"
-    env_file:
-      - .env
+    stop_grace_period: 5m
+    stop_signal: SIGTERM
+    env_file: .env
     environment:
       - TZ=Asia/Shanghai
       - REDIS_ADDR=redis:6379
+    ports:
+      - "1780:1780"
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - poker-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:1780/health",
-        ]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
 
   # Redis 数据库
   redis:

@@ -14,6 +14,7 @@ repos:
           - --fix
           - --timeout=5m
           - --config=.golangci.yml
+        pass_filenames: false # 检查所有文件，不只是暂存的文件
 
   # Go tools
   - repo: local
@@ -87,7 +88,7 @@ repos:
     hooks:
       - id: go-test
         name: Run Go unit tests
-        entry: bash -c 'go test -race -tags "fts5" ./internal/... -cover'
+        entry: bash -c 'go test -race -tags "fts5" -p 4 ./internal/... -cover'
         language: system
         stages: [pre-push]
         pass_filenames: false

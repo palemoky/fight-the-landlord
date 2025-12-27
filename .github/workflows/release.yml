@@ -62,12 +62,12 @@ jobs:
             VERSION=${{ github.ref_name }}
 
       - name: Update Docker Hub description
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request'
         uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ env.DOCKER_IMAGE }}
+          repository: ${{ env.IMAGE_NAME }}
           readme-filepath: ./README.md
 
       - name: Notify via Xiaomi Speaker

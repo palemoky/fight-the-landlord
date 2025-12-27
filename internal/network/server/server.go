@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,7 +26,8 @@ var upgrader = websocket.Upgrader{
 	},
 	// 启用 permessage-deflate 压缩扩展
 	// 可减少 40-70% 流量，gorilla/websocket 会自动协商压缩参数
-	EnableCompression: true,
+	// 压缩会对CPU和内存造成压力，只有在大文件压缩才有收益，大量小文件反而是负优化
+	EnableCompression: false,
 }
 
 // Server WebSocket 服务器
@@ -44,6 +48,14 @@ type Server struct {
 	originChecker  *OriginChecker
 	messageLimiter *MessageRateLimiter
 	ipFilter       *IPFilter
+
+	// 连接控制
+	maxConnections int
+	semaphore      chan struct{} // 信号量控制并发连接数
+
+	// 维护模式
+	maintenanceMode bool
+	maintenanceMu   sync.RWMutex
 }
 
 // NewServer 创建服务器实例
@@ -78,6 +90,9 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		originChecker:  NewOriginChecker(cfg.Security.AllowedOrigins),
 		messageLimiter: NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
 		ipFilter:       NewIPFilter(),
+		// 初始化连接控制
+		maxConnections: cfg.Server.MaxConnections,
+		semaphore:      make(chan struct{}, cfg.Server.MaxConnections),
 	}
 
 	// 初始化房间管理器
@@ -89,8 +104,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	// 初始化消息处理器
 	s.handler = NewHandler(s)
 
-	log.Printf("🔒 安全配置: 连接限制=%d/秒, 消息限制=%d/秒",
-		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond)
+	log.Printf("🔒 安全配置: 连接限制=%d/s, 消息限制=%d/s, 最大连接数=%d",
+		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond, cfg.Server.MaxConnections)
 
 	return s, nil
 }
@@ -102,13 +117,35 @@ func (s *Server) Start() error {
 	http.HandleFunc("/ws", s.handleWebSocket)
 	http.HandleFunc("/health", s.handleHealth)
 
-	log.Printf("🚀 服务器启动在 ws://%s/ws", addr)
+	// 启动监控 goroutine
+	go s.monitorStats()
+
+	log.Printf("🚀 服务器启动在 ws://%s/ws (CPU核心数: %d)", addr, runtime.NumCPU())
 	return http.ListenAndServe(addr, nil)
 }
 
 // handleWebSocket 处理 WebSocket 连接
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	clientIP := GetClientIP(r)
+
+	// 维护模式检查（最优先）
+	if s.IsMaintenanceMode() {
+		log.Printf("🔧 维护模式，拒绝新连接: %s", clientIP)
+		http.Error(w, "Server is under maintenance, please try again later",
+			http.StatusServiceUnavailable)
+		return
+	}
+
+	// 连接数限制检查
+	select {
+	case s.semaphore <- struct{}{}:
+		// 成功获取信号量，连接建立后释放
+		defer func() { <-s.semaphore }()
+	default:
+		log.Printf("🚫 达到最大连接数限制 (%d), IP: %s", s.maxConnections, clientIP)
+		http.Error(w, "Server Full", http.StatusServiceUnavailable)
+		return
+	}
 
 	// IP 过滤检查
 	if !s.ipFilter.IsAllowed(clientIP) {
@@ -197,6 +234,123 @@ func (s *Server) Broadcast(msg *protocol.Message) {
 
 	for _, client := range s.clients {
 		client.SendMessage(msg)
+	}
+}
+
+// monitorStats 定期监控服务器状态
+func (s *Server) monitorStats() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+
+		onlineCount := s.GetOnlineCount()
+		goroutines := runtime.NumGoroutine()
+		activeConns := len(s.semaphore)
+
+		log.Printf("📊 [监控] 在线: %d | Goroutines: %d | 活跃连接: %d/%d | 内存: %.2f MB",
+			onlineCount,
+			goroutines,
+			activeConns,
+			s.maxConnections,
+			float64(m.Alloc)/1024/1024)
+	}
+}
+
+// EnterMaintenanceMode 进入维护模式
+func (s *Server) EnterMaintenanceMode() {
+	s.maintenanceMu.Lock()
+	s.maintenanceMode = true
+	s.maintenanceMu.Unlock()
+
+	log.Println("🔧 进入维护模式：停止新连接和房间创建")
+}
+
+// IsMaintenanceMode 检查是否在维护模式
+func (s *Server) IsMaintenanceMode() bool {
+	s.maintenanceMu.RLock()
+	defer s.maintenanceMu.RUnlock()
+	return s.maintenanceMode
+}
+
+// GracefulShutdown 优雅关闭服务器
+func (s *Server) GracefulShutdown(timeout time.Duration) {
+	log.Println("📢 开始优雅关闭...")
+
+	// 1. 进入维护模式
+	s.EnterMaintenanceMode()
+
+	// 2. 等待游戏结束
+	deadline := time.Now().Add(timeout)
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for time.Now().Before(deadline) {
+		activeGames := s.roomManager.GetActiveGamesCount()
+		if activeGames == 0 {
+			log.Println("✅ 所有游戏已结束")
+			break
+		}
+		log.Printf("⏳ 等待 %d 个游戏结束...", activeGames)
+		<-ticker.C
+	}
+
+	// 3. 超时检查
+	if activeGames := s.roomManager.GetActiveGamesCount(); activeGames > 0 {
+		log.Printf("⚠️ 超时，仍有 %d 个游戏进行中，强制关闭", activeGames)
+	}
+
+	// 4. 发送通知（如果配置了）
+	s.sendShutdownNotification()
+
+	// 5. 关闭服务器
+	s.Shutdown()
+}
+
+// sendShutdownNotification 发送关闭通知到小米音箱
+func (s *Server) sendShutdownNotification() {
+	// 从环境变量读取小米音箱配置
+	speakerURL := os.Getenv("XIAOMI_SPEAKER_URL")
+	if speakerURL == "" {
+		return // 未配置，跳过
+	}
+
+	message := "斗地主服务器已优雅关闭，开始升级吧！"
+
+	// 发送 POST 请求
+	payload := fmt.Sprintf(`{"text":"%s"}`, message)
+	req, err := http.NewRequest("POST", speakerURL, strings.NewReader(payload))
+	if err != nil {
+		log.Printf("创建通知请求失败: %v", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	// 添加认证 Headers（如果配置了）
+	if apiSecret := os.Getenv("XIAOMI_SPEAKER_API_SECRET"); apiSecret != "" {
+		req.Header.Set("Speaker-API-Secret", apiSecret)
+	}
+	if cfClientID := os.Getenv("XIAOMI_SPEAKER_CF_CLIENT_ID"); cfClientID != "" {
+		req.Header.Set("CF-Access-Client-Id", cfClientID)
+	}
+	if cfClientSecret := os.Getenv("XIAOMI_SPEAKER_CF_CLIENT_SECRET"); cfClientSecret != "" {
+		req.Header.Set("CF-Access-Client-Secret", cfClientSecret)
+	}
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("发送通知失败: %v", err)
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusOK {
+		log.Println("🔔 已发送关闭通知到小米音箱")
+	} else {
+		log.Printf("通知响应异常: %d", resp.StatusCode)
 	}
 }
 

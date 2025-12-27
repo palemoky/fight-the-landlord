@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/network/server"
@@ -34,8 +35,8 @@ func main() {
 
 	go func() {
 		<-quit
-		log.Println("正在关闭服务器...")
-		srv.Shutdown()
+		log.Println("📢 收到关闭信号，开始优雅关闭...")
+		srv.GracefulShutdown(5 * time.Minute)
 		os.Exit(0)
 	}()
 

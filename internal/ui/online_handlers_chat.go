@@ -44,3 +44,32 @@ func (m *OnlineModel) handleMsgChat(msg *protocol.Message) tea.Cmd {
 
 	return nil
 }
+
+// handleMsgMaintenance handles server maintenance notifications
+func (m *OnlineModel) handleMsgMaintenance(msg *protocol.Message) tea.Cmd {
+	var payload protocol.MaintenancePayload
+	if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+		return nil
+	}
+
+	// Set maintenance mode flag
+	m.maintenanceMode = true
+
+	// Display maintenance message as an error
+	m.error = payload.Message
+
+	return nil
+}
+
+// handleMsgMaintenanceStatus handles maintenance status response
+func (m *OnlineModel) handleMsgMaintenanceStatus(msg *protocol.Message) tea.Cmd {
+	var payload protocol.MaintenanceStatusPayload
+	if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+		return nil
+	}
+
+	// Update maintenance mode flag
+	m.maintenanceMode = payload.Maintenance
+
+	return nil
+}

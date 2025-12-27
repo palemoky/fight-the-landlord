@@ -78,8 +78,13 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, welcome))
 		sb.WriteString("\n")
 
-		// Display online count
-		if m.onlineCount > 0 {
+		// Display maintenance notice or online count
+		if onlineModel.maintenanceMode {
+			maintenanceInfo := "⚠️ 服务器维护中，暂停接受新连接"
+			maintenanceStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center,
+				maintenanceStyle.Render(maintenanceInfo)))
+		} else if m.onlineCount > 0 {
 			onlineInfo := fmt.Sprintf("🌐 在线玩家: %d 人", m.onlineCount)
 			onlineStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42")) // Green
 			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, onlineStyle.Render(onlineInfo)))
@@ -184,6 +189,12 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
 		sb.WriteString(errorView)
 	}
+
+	// Credit footer
+	creditStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
+	credit := creditStyle.Render("Made with ❤️ by Palemoky")
+	sb.WriteString("\n\n")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, credit))
 
 	content := sb.String()
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)

@@ -22,6 +22,7 @@ func TestMessageTypeConversion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.str, func(t *testing.T) {
+			t.Parallel()
 			// Test String -> Proto
 			pbEnum := stringToProtoMessageType(tt.str)
 			assert.Equal(t, tt.pbEnum, pbEnum)

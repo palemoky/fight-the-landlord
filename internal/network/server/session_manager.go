@@ -165,6 +165,21 @@ func (sm *SessionManager) CanReconnect(token, playerID string) bool {
 	return true
 }
 
+// IsOnline 检查玩家是否在线
+func (sm *SessionManager) IsOnline(playerID string) bool {
+	sm.mu.RLock()
+	session, ok := sm.sessions[playerID]
+	sm.mu.RUnlock()
+
+	if !ok {
+		return false
+	}
+
+	session.mu.RLock()
+	defer session.mu.RUnlock()
+	return session.IsOnline
+}
+
 // cleanupLoop 定期清理过期会话
 func (sm *SessionManager) cleanupLoop() {
 	ticker := time.NewTicker(1 * time.Minute)

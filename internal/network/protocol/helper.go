@@ -2,25 +2,24 @@ package protocol
 
 import (
 	"google.golang.org/protobuf/proto"
-
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/pb"
 )
 
 // NewMessage 创建一个新消息
+// 注意: 使用完毕后应调用 PutMessage 归还对象到池
 func NewMessage(msgType MessageType, payload any) (*Message, error) {
-	var data []byte
+	msg := GetMessage()
+	msg.Type = msgType
+
 	if payload != nil {
 		var err error
 		// 使用 Protobuf 编码 payload
-		data, err = EncodePayload(msgType, payload)
+		msg.Payload, err = EncodePayload(msgType, payload)
 		if err != nil {
+			PutMessage(msg) // 失败时归还
 			return nil, err
 		}
 	}
-	return &Message{
-		Type:    msgType,
-		Payload: data,
-	}, nil
+	return msg, nil
 }
 
 // MustNewMessage 创建消息，失败时 panic
@@ -34,24 +33,30 @@ func MustNewMessage(msgType MessageType, payload any) *Message {
 
 // Encode 将消息编码为 Protobuf 字节
 func (m *Message) Encode() ([]byte, error) {
-	pbMsg := &pb.Message{
-		Type:    stringToProtoMessageType(string(m.Type)),
-		Payload: m.Payload, // Protobuf payload
-	}
+	pbMsg := GetPBMessage()
+	defer PutPBMessage(pbMsg)
+
+	pbMsg.Type = stringToProtoMessageType(string(m.Type))
+	pbMsg.Payload = m.Payload // Protobuf payload
+
 	return proto.Marshal(pbMsg)
 }
 
 // Decode 从 Protobuf 字节解码消息
+// 注意: 使用完毕后应调用 PutMessage 归还对象到池
 func Decode(data []byte) (*Message, error) {
-	var pbMsg pb.Message
-	if err := proto.Unmarshal(data, &pbMsg); err != nil {
+	pbMsg := GetPBMessage()
+	defer PutPBMessage(pbMsg)
+
+	if err := proto.Unmarshal(data, pbMsg); err != nil {
 		return nil, err
 	}
 
-	return &Message{
-		Type:    MessageType(protoMessageTypeToString(pbMsg.Type)),
-		Payload: pbMsg.Payload,
-	}, nil
+	msg := GetMessage()
+	msg.Type = MessageType(protoMessageTypeToString(pbMsg.Type))
+	msg.Payload = append([]byte(nil), pbMsg.Payload...) // 复制 payload 避免引用
+
+	return msg, nil
 }
 
 // ParsePayload 解析消息的 Payload 到指定类型

@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         # Use ci tag to skip sound tests/deps
-        run: go test -tags=ci -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -tags=ci -v -race -p 4 -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Save Go cache
         uses: actions/cache/save@v5

@@ -129,6 +129,7 @@ func TestFindSmallestBeatingCards(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			// Pre-parse opponent hand to simulate game state
 			var parsedOpponent ParsedHand
 			if tt.opponentHand == nil {

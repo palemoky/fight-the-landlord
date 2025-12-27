@@ -36,6 +36,7 @@ func TestNewMessage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			msg, err := NewMessage(tt.msgType, tt.payload)
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -94,6 +95,8 @@ func TestPayloadEncoding_Protobuf(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Encode
 			encodedBytes, err := EncodePayload(tt.msgType, tt.payload)
 			assert.NoError(t, err)
