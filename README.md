@@ -254,22 +254,21 @@ func shuffle(cards []Card) {
 
 如果你发现任何可能影响公平性的代码，欢迎提交 Issue 或 Pull Request。
 
+## Todo
+
+- [ ] 使用 **GarageBand (库乐队)** 或其他音乐制作工具为游戏添加背景音乐和音效
+- [ ] 等待 Docker Hardened Images 取消拉取验证和支持 debug 后，升级到 DHI
+- [ ] 更加智能的 AI 出牌策略
+
 ## 鸣谢
 
+- [Google Cloud Compute Engine](https://cloud.google.com/compute) 提供计算资源
+- [Cloudflare](https://www.cloudflare.com/) 提供 CDN 服务
 - [Flaticon](https://www.flaticon.com/) 提供游戏图标
 
 ## 🤝 贡献
 
 欢迎贡献代码、报告问题或提出建议！
-
-### 🎵 诚邀配乐师
-
-目前游戏还在使用简单的蜂鸣声效。如果你擅长使用 **GarageBand (库乐队)** 或其他音乐制作工具，欢迎为本项目制作背景音乐和音效！我们需要：
-
-- 轻松愉快的背景音乐 (BGM)
-- 发牌、出牌、胜利/失败的短音效
-
-期待你的 Pull Request 或直接联系我们！
 
 ## ⭐ Star History
 
