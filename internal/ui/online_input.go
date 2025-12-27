@@ -195,120 +195,146 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 	switch m.phase {
 	case PhaseLobby:
-		// 大厅界面：1=快速匹配, 2=创建房间, 3=加入房间, 4=排行榜, 5=我的战绩, 6=游戏规则
-		// 如果输入为空，使用选中的菜单项
-		if input == "" {
-			input = fmt.Sprintf("%d", m.lobby.selectedIndex+1)
-		}
-
-		switch input {
-		case "1":
-			// 快速匹配
-			if m.maintenanceMode {
-				m.error = "服务器维护中，暂停快速匹配"
-				return nil
-			}
-			m.phase = PhaseMatching
-			m.matchingStartTime = time.Now()
-			_ = m.client.QuickMatch()
-		case "2":
-			// 创建房间
-			if m.maintenanceMode {
-				m.error = "服务器维护中，暂停创建房间"
-				return nil
-			}
-			_ = m.client.CreateRoom()
-		case "3":
-			// 加入房间
-			if m.maintenanceMode {
-				m.error = "服务器维护中，暂停加入房间"
-				return nil
-			}
-			// 请求房间列表
-			m.phase = PhaseRoomList
-			m.lobby.selectedRoomIdx = 0
-			m.input.Placeholder = "或直接输入房间号..."
-			m.input.Focus()
-			_ = m.client.GetRoomList()
-		case "4":
-			m.phase = PhaseLeaderboard
-			_ = m.client.GetLeaderboard("total", 0, 10)
-		case "5":
-			m.phase = PhaseStats
-			_ = m.client.GetStats()
-		case "6":
-			m.phase = PhaseRules
-		default:
-			// 可能是房间号
-			if len(input) > 0 {
-				if m.maintenanceMode {
-					m.error = "服务器维护中，暂停加入房间"
-					return nil
-				}
-				_ = m.client.JoinRoom(input)
-			}
-		}
-
+		return m.handleLobbyEnter(input)
 	case PhaseRoomList:
-		// 房间列表界面
+		return m.handleRoomListEnter(input)
+	case PhaseWaiting:
+		return m.handleWaitingEnter(input)
+	case PhaseBidding:
+		return m.handleBiddingEnter(input)
+	case PhasePlaying:
+		return m.handlePlayingEnter(input)
+	case PhaseGameOver:
+		return m.handleGameOverEnter()
+	}
+
+	return nil
+}
+
+// handleLobbyEnter 处理大厅界面的回车
+func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
+	// 如果输入为空，使用选中的菜单项
+	if input == "" {
+		input = fmt.Sprintf("%d", m.lobby.selectedIndex+1)
+	}
+
+	switch input {
+	case "1":
+		// 快速匹配
+		if m.maintenanceMode {
+			m.error = "服务器维护中，暂停快速匹配"
+			return nil
+		}
+		m.phase = PhaseMatching
+		m.matchingStartTime = time.Now()
+		_ = m.client.QuickMatch()
+	case "2":
+		// 创建房间
+		if m.maintenanceMode {
+			m.error = "服务器维护中，暂停创建房间"
+			return nil
+		}
+		_ = m.client.CreateRoom()
+	case "3":
+		// 加入房间
 		if m.maintenanceMode {
 			m.error = "服务器维护中，暂停加入房间"
 			return nil
 		}
-		if input == "" {
-			// 没有输入，加入选中的房间
-			if len(m.lobby.availableRooms) > 0 && m.lobby.selectedRoomIdx < len(m.lobby.availableRooms) {
-				roomCode := m.lobby.availableRooms[m.lobby.selectedRoomIdx].RoomCode
-				_ = m.client.JoinRoom(roomCode)
+		// 请求房间列表
+		m.phase = PhaseRoomList
+		m.lobby.selectedRoomIdx = 0
+		m.input.Placeholder = "或直接输入房间号..."
+		m.input.Focus()
+		_ = m.client.GetRoomList()
+	case "4":
+		m.phase = PhaseLeaderboard
+		_ = m.client.GetLeaderboard("total", 0, 10)
+	case "5":
+		m.phase = PhaseStats
+		_ = m.client.GetStats()
+	case "6":
+		m.phase = PhaseRules
+	default:
+		// 可能是房间号
+		if len(input) > 0 {
+			if m.maintenanceMode {
+				m.error = "服务器维护中，暂停加入房间"
+				return nil
 			}
-		} else {
-			// 有输入，直接加入输入的房间号
 			_ = m.client.JoinRoom(input)
 		}
-
-	case PhaseWaiting:
-		// 等待房间：输入 r 准备
-		if strings.ToLower(input) == "r" || strings.ToLower(input) == "ready" {
-			_ = m.client.Ready()
-		}
-
-	case PhaseBidding:
-		// 叫地主：y=叫, n=不叫
-		if m.game.bidTurn == m.playerID {
-			switch strings.ToLower(input) {
-			case "y", "yes", "1":
-				_ = m.client.Bid(true)
-			case "n", "no", "0":
-				_ = m.client.Bid(false)
-			}
-		}
-
-	case PhasePlaying:
-		// 出牌
-		if m.game.currentTurn == m.playerID {
-			upperInput := strings.ToUpper(input)
-			if upperInput == "PASS" || upperInput == "P" {
-				_ = m.client.Pass()
-			} else if len(input) > 0 {
-				// 解析出牌
-				cards, err := m.parseCardsInput(input)
-				if err != nil {
-					// 显示在 placeholder，3秒后清除
-					m.input.Placeholder = err.Error()
-					return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-						return ClearInputErrorMsg{}
-					})
-				} else {
-					_ = m.client.PlayCards(protocol.CardsToInfos(cards))
-				}
-			}
-		}
-
-	case PhaseGameOver:
-		// 游戏结束：输入任意键返回大厅
-		m.enterLobby()
-		m.resetGameState()
 	}
 
+	return nil
+}
+
+// handleRoomListEnter 处理房间列表界面的回车
+func (m *OnlineModel) handleRoomListEnter(input string) tea.Cmd {
+	if m.maintenanceMode {
+		m.error = "服务器维护中，暂停加入房间"
+		return nil
+	}
+	if input == "" {
+		// 没有输入，加入选中的房间
+		if len(m.lobby.availableRooms) > 0 && m.lobby.selectedRoomIdx < len(m.lobby.availableRooms) {
+			roomCode := m.lobby.availableRooms[m.lobby.selectedRoomIdx].RoomCode
+			_ = m.client.JoinRoom(roomCode)
+		}
+	} else {
+		// 有输入，直接加入输入的房间号
+		_ = m.client.JoinRoom(input)
+	}
+	return nil
+}
+
+// handleWaitingEnter 处理等待房间的回车
+func (m *OnlineModel) handleWaitingEnter(input string) tea.Cmd {
+	if strings.ToLower(input) == "r" || strings.ToLower(input) == "ready" {
+		_ = m.client.Ready()
+	}
+	return nil
+}
+
+// handleBiddingEnter 处理叫地主阶段的回车
+func (m *OnlineModel) handleBiddingEnter(input string) tea.Cmd {
+	if m.game.bidTurn == m.playerID {
+		switch strings.ToLower(input) {
+		case "y", "yes", "1":
+			_ = m.client.Bid(true)
+		case "n", "no", "0":
+			_ = m.client.Bid(false)
+		}
+	}
+	return nil
+}
+
+// handlePlayingEnter 处理出牌阶段的回车
+func (m *OnlineModel) handlePlayingEnter(input string) tea.Cmd {
+	if m.game.currentTurn == m.playerID {
+		upperInput := strings.ToUpper(input)
+		if upperInput == "PASS" || upperInput == "P" {
+			_ = m.client.Pass()
+		} else if len(input) > 0 {
+			// 解析出牌
+			cards, err := m.parseCardsInput(input)
+			if err != nil {
+				// 显示在 placeholder，3秒后清除
+				m.input.Placeholder = err.Error()
+				return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+					return ClearInputErrorMsg{}
+				})
+			} else {
+				_ = m.client.PlayCards(protocol.CardsToInfos(cards))
+			}
+		}
+	}
+	return nil
+}
+
+// handleGameOverEnter 处理游戏结束的回车
+func (m *OnlineModel) handleGameOverEnter() tea.Cmd {
+	m.enterLobby()
+	m.resetGameState()
 	return nil
 }
