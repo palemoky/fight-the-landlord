@@ -50,6 +50,50 @@
 
 ## 🚀 快速开始
 
+### 客户端安装
+
+**macOS / Linux**：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/install.sh | bash
+```
+
+**Windows (PowerShell)**：
+
+```powershell
+irm https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/install.ps1 | iex
+```
+
+**运行客户端**：
+
+```bash
+fight-the-landlord
+```
+
+### 服务端部署
+
+**使用 Docker Compose（推荐）**：
+
+```bash
+# 1. 创建项目目录
+mkdir fight-the-landlord && cd fight-the-landlord
+
+# 2. 下载配置文件
+curl -fsSL https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/.env.example -o .env
+
+# 3. 修改配置（可选）
+vim .env
+
+# 4. 启动服务
+docker compose up -d
+
+# 5. 停止服务
+docker compose down
+```
+
+💡 推荐使用 [lazydocker](https://github.com/jesseduffield/lazydocker) 管理服务
+
 ### 本地开发
 
 ```bash
@@ -61,22 +105,6 @@ go run ./cmd/server
 
 # 3. 启动客户端（开 3 个终端）
 go run ./cmd/client
-```
-
-### Docker 部署
-
-```bash
-# 复制环境变量配置
-cp .env.example .env
-
-# 构建并启动
-docker compose up -d --build
-
-# 查看日志
-docker compose logs -f server
-
-# 停止服务
-docker compose down
 ```
 
 ## 🎲 游戏玩法
@@ -271,10 +299,6 @@ func shuffle(cards []Card) {
 ## 🤝 贡献
 
 欢迎贡献代码、报告问题或提出建议！
-
-## ⭐ Star History
-
-如果你喜欢这个项目，请给它一个 Star ⭐
 
 ---
 

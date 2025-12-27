@@ -34,7 +34,10 @@ func main() {
 		}
 	}()
 
-	serverAddr := flag.String("server", "localhost:1780", "服务器地址")
+	// 默认服务器地址（可通过编译时 -ldflags 注入）
+	defaultServer := "localhost:1780"
+
+	serverAddr := flag.String("server", defaultServer, "服务器地址")
 	flag.Parse()
 
 	serverURL := fmt.Sprintf("ws://%s/ws", *serverAddr)
