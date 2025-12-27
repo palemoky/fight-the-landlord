@@ -296,28 +296,9 @@ func (lm *LeaderboardManager) GetAroundPlayer(ctx context.Context, playerID stri
 	}
 
 	// 计算偏移量
-	offset := int(rank) - count/2 - 1
-	if offset < 0 {
-		offset = 0
-	}
+	offset := max(int(rank)-count/2-1, 0)
 
 	return lm.GetLeaderboard(ctx, "total", offset, count)
-}
-
-// --- 辅助函数 ---
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 // SortByScore 按积分排序
