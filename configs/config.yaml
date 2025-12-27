@@ -4,6 +4,8 @@ server:
   # WebSocket 监听地址
   host: "0.0.0.0"
   port: 1780
+  # 最大并发连接数（0 表示无限制）
+  max_connections: 10000
 
 redis:
   # Redis 地址

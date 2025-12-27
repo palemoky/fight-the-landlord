@@ -19,8 +19,9 @@ type Config struct {
 
 // ServerConfig WebSocket 服务器配置
 type ServerConfig struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Host           string `yaml:"host"`
+	Port           int    `yaml:"port"`
+	MaxConnections int    `yaml:"max_connections"` // 最大并发连接数，0 表示无限制
 }
 
 // RedisConfig Redis 配置
@@ -108,6 +109,11 @@ func loadFromEnv(cfg *Config) {
 			cfg.Server.Port = port
 		}
 	}
+	if v := os.Getenv("SERVER_MAX_CONNECTIONS"); v != "" {
+		if maxConn, err := strconv.Atoi(v); err == nil {
+			cfg.Server.MaxConnections = maxConn
+		}
+	}
 
 	// Redis
 	if v := os.Getenv("REDIS_ADDR"); v != "" {
@@ -158,6 +164,9 @@ func setDefaults(cfg *Config) {
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = 1780
 	}
+	if cfg.Server.MaxConnections == 0 {
+		cfg.Server.MaxConnections = 10000 // 默认最大 1 万连接
+	}
 	if cfg.Redis.Addr == "" {
 		cfg.Redis.Addr = "localhost:6379"
 	}
@@ -192,8 +201,9 @@ func setDefaults(cfg *Config) {
 func Default() *Config {
 	cfg := &Config{
 		Server: ServerConfig{
-			Host: "0.0.0.0",
-			Port: 1780,
+			Host:           "0.0.0.0",
+			Port:           1780,
+			MaxConnections: 10000,
 		},
 		Redis: RedisConfig{
 			Addr: "localhost:6379",

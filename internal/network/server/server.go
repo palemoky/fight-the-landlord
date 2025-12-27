@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"sync"
 	"time"
 
@@ -45,6 +46,10 @@ type Server struct {
 	originChecker  *OriginChecker
 	messageLimiter *MessageRateLimiter
 	ipFilter       *IPFilter
+
+	// 连接控制
+	maxConnections int
+	semaphore      chan struct{} // 信号量控制并发连接数
 }
 
 // NewServer 创建服务器实例
@@ -79,6 +84,9 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		originChecker:  NewOriginChecker(cfg.Security.AllowedOrigins),
 		messageLimiter: NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
 		ipFilter:       NewIPFilter(),
+		// 初始化连接控制
+		maxConnections: cfg.Server.MaxConnections,
+		semaphore:      make(chan struct{}, cfg.Server.MaxConnections),
 	}
 
 	// 初始化房间管理器
@@ -90,8 +98,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	// 初始化消息处理器
 	s.handler = NewHandler(s)
 
-	log.Printf("🔒 安全配置: 连接限制=%d/秒, 消息限制=%d/秒",
-		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond)
+	log.Printf("🔒 安全配置: 连接限制=%d/s, 消息限制=%d/s, 最大连接数=%d",
+		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond, cfg.Server.MaxConnections)
 
 	return s, nil
 }
@@ -103,13 +111,27 @@ func (s *Server) Start() error {
 	http.HandleFunc("/ws", s.handleWebSocket)
 	http.HandleFunc("/health", s.handleHealth)
 
-	log.Printf("🚀 服务器启动在 ws://%s/ws", addr)
+	// 启动监控 goroutine
+	go s.monitorStats()
+
+	log.Printf("🚀 服务器启动在 ws://%s/ws (CPU核心数: %d)", addr, runtime.NumCPU())
 	return http.ListenAndServe(addr, nil)
 }
 
 // handleWebSocket 处理 WebSocket 连接
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	clientIP := GetClientIP(r)
+
+	// 连接数限制检查
+	select {
+	case s.semaphore <- struct{}{}:
+		// 成功获取信号量，连接建立后释放
+		defer func() { <-s.semaphore }()
+	default:
+		log.Printf("🚫 达到最大连接数限制 (%d), IP: %s", s.maxConnections, clientIP)
+		http.Error(w, "Server Full", http.StatusServiceUnavailable)
+		return
+	}
 
 	// IP 过滤检查
 	if !s.ipFilter.IsAllowed(clientIP) {
@@ -198,6 +220,28 @@ func (s *Server) Broadcast(msg *protocol.Message) {
 
 	for _, client := range s.clients {
 		client.SendMessage(msg)
+	}
+}
+
+// monitorStats 定期监控服务器状态
+func (s *Server) monitorStats() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+
+		onlineCount := s.GetOnlineCount()
+		goroutines := runtime.NumGoroutine()
+		activeConns := len(s.semaphore)
+
+		log.Printf("📊 [监控] 在线: %d | Goroutines: %d | 活跃连接: %d/%d | 内存: %.2f MB",
+			onlineCount,
+			goroutines,
+			activeConns,
+			s.maxConnections,
+			float64(m.Alloc)/1024/1024)
 	}
 }
 
