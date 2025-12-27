@@ -435,8 +435,9 @@ func (rm *RoomManager) GetActiveGamesCount() int {
 	count := 0
 	for _, room := range rm.rooms {
 		room.mu.RLock()
-		// 统计正在游戏中的房间（叫地主或出牌阶段）
-		if room.State == RoomStateBidding || room.State == RoomStatePlaying {
+		// 统计正在游戏中的房间（叫地主、出牌、游戏结束等待清理）
+		switch room.State {
+		case RoomStateBidding, RoomStatePlaying, RoomStateEnded:
 			count++
 		}
 		room.mu.RUnlock()

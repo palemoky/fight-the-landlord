@@ -413,9 +413,12 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 	// 记录游戏结果到排行榜
 	gs.recordGameResults(winner)
 
-	// 延迟 30 秒后清理房间，让玩家有时间查看结果
+	// 延迟清理房间，让玩家有时间返回大厅查看维护通知
+	cleanupDelay := gs.room.server.config.Game.RoomCleanupDelayDuration()
+	log.Printf("⏰ 房间 %s 将在 %v 后自动清理", gs.room.Code, cleanupDelay)
+
 	go func() {
-		time.Sleep(gs.room.server.config.Game.RoomCleanupDelayDuration())
+		time.Sleep(cleanupDelay)
 
 		// 让所有玩家离开房间
 		gs.room.mu.RLock()
@@ -437,7 +440,7 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 			}
 		}
 
-		log.Printf("🧹 房间 %s 已自动清理（游戏结束后 30 秒）", gs.room.Code)
+		log.Printf("🧹 房间 %s 已自动清理", gs.room.Code)
 	}()
 }
 

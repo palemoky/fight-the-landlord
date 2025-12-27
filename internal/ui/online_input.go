@@ -336,5 +336,9 @@ func (m *OnlineModel) handlePlayingEnter(input string) tea.Cmd {
 func (m *OnlineModel) handleGameOverEnter() tea.Cmd {
 	m.enterLobby()
 	m.resetGameState()
+
+	// 返回大厅时查询维护状态
+	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+
 	return nil
 }
