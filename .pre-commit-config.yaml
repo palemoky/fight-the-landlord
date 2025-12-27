@@ -14,6 +14,7 @@ repos:
           - --fix
           - --timeout=5m
           - --config=.golangci.yml
+        pass_filenames: false # 检查所有文件，不只是暂存的文件
 
   # Go tools
   - repo: local
