@@ -98,8 +98,9 @@ func (c *Client) ReadPump() {
 			continue
 		}
 
-		// 交给处理器处理
+		// 交给处理器处理，处理完后归还到池
 		c.server.handler.Handle(c, msg)
+		protocol.PutMessage(msg)
 	}
 }
 
