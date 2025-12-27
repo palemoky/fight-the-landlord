@@ -272,7 +272,7 @@ type PlayerHand struct {
 
 // MaintenancePayload 维护模式通知
 type MaintenancePayload struct {
-	Message string `json:"message"`
+	Maintenance bool `json:"maintenance"` // 是否在维护模式
 }
 
 // MaintenanceStatusPayload 维护状态响应

@@ -53,10 +53,14 @@ func (m *OnlineModel) handleMsgMaintenance(msg *protocol.Message) tea.Cmd {
 	}
 
 	// Set maintenance mode flag
-	m.maintenanceMode = true
+	m.maintenanceMode = payload.Maintenance
 
 	// Display maintenance message as an error
-	m.error = payload.Message
+	if payload.Maintenance {
+		m.error = "⚠️  服务器正在维护中"
+	} else {
+		m.error = ""
+	}
 
 	return nil
 }

@@ -284,7 +284,7 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 
 	// 2. 等待游戏结束
 	deadline := time.Now().Add(timeout)
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(s.config.Game.ShutdownCheckIntervalDuration())
 	defer ticker.Stop()
 
 	for time.Now().Before(deadline) {

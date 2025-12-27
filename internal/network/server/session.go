@@ -412,6 +412,33 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 
 	// 记录游戏结果到排行榜
 	gs.recordGameResults(winner)
+
+	// 延迟 30 秒后清理房间，让玩家有时间查看结果
+	go func() {
+		time.Sleep(gs.room.server.config.Game.RoomCleanupDelayDuration())
+
+		// 让所有玩家离开房间
+		gs.room.mu.RLock()
+		playerIDs := make([]string, 0, len(gs.room.Players))
+		for id := range gs.room.Players {
+			playerIDs = append(playerIDs, id)
+		}
+		gs.room.mu.RUnlock()
+
+		// 逐个让玩家离开房间
+		for _, playerID := range playerIDs {
+			gs.room.mu.RLock()
+			if rp, exists := gs.room.Players[playerID]; exists && rp.Client != nil {
+				client := rp.Client
+				gs.room.mu.RUnlock()
+				gs.room.server.roomManager.LeaveRoom(client)
+			} else {
+				gs.room.mu.RUnlock()
+			}
+		}
+
+		log.Printf("🧹 房间 %s 已自动清理（游戏结束后 30 秒）", gs.room.Code)
+	}()
 }
 
 // recordGameResults 记录游戏结果到排行榜

@@ -39,6 +39,8 @@ func stringToProtoMessageType(s string) pb.MessageType {
 		return pb.MessageType_MSG_GET_ROOM_LIST
 	case "get_online_count":
 		return pb.MessageType_MSG_GET_ONLINE_COUNT
+	case "get_maintenance_status":
+		return pb.MessageType_MSG_GET_MAINTENANCE_STATUS
 	case "chat":
 		return pb.MessageType_MSG_CHAT
 	case "connected":
@@ -91,6 +93,10 @@ func stringToProtoMessageType(s string) pb.MessageType {
 		return pb.MessageType_MSG_LEADERBOARD_RESULT
 	case "room_list_result":
 		return pb.MessageType_MSG_ROOM_LIST_RESULT
+	case "maintenance_status":
+		return pb.MessageType_MSG_MAINTENANCE_STATUS
+	case "maintenance":
+		return pb.MessageType_MSG_MAINTENANCE
 	case "error":
 		return pb.MessageType_MSG_ERROR
 	default:
@@ -133,6 +139,8 @@ func protoMessageTypeToString(t pb.MessageType) string {
 		return "get_room_list"
 	case pb.MessageType_MSG_GET_ONLINE_COUNT:
 		return "get_online_count"
+	case pb.MessageType_MSG_GET_MAINTENANCE_STATUS:
+		return "get_maintenance_status"
 	case pb.MessageType_MSG_CHAT:
 		return "chat"
 	case pb.MessageType_MSG_CONNECTED:
@@ -185,6 +193,10 @@ func protoMessageTypeToString(t pb.MessageType) string {
 		return "leaderboard_result"
 	case pb.MessageType_MSG_ROOM_LIST_RESULT:
 		return "room_list_result"
+	case pb.MessageType_MSG_MAINTENANCE_STATUS:
+		return "maintenance_status"
+	case pb.MessageType_MSG_MAINTENANCE:
+		return "maintenance"
 	case pb.MessageType_MSG_ERROR:
 		return "error"
 	default:

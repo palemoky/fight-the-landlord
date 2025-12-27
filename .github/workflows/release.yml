@@ -1,4 +1,4 @@
-name: Release Docker Image
+name: Release
 
 on:
   push:
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 env:
@@ -18,7 +18,81 @@ env:
   IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
 
 jobs:
-  build-and-push:
+  # 构建客户端二进制文件
+  build-client:
+    name: Build client binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+          DEFAULT_SERVER: ${{ vars.DEFAULT_SERVER || 'localhost:1780' }}
+        run: |
+          # Set output filename
+          if [ "$GOOS" = "windows" ]; then
+            OUTPUT="fight-the-landlord-${GOOS}-${GOARCH}.exe"
+          else
+            OUTPUT="fight-the-landlord-${GOOS}-${GOARCH}"
+          fi
+
+          # Build with optimizations and inject default server
+          go build -trimpath -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.defaultServer=${DEFAULT_SERVER}" \
+            -o "$OUTPUT" ./cmd/client
+
+          # Create checksum
+          sha256sum "$OUTPUT" > "$OUTPUT.sha256"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            fight-the-landlord-*
+            *.sha256
+
+  # 创建 GitHub Release
+  create-release:
+    name: Create GitHub release
+    needs: build-client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: binary-*
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+
+  # 构建并推送 Docker 镜像
+  build-and-push-docker:
+    name: Build and push Docker image
     runs-on: ubuntu-latest
 
     steps:

@@ -26,22 +26,23 @@ type MessageType int32
 const (
 	MessageType_MSG_UNKNOWN MessageType = 0
 	// 客户端 -> 服务端
-	MessageType_MSG_RECONNECT        MessageType = 1
-	MessageType_MSG_PING             MessageType = 2
-	MessageType_MSG_CREATE_ROOM      MessageType = 3
-	MessageType_MSG_JOIN_ROOM        MessageType = 4
-	MessageType_MSG_LEAVE_ROOM       MessageType = 5
-	MessageType_MSG_QUICK_MATCH      MessageType = 6
-	MessageType_MSG_READY            MessageType = 7
-	MessageType_MSG_CANCEL_READY     MessageType = 8
-	MessageType_MSG_BID              MessageType = 9
-	MessageType_MSG_PLAY_CARDS       MessageType = 10
-	MessageType_MSG_PASS             MessageType = 11
-	MessageType_MSG_GET_STATS        MessageType = 12
-	MessageType_MSG_GET_LEADERBOARD  MessageType = 13
-	MessageType_MSG_GET_ROOM_LIST    MessageType = 14
-	MessageType_MSG_GET_ONLINE_COUNT MessageType = 15
-	MessageType_MSG_CHAT             MessageType = 16
+	MessageType_MSG_RECONNECT              MessageType = 1
+	MessageType_MSG_PING                   MessageType = 2
+	MessageType_MSG_CREATE_ROOM            MessageType = 3
+	MessageType_MSG_JOIN_ROOM              MessageType = 4
+	MessageType_MSG_LEAVE_ROOM             MessageType = 5
+	MessageType_MSG_QUICK_MATCH            MessageType = 6
+	MessageType_MSG_READY                  MessageType = 7
+	MessageType_MSG_CANCEL_READY           MessageType = 8
+	MessageType_MSG_BID                    MessageType = 9
+	MessageType_MSG_PLAY_CARDS             MessageType = 10
+	MessageType_MSG_PASS                   MessageType = 11
+	MessageType_MSG_GET_STATS              MessageType = 12
+	MessageType_MSG_GET_LEADERBOARD        MessageType = 13
+	MessageType_MSG_GET_ROOM_LIST          MessageType = 14
+	MessageType_MSG_GET_ONLINE_COUNT       MessageType = 15
+	MessageType_MSG_GET_MAINTENANCE_STATUS MessageType = 17
+	MessageType_MSG_CHAT                   MessageType = 16
 	// 服务端 -> 客户端
 	MessageType_MSG_CONNECTED          MessageType = 100
 	MessageType_MSG_RECONNECTED        MessageType = 101
@@ -68,6 +69,8 @@ const (
 	MessageType_MSG_STATS_RESULT       MessageType = 122
 	MessageType_MSG_LEADERBOARD_RESULT MessageType = 123
 	MessageType_MSG_ROOM_LIST_RESULT   MessageType = 124
+	MessageType_MSG_MAINTENANCE_STATUS MessageType = 125
+	MessageType_MSG_MAINTENANCE        MessageType = 126
 	MessageType_MSG_ERROR              MessageType = 200
 )
 
@@ -90,6 +93,7 @@ var (
 		13:  "MSG_GET_LEADERBOARD",
 		14:  "MSG_GET_ROOM_LIST",
 		15:  "MSG_GET_ONLINE_COUNT",
+		17:  "MSG_GET_MAINTENANCE_STATUS",
 		16:  "MSG_CHAT",
 		100: "MSG_CONNECTED",
 		101: "MSG_RECONNECTED",
@@ -116,52 +120,57 @@ var (
 		122: "MSG_STATS_RESULT",
 		123: "MSG_LEADERBOARD_RESULT",
 		124: "MSG_ROOM_LIST_RESULT",
+		125: "MSG_MAINTENANCE_STATUS",
+		126: "MSG_MAINTENANCE",
 		200: "MSG_ERROR",
 	}
 	MessageType_value = map[string]int32{
-		"MSG_UNKNOWN":            0,
-		"MSG_RECONNECT":          1,
-		"MSG_PING":               2,
-		"MSG_CREATE_ROOM":        3,
-		"MSG_JOIN_ROOM":          4,
-		"MSG_LEAVE_ROOM":         5,
-		"MSG_QUICK_MATCH":        6,
-		"MSG_READY":              7,
-		"MSG_CANCEL_READY":       8,
-		"MSG_BID":                9,
-		"MSG_PLAY_CARDS":         10,
-		"MSG_PASS":               11,
-		"MSG_GET_STATS":          12,
-		"MSG_GET_LEADERBOARD":    13,
-		"MSG_GET_ROOM_LIST":      14,
-		"MSG_GET_ONLINE_COUNT":   15,
-		"MSG_CHAT":               16,
-		"MSG_CONNECTED":          100,
-		"MSG_RECONNECTED":        101,
-		"MSG_PONG":               102,
-		"MSG_PLAYER_OFFLINE":     103,
-		"MSG_PLAYER_ONLINE":      104,
-		"MSG_ONLINE_COUNT":       105,
-		"MSG_ROOM_CREATED":       106,
-		"MSG_ROOM_JOINED":        107,
-		"MSG_PLAYER_JOINED":      108,
-		"MSG_PLAYER_LEFT":        109,
-		"MSG_PLAYER_READY":       110,
-		"MSG_MATCH_FOUND":        111,
-		"MSG_GAME_START":         112,
-		"MSG_DEAL_CARDS":         113,
-		"MSG_BID_TURN":           114,
-		"MSG_BID_RESULT":         115,
-		"MSG_LANDLORD":           116,
-		"MSG_PLAY_TURN":          117,
-		"MSG_CARD_PLAYED":        118,
-		"MSG_PLAYER_PASS":        119,
-		"MSG_GAME_OVER":          120,
-		"MSG_ROUND_RESULT":       121,
-		"MSG_STATS_RESULT":       122,
-		"MSG_LEADERBOARD_RESULT": 123,
-		"MSG_ROOM_LIST_RESULT":   124,
-		"MSG_ERROR":              200,
+		"MSG_UNKNOWN":                0,
+		"MSG_RECONNECT":              1,
+		"MSG_PING":                   2,
+		"MSG_CREATE_ROOM":            3,
+		"MSG_JOIN_ROOM":              4,
+		"MSG_LEAVE_ROOM":             5,
+		"MSG_QUICK_MATCH":            6,
+		"MSG_READY":                  7,
+		"MSG_CANCEL_READY":           8,
+		"MSG_BID":                    9,
+		"MSG_PLAY_CARDS":             10,
+		"MSG_PASS":                   11,
+		"MSG_GET_STATS":              12,
+		"MSG_GET_LEADERBOARD":        13,
+		"MSG_GET_ROOM_LIST":          14,
+		"MSG_GET_ONLINE_COUNT":       15,
+		"MSG_GET_MAINTENANCE_STATUS": 17,
+		"MSG_CHAT":                   16,
+		"MSG_CONNECTED":              100,
+		"MSG_RECONNECTED":            101,
+		"MSG_PONG":                   102,
+		"MSG_PLAYER_OFFLINE":         103,
+		"MSG_PLAYER_ONLINE":          104,
+		"MSG_ONLINE_COUNT":           105,
+		"MSG_ROOM_CREATED":           106,
+		"MSG_ROOM_JOINED":            107,
+		"MSG_PLAYER_JOINED":          108,
+		"MSG_PLAYER_LEFT":            109,
+		"MSG_PLAYER_READY":           110,
+		"MSG_MATCH_FOUND":            111,
+		"MSG_GAME_START":             112,
+		"MSG_DEAL_CARDS":             113,
+		"MSG_BID_TURN":               114,
+		"MSG_BID_RESULT":             115,
+		"MSG_LANDLORD":               116,
+		"MSG_PLAY_TURN":              117,
+		"MSG_CARD_PLAYED":            118,
+		"MSG_PLAYER_PASS":            119,
+		"MSG_GAME_OVER":              120,
+		"MSG_ROUND_RESULT":           121,
+		"MSG_STATS_RESULT":           122,
+		"MSG_LEADERBOARD_RESULT":     123,
+		"MSG_ROOM_LIST_RESULT":       124,
+		"MSG_MAINTENANCE_STATUS":     125,
+		"MSG_MAINTENANCE":            126,
+		"MSG_ERROR":                  200,
 	}
 )
 
@@ -252,7 +261,7 @@ const file_internal_network_protocol_proto_message_proto_rawDesc = "" +
 	"-internal/network/protocol/proto/message.proto\x12\bprotocol\"N\n" +
 	"\aMessage\x12)\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x15.protocol.MessageTypeR\x04type\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload*\xee\x06\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload*\xbf\a\n" +
 	"\vMessageType\x12\x0f\n" +
 	"\vMSG_UNKNOWN\x10\x00\x12\x11\n" +
 	"\rMSG_RECONNECT\x10\x01\x12\f\n" +
@@ -270,7 +279,8 @@ const file_internal_network_protocol_proto_message_proto_rawDesc = "" +
 	"\rMSG_GET_STATS\x10\f\x12\x17\n" +
 	"\x13MSG_GET_LEADERBOARD\x10\r\x12\x15\n" +
 	"\x11MSG_GET_ROOM_LIST\x10\x0e\x12\x18\n" +
-	"\x14MSG_GET_ONLINE_COUNT\x10\x0f\x12\f\n" +
+	"\x14MSG_GET_ONLINE_COUNT\x10\x0f\x12\x1e\n" +
+	"\x1aMSG_GET_MAINTENANCE_STATUS\x10\x11\x12\f\n" +
 	"\bMSG_CHAT\x10\x10\x12\x11\n" +
 	"\rMSG_CONNECTED\x10d\x12\x13\n" +
 	"\x0fMSG_RECONNECTED\x10e\x12\f\n" +
@@ -296,7 +306,9 @@ const file_internal_network_protocol_proto_message_proto_rawDesc = "" +
 	"\x10MSG_ROUND_RESULT\x10y\x12\x14\n" +
 	"\x10MSG_STATS_RESULT\x10z\x12\x1a\n" +
 	"\x16MSG_LEADERBOARD_RESULT\x10{\x12\x18\n" +
-	"\x14MSG_ROOM_LIST_RESULT\x10|\x12\x0e\n" +
+	"\x14MSG_ROOM_LIST_RESULT\x10|\x12\x1a\n" +
+	"\x16MSG_MAINTENANCE_STATUS\x10}\x12\x13\n" +
+	"\x0fMSG_MAINTENANCE\x10~\x12\x0e\n" +
 	"\tMSG_ERROR\x10\xc8\x01BEZCgithub.com/palemoky/fight-the-landlord/internal/network/protocol/pbb\x06proto3"
 
 var (

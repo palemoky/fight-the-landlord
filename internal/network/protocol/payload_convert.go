@@ -53,8 +53,8 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 			Offset: int32(p.Offset),
 			Limit:  int32(p.Limit),
 		}
-	case MsgGetOnlineCount:
-		// No payload needed for this message
+	case MsgGetOnlineCount, MsgGetMaintenanceStatus:
+		// No payload needed for these messages
 		return nil, nil
 
 	// 服务端响应
@@ -100,6 +100,16 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 		p := payload.(OnlineCountPayload)
 		pbPayload = &pb.OnlineCountPayload{
 			Count: int32(p.Count),
+		}
+	case MsgMaintenanceStatus:
+		p := payload.(MaintenanceStatusPayload)
+		pbPayload = &pb.MaintenanceStatusPayload{
+			Maintenance: p.Maintenance,
+		}
+	case MsgMaintenance:
+		p := payload.(MaintenancePayload)
+		pbPayload = &pb.MaintenancePayload{
+			Maintenance: p.Maintenance,
 		}
 	case MsgRoomCreated:
 		p := payload.(RoomCreatedPayload)
@@ -326,6 +336,22 @@ func DecodePayload(msgType MessageType, data []byte, target any) error {
 		}
 		*target.(*OnlineCountPayload) = OnlineCountPayload{
 			Count: int(pb.Count),
+		}
+	case MsgMaintenanceStatus:
+		var pbMsg pb.MaintenanceStatusPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*MaintenanceStatusPayload) = MaintenanceStatusPayload{
+			Maintenance: pbMsg.Maintenance,
+		}
+	case MsgMaintenance:
+		var pbMsg pb.MaintenancePayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return err
+		}
+		*target.(*MaintenancePayload) = MaintenancePayload{
+			Maintenance: pbMsg.Maintenance,
 		}
 	case MsgError:
 		var pb pb.ErrorPayload
