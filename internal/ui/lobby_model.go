@@ -185,6 +185,12 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 		sb.WriteString(errorView)
 	}
 
+	// Credit footer
+	creditStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
+	credit := creditStyle.Render("Made with ❤️ by Palemoky")
+	sb.WriteString("\n\n")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, credit))
+
 	content := sb.String()
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
