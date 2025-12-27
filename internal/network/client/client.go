@@ -69,7 +69,7 @@ func NewClient(serverURL string) *Client {
 func (c *Client) Connect() error {
 	dialer := websocket.Dialer{
 		HandshakeTimeout:  10 * time.Second,
-		EnableCompression: true, // 启用压缩
+		EnableCompression: false,
 	}
 
 	conn, _, err := dialer.Dial(c.ServerURL, nil)
@@ -422,7 +422,7 @@ func (c *Client) tryReconnect() {
 		// 创建新连接
 		dialer := websocket.Dialer{
 			HandshakeTimeout:  10 * time.Second,
-			EnableCompression: true, // 启用压缩
+			EnableCompression: false,
 		}
 
 		conn, _, err := dialer.Dial(c.ServerURL, nil)

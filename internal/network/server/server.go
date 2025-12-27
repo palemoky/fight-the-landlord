@@ -23,7 +23,8 @@ var upgrader = websocket.Upgrader{
 	},
 	// 启用 permessage-deflate 压缩扩展
 	// 可减少 40-70% 流量，gorilla/websocket 会自动协商压缩参数
-	EnableCompression: true,
+	// 压缩会对CPU和内存造成压力，只有在大文件压缩才有收益，大量小文件反而是负优化
+	EnableCompression: false,
 }
 
 // Server WebSocket 服务器
