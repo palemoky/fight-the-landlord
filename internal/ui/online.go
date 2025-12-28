@@ -367,6 +367,13 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	*m.input = newInput // Update the value at the pointer address
 	cmds = append(cmds, cmd)
 
+	// 在匹配阶段，每秒刷新一次以更新等待时间
+	if m.phase == PhaseMatching {
+		cmds = append(cmds, tea.Tick(time.Second, func(t time.Time) tea.Msg {
+			return tea.WindowSizeMsg{Width: m.width, Height: m.height}
+		}))
+	}
+
 	return m, tea.Batch(cmds...)
 }
 
