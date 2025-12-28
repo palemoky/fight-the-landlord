@@ -48,11 +48,6 @@ func (m *GameModel) waitingView(onlineModel *OnlineModel) string {
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
 	}
 
-	if onlineModel.error != "" {
-		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
-		sb.WriteString(errorView)
-	}
-
 	return sb.String()
 }
 
@@ -79,11 +74,6 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 	if chatBox != "" {
 		sb.WriteString("\n")
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, chatBox))
-	}
-
-	if onlineModel.error != "" {
-		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
-		sb.WriteString(errorView)
 	}
 
 	gameContent := sb.String()
