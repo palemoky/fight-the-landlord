@@ -25,7 +25,10 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 						Scope:   "lobby",
 					})
 					if err := m.client.SendMessage(chatMsg); err != nil {
-						m.error = fmt.Sprintf("发送消息失败: %v", err)
+						m.setNotification(NotifyError, fmt.Sprintf("⚠️ 发送消息失败: %v", err), true)
+						return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+							return ClearSystemNotificationMsg{}
+						})
 					}
 					m.lobby.chatInput.SetValue("")
 				}
@@ -69,7 +72,10 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 							Scope:   "room",
 						})
 						if err := m.client.SendMessage(chatMsg); err != nil {
-							m.error = fmt.Sprintf("发送消息失败: %v", err)
+							m.setNotification(NotifyError, fmt.Sprintf("⚠️ 发送消息失败: %v", err), true)
+							return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+								return ClearSystemNotificationMsg{}
+							})
 						}
 						m.game.showQuickMsgMenu = false
 						return true, nil
@@ -125,9 +131,9 @@ func (m *OnlineModel) handleEscKey() (bool, tea.Cmd) {
 	// 在游戏中（叫地主、出牌）时，ESC 不退出游戏，避免误操作
 	if m.phase == PhaseBidding || m.phase == PhasePlaying {
 		// 显示提示信息，3秒后自动消失
-		m.error = "游戏进行中，无法退出！"
+		m.setNotification(NotifyError, "⚠️ 游戏进行中，无法退出！", true)
 		return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-			return ClearErrorMsg{}
+			return ClearSystemNotificationMsg{}
 		})
 	}
 	// 其他情况（大厅、游戏结束等）可以退出
@@ -222,8 +228,10 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 	case "1":
 		// 快速匹配
 		if m.maintenanceMode {
-			m.error = "服务器维护中，暂停快速匹配"
-			return nil
+			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停快速匹配", true)
+			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+				return ClearSystemNotificationMsg{}
+			})
 		}
 		m.phase = PhaseMatching
 		m.matchingStartTime = time.Now()
@@ -231,8 +239,10 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 	case "2":
 		// 创建房间
 		if m.maintenanceMode {
-			m.error = "服务器维护中，暂停创建房间"
-			return nil
+			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停创建房间", true)
+			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+				return ClearSystemNotificationMsg{}
+			})
 		}
 		_ = m.client.CreateRoom()
 	case "3":
@@ -259,8 +269,10 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 		// 可能是房间号
 		if len(input) > 0 {
 			if m.maintenanceMode {
-				m.error = "服务器维护中，暂停加入房间"
-				return nil
+				m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停加入房间", true)
+				return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+					return ClearSystemNotificationMsg{}
+				})
 			}
 			_ = m.client.JoinRoom(input)
 		}
@@ -272,8 +284,10 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 // handleRoomListEnter 处理房间列表界面的回车
 func (m *OnlineModel) handleRoomListEnter(input string) tea.Cmd {
 	if m.maintenanceMode {
-		m.error = "服务器维护中，暂停加入房间"
-		return nil
+		m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停加入房间", true)
+		return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+			return ClearSystemNotificationMsg{}
+		})
 	}
 	if input == "" {
 		// 没有输入，加入选中的房间

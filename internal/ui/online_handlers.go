@@ -133,6 +133,9 @@ func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 		m.phase = PhaseLobby
 		m.input.Placeholder = "输入选项 (1-5) 或房间号"
 		m.input.Focus()
+		// Note: Don't request online count here to avoid rate limiting
+		// The notification will be set by ReconnectSuccessMsg, then cleared after 3s
+		// At that point, if there's no other notification, it will show nothing until next update
 	}
 	// 注意：ReconnectSuccessMsg 已通过 OnReconnect 回调发送，这里不需要再发送
 	return nil
@@ -146,12 +149,16 @@ func (m *OnlineModel) handleMsgPong(msg *protocol.Message) tea.Cmd {
 }
 
 func (m *OnlineModel) handleMsgError(msg *protocol.Message) tea.Cmd {
-	var payload protocol.ErrorPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	payload, err := protocol.ParsePayload[protocol.ErrorPayload](msg)
+	if err != nil {
+		return nil
+	}
 
 	// 检测维护模式错误码
 	if payload.Code == protocol.ErrCodeServerMaintenance {
 		m.maintenanceMode = true
+		// 设置维护通知（持久显示）
+		m.setNotification(NotifyMaintenance, "⚠️ 服务器维护中，暂停接受新连接", false)
 	}
 
 	// 在游戏阶段（叫地主、出牌），将错误显示在 placeholder 中
@@ -163,9 +170,19 @@ func (m *OnlineModel) handleMsgError(msg *protocol.Message) tea.Cmd {
 		})
 	}
 
-	// 其他阶段显示在错误区域
-	m.error = payload.Message
-	return nil
+	// 在大厅阶段，显示在系统通知区域（临时通知）
+	// 但是如果当前正在显示重连成功消息，不要覆盖它
+	if notification := m.getCurrentNotification(); notification != nil && notification.Type == NotifyReconnectSuccess {
+		// 正在显示重连成功消息，忽略此错误
+		return nil
+	}
+
+	m.setNotification(NotifyError, fmt.Sprintf("⚠️ %s", payload.Message), true)
+
+	// 3秒后自动消失
+	return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+		return ClearSystemNotificationMsg{}
+	})
 }
 
 func (m *OnlineModel) handleMsgOnlineCount(msg *protocol.Message) tea.Cmd {
@@ -173,6 +190,8 @@ func (m *OnlineModel) handleMsgOnlineCount(msg *protocol.Message) tea.Cmd {
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
 	// m.onlineCount moved to LobbyModel
 	m.lobby.onlineCount = payload.Count
+	// 设置在线人数通知（持久显示）
+	m.setNotification(NotifyOnlineCount, fmt.Sprintf("🌐 在线玩家: %d 人", payload.Count), false)
 	return nil
 }
 

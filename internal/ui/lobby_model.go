@@ -85,29 +85,30 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, welcome))
 		sb.WriteString("\n")
 
-		// Display maintenance notice or online count
-		if onlineModel.maintenanceMode {
-			maintenanceInfo := "⚠️ 服务器维护中，暂停接受新连接"
-			maintenanceStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+		// 显示系统通知（统一通知区域，按优先级显示）
+		if notification := onlineModel.getCurrentNotification(); notification != nil {
+			var notificationStyle lipgloss.Style
+			switch notification.Type {
+			case NotifyError, NotifyRateLimit:
+				// 错误和限频使用橙色
+				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+			case NotifyReconnecting:
+				// 重连中使用橙色
+				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+			case NotifyReconnectSuccess:
+				// 重连成功使用绿色
+				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+			case NotifyMaintenance:
+				// 维护通知使用橙色
+				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+			case NotifyOnlineCount:
+				// 在线人数使用绿色
+				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
+			}
 			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center,
-				maintenanceStyle.Render(maintenanceInfo)))
-		} else if m.onlineCount > 0 {
-			onlineInfo := fmt.Sprintf("🌐 在线玩家: %d 人", m.onlineCount)
-			onlineStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("42")) // Green
-			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, onlineStyle.Render(onlineInfo)))
+				notificationStyle.Render(notification.Message)))
 		}
 		sb.WriteString("\n")
-
-		// Reconnect status handled by OnlineModel, passed in or handled by parent view composition
-		if onlineModel.reconnecting || onlineModel.reconnectSuccess {
-			var reconnectStyle lipgloss.Style
-			if onlineModel.reconnectSuccess {
-				reconnectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
-			} else {
-				reconnectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-			}
-			sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, reconnectStyle.Render(onlineModel.reconnectMessage)))
-		}
 		sb.WriteString("\n")
 	}
 

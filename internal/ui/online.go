@@ -32,6 +32,25 @@ const (
 	PhaseRules
 )
 
+// NotificationType 通知类型
+type NotificationType int
+
+const (
+	NotifyError            NotificationType = iota // 错误信息（临时）
+	NotifyRateLimit                                // 限频提示（临时）
+	NotifyReconnecting                             // 重连中（持久）
+	NotifyReconnectSuccess                         // 重连成功（临时）
+	NotifyMaintenance                              // 维护通知（持久）
+	NotifyOnlineCount                              // 在线人数（持久）
+)
+
+// SystemNotification 系统通知
+type SystemNotification struct {
+	Message   string
+	Type      NotificationType
+	Temporary bool // 是否为临时通知（3秒后自动消失）
+}
+
 // ServerMessage 服务器消息（用于 tea.Msg）
 type ServerMessage struct {
 	Msg *protocol.Message
@@ -63,11 +82,14 @@ type ClearErrorMsg struct{}
 // ClearInputErrorMsg 清除输入框错误消息
 type ClearInputErrorMsg struct{}
 
+// ClearSystemNotificationMsg 清除系统通知消息
+type ClearSystemNotificationMsg struct{}
+
 // OnlineModel 联网模式的 model
 type OnlineModel struct {
 	client *client.Client
 	phase  GamePhase
-	error  string
+	error  string // 保留用于游戏阶段的输入框错误显示
 
 	// 玩家信息
 	playerID   string
@@ -82,12 +104,13 @@ type OnlineModel struct {
 	reconnecting      bool         // 是否正在重连
 	reconnectAttempt  int          // 当前重连尝试次数
 	reconnectMaxTries int          // 最大重连次数
-	reconnectSuccess  bool         // 重连是否成功
-	reconnectMessage  string       // 重连消息
 	reconnectChan     chan tea.Msg // 重连消息通道（可发送多种消息类型）
 
 	// 维护模式
 	maintenanceMode bool // 服务器是否在维护模式
+
+	// 系统通知（统一管理所有通知）
+	notifications map[NotificationType]*SystemNotification // 按类型存储的通知
 
 	// Sub-models
 	lobby *LobbyModel
@@ -123,6 +146,7 @@ func NewOnlineModel(serverURL string) *OnlineModel {
 		lobby:             NewLobbyModel(c, &ti), // Pass pointer to shared input
 		game:              NewGameModel(c, &ti),  // Pass pointer to shared input
 		soundManager:      sound.NewSoundManager(),
+		notifications:     make(map[NotificationType]*SystemNotification),
 	}
 
 	// 设置重连回调 - 通过 channel 发送消息到 Bubble Tea
@@ -163,6 +187,42 @@ func (m *OnlineModel) listenForReconnect() tea.Cmd {
 		msg := <-m.reconnectChan
 		return msg
 	}
+}
+
+// setNotification 设置通知
+func (m *OnlineModel) setNotification(notifyType NotificationType, message string, temporary bool) {
+	m.notifications[notifyType] = &SystemNotification{
+		Message:   message,
+		Type:      notifyType,
+		Temporary: temporary,
+	}
+}
+
+// clearNotification 清除指定类型的通知
+func (m *OnlineModel) clearNotification(notifyType NotificationType) {
+	delete(m.notifications, notifyType)
+}
+
+// getCurrentNotification 根据优先级获取当前应显示的通知
+// 优先级: 错误 > 限频 > 重连中 > 重连成功 > 维护 > 在线人数
+func (m *OnlineModel) getCurrentNotification() *SystemNotification {
+	// 按优先级顺序检查
+	priorityOrder := []NotificationType{
+		NotifyError,
+		NotifyRateLimit,
+		NotifyReconnecting,
+		NotifyReconnectSuccess,
+		NotifyMaintenance,
+		NotifyOnlineCount,
+	}
+
+	for _, notifyType := range priorityOrder {
+		if notification, exists := m.notifications[notifyType]; exists {
+			return notification
+		}
+	}
+
+	return nil
 }
 
 // connectToServer 连接服务器
@@ -224,16 +284,18 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.reconnecting = true
 		m.reconnectAttempt = msg.Attempt
 		m.reconnectMaxTries = msg.MaxTries
-		m.reconnectSuccess = false
-		m.reconnectMessage = fmt.Sprintf("🔄 正在重连 (%d/%d)...", msg.Attempt, msg.MaxTries)
+		// 设置重连中通知（持久显示）
+		m.setNotification(NotifyReconnecting, fmt.Sprintf("🔄 正在重连 (%d/%d)...", msg.Attempt, msg.MaxTries), false)
 		// 继续监听重连消息
 		cmds = append(cmds, m.listenForReconnect())
 
 	case ReconnectSuccessMsg:
 		m.reconnecting = false
-		m.reconnectSuccess = true
-		m.reconnectMessage = "✅ 重连成功！"
-		// 3秒后清除消息
+		// 清除重连中通知
+		m.clearNotification(NotifyReconnecting)
+		// 设置重连成功通知（临时显示，3秒后消失）
+		m.setNotification(NotifyReconnectSuccess, "✅ 重连成功！", true)
+		// 3秒后清除重连成功消息并请求在线人数
 		cmds = append(cmds, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
 			return ClearReconnectMsg{}
 		}))
@@ -245,8 +307,13 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case ClearReconnectMsg:
-		m.reconnectSuccess = false
-		m.reconnectMessage = ""
+		// 清除重连成功通知
+		m.clearNotification(NotifyReconnectSuccess)
+		// 如果在大厅，请求在线人数和维护状态
+		if m.phase == PhaseLobby {
+			_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+			_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+		}
 
 	case ClearErrorMsg:
 		m.error = ""
@@ -265,6 +332,11 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.input.Placeholder = "没有能大过上家的牌，输入 PASS"
 			}
 		}
+
+	case ClearSystemNotificationMsg:
+		// 清除临时通知（错误、限频等）
+		m.clearNotification(NotifyError)
+		m.clearNotification(NotifyRateLimit)
 
 	case ServerMessage:
 		cmd = m.handleServerMessage(msg.Msg)
@@ -331,15 +403,14 @@ func (m *OnlineModel) View() string {
 	return docStyle.Render(content)
 }
 
-// enterLobby enters the lobby phase and requests online count
+// enterLobby enters the lobby phase
 func (m *OnlineModel) enterLobby() {
 	m.phase = PhaseLobby
 	m.error = ""
 	m.input.Reset()
 	m.input.Placeholder = "输入选项 (1-6) 或房间号"
 	m.input.Focus()
-	// Request online count when entering lobby
-	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+	// Note: Online count is requested in handleMsgConnected, no need to request again here
 }
 
 // connectingView 显示连接中状态
