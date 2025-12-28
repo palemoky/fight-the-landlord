@@ -129,9 +129,9 @@ type OnlineModel struct {
 // NewOnlineModel 创建联网模式 model
 func NewOnlineModel(serverURL string) *OnlineModel {
 	ti := textinput.New()
-	ti.Placeholder = "输入房间号..."
-	ti.CharLimit = 10
-	ti.Width = 20
+	ti.Placeholder = "输入选项 (1-6) 或房间号"
+	ti.CharLimit = 20 // 支持长牌型，如 333444555101010QQAA (19字符)
+	ti.Width = 30
 	ti.Focus()
 
 	c := client.NewClient(serverURL)
