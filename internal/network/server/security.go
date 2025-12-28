@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -328,4 +329,95 @@ func (ml *MessageRateLimiter) RemoveClient(clientID string) {
 	ml.mu.Lock()
 	defer ml.mu.Unlock()
 	delete(ml.limits, clientID)
+}
+
+// --- 聊天消息速率限制 ---
+
+// ChatRateLimiter 聊天消息速率限制器
+type ChatRateLimiter struct {
+	limits map[string]*chatRate
+	mu     sync.RWMutex
+
+	maxPerSecond int
+	maxPerMinute int
+	cooldown     time.Duration
+}
+
+type chatRate struct {
+	secondCount   int
+	minuteCount   int
+	lastSecond    time.Time
+	lastMinute    time.Time
+	cooldownUntil time.Time
+}
+
+// NewChatRateLimiter 创建聊天消息速率限制器
+func NewChatRateLimiter(maxPerSecond, maxPerMinute int, cooldown time.Duration) *ChatRateLimiter {
+	return &ChatRateLimiter{
+		limits:       make(map[string]*chatRate),
+		maxPerSecond: maxPerSecond,
+		maxPerMinute: maxPerMinute,
+		cooldown:     cooldown,
+	}
+}
+
+// AllowChat 检查是否允许发送聊天消息
+func (cl *ChatRateLimiter) AllowChat(clientID string) (allowed bool, reason string) {
+	cl.mu.Lock()
+	defer cl.mu.Unlock()
+
+	now := time.Now()
+	rate, exists := cl.limits[clientID]
+
+	if !exists {
+		cl.limits[clientID] = &chatRate{
+			secondCount: 1,
+			minuteCount: 1,
+			lastSecond:  now,
+			lastMinute:  now,
+		}
+		return true, ""
+	}
+
+	// 检查是否在冷却期
+	if now.Before(rate.cooldownUntil) {
+		remaining := int(rate.cooldownUntil.Sub(now).Seconds()) + 1 // +1 以避免显示 0 秒
+		return false, fmt.Sprintf("章鱼哥已上线，请保持安静 %d 秒", remaining)
+	}
+
+	// 重置秒级计数
+	if now.Sub(rate.lastSecond) >= time.Second {
+		rate.secondCount = 0
+		rate.lastSecond = now
+	}
+
+	// 重置分钟计数
+	if now.Sub(rate.lastMinute) >= time.Minute {
+		rate.minuteCount = 0
+		rate.lastMinute = now
+	}
+
+	rate.secondCount++
+	rate.minuteCount++
+
+	// 检查秒级限制
+	if rate.secondCount > cl.maxPerSecond {
+		rate.cooldownUntil = now.Add(cl.cooldown)
+		return false, "不要着急，休息，休息一会~"
+	}
+
+	// 检查分钟限制
+	if rate.minuteCount > cl.maxPerMinute {
+		rate.cooldownUntil = now.Add(cl.cooldown)
+		return false, "派大星正在接管键盘..."
+	}
+
+	return true, ""
+}
+
+// RemoveClient 移除客户端记录
+func (cl *ChatRateLimiter) RemoveClient(clientID string) {
+	cl.mu.Lock()
+	defer cl.mu.Unlock()
+	delete(cl.limits, clientID)
 }

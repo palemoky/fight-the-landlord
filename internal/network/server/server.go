@@ -47,6 +47,7 @@ type Server struct {
 	rateLimiter    *RateLimiter
 	originChecker  *OriginChecker
 	messageLimiter *MessageRateLimiter
+	chatLimiter    *ChatRateLimiter
 	ipFilter       *IPFilter
 
 	// 连接控制
@@ -89,7 +90,12 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		),
 		originChecker:  NewOriginChecker(cfg.Security.AllowedOrigins),
 		messageLimiter: NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
-		ipFilter:       NewIPFilter(),
+		chatLimiter: NewChatRateLimiter(
+			cfg.Security.ChatLimit.MaxPerSecond,
+			cfg.Security.ChatLimit.MaxPerMinute,
+			cfg.Security.ChatLimit.CooldownDuration(),
+		),
+		ipFilter: NewIPFilter(),
 		// 初始化连接控制
 		maxConnections: cfg.Server.MaxConnections,
 		semaphore:      make(chan struct{}, cfg.Server.MaxConnections),
@@ -104,8 +110,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	// 初始化消息处理器
 	s.handler = NewHandler(s)
 
-	log.Printf("🔒 安全配置: 连接限制=%d/s, 消息限制=%d/s, 最大连接数=%d",
-		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond, cfg.Server.MaxConnections)
+	log.Printf("🔒 安全配置: 连接限制=%d/s, 消息限制=%d/s, 聊天限制=%d/s, 最大连接数=%d",
+		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond, cfg.Security.ChatLimit.MaxPerSecond, cfg.Server.MaxConnections)
 
 	return s, nil
 }

@@ -38,10 +38,19 @@ security:
     max_per_minute: 60
     # 超限后封禁时长（秒）
     ban_duration: 60
-  # 消息速率限制（per client）
+  # 系统消息速率限制（per client）
   message_limit:
     # 每秒最大消息数
     max_per_second: 20
+
+  # 聊天消息速率限制（per client）
+  chat_limit:
+    # 每秒最大聊天消息数
+    max_per_second: 1
+    # 每分钟最大聊天消息数
+    max_per_minute: 30
+    # 触发限流后的冷却时间（秒）
+    cooldown: 5
 
 # 通知配置（可选）
 notification:

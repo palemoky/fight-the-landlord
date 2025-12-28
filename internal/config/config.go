@@ -47,6 +47,7 @@ type SecurityConfig struct {
 	AllowedOrigins []string           `yaml:"allowed_origins"` // 允许的来源
 	RateLimit      RateLimitConfig    `yaml:"rate_limit"`      // 连接速率限制
 	MessageLimit   MessageLimitConfig `yaml:"message_limit"`   // 消息速率限制
+	ChatLimit      ChatLimitConfig    `yaml:"chat_limit"`      // 聊天消息速率限制
 }
 
 // RateLimitConfig 连接速率限制配置
@@ -59,6 +60,13 @@ type RateLimitConfig struct {
 // MessageLimitConfig 消息速率限制配置
 type MessageLimitConfig struct {
 	MaxPerSecond int `yaml:"max_per_second"` // 每秒最大消息数
+}
+
+// ChatLimitConfig 聊天消息速率限制配置
+type ChatLimitConfig struct {
+	MaxPerSecond int `yaml:"max_per_second"` // 每秒最大聊天消息数
+	MaxPerMinute int `yaml:"max_per_minute"` // 每分钟最大聊天消息数
+	Cooldown     int `yaml:"cooldown"`       // 冷却时间（秒）
 }
 
 // TurnTimeoutDuration 返回出牌超时时长
@@ -94,6 +102,11 @@ func (c *GameConfig) RoomCleanupDelayDuration() time.Duration {
 // BanDurationTime 返回封禁时长
 func (c *RateLimitConfig) BanDurationTime() time.Duration {
 	return time.Duration(c.BanDuration) * time.Second
+}
+
+// CooldownDuration 返回聊天冷却时长
+func (c *ChatLimitConfig) CooldownDuration() time.Duration {
+	return time.Duration(c.Cooldown) * time.Second
 }
 
 // Load 加载配置文件
@@ -243,6 +256,16 @@ func setDefaults(cfg *Config) {
 	if cfg.Security.MessageLimit.MaxPerSecond == 0 {
 		cfg.Security.MessageLimit.MaxPerSecond = 20
 	}
+	// 聊天限流默认值
+	if cfg.Security.ChatLimit.MaxPerSecond == 0 {
+		cfg.Security.ChatLimit.MaxPerSecond = 1
+	}
+	if cfg.Security.ChatLimit.MaxPerMinute == 0 {
+		cfg.Security.ChatLimit.MaxPerMinute = 30
+	}
+	if cfg.Security.ChatLimit.Cooldown == 0 {
+		cfg.Security.ChatLimit.Cooldown = 5
+	}
 }
 
 // Default 返回默认配置
@@ -282,6 +305,11 @@ func Default() *Config {
 			},
 			MessageLimit: MessageLimitConfig{
 				MaxPerSecond: 20,
+			},
+			ChatLimit: ChatLimitConfig{
+				MaxPerSecond: 1,
+				MaxPerMinute: 30,
+				Cooldown:     5,
 			},
 		},
 	}

@@ -13,6 +13,14 @@ func (h *Handler) handleChat(client *Client, msg *protocol.Message) {
 		return
 	}
 
+	// 聊天限流检查
+	allowed, reason := h.server.chatLimiter.AllowChat(client.ID)
+	if !allowed {
+		client.SendMessage(protocol.NewErrorMessageWithText(
+			protocol.ErrCodeRateLimit, reason))
+		return
+	}
+
 	// 填充发送者信息
 	payload.SenderID = client.ID
 	payload.SenderName = client.Name
