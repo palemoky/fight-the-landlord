@@ -26,7 +26,7 @@ func TestNewLobbyModel(t *testing.T) {
 	// Verify Chat Input properties
 	assert.Equal(t, "按 / 键聊天...", model.chatInput.Placeholder)
 	assert.Equal(t, 50, model.chatInput.CharLimit)
-	assert.Equal(t, 25, model.chatInput.Width, "Chat input width should be set to fit the chat box")
+	assert.Equal(t, 45, model.chatInput.Width, "Chat input width should be set to fit the chat box")
 }
 
 func TestLobbyModel_Navigation_Menu(t *testing.T) {
