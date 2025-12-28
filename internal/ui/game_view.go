@@ -306,7 +306,13 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *time
 		sb.WriteString(quickMsgHint)
 	}
 
-	return promptStyle.Render(sb.String())
+	// Center the entire prompt content
+	centeredContent := lipgloss.NewStyle().
+		Width(m.width).
+		AlignHorizontal(lipgloss.Center).
+		Render(sb.String())
+
+	return promptStyle.Render(centeredContent)
 }
 
 func (m *GameModel) renderGameRules() string {
