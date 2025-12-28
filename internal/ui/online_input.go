@@ -351,8 +351,9 @@ func (m *OnlineModel) handleGameOverEnter() tea.Cmd {
 	m.enterLobby()
 	m.resetGameState()
 
-	// 返回大厅时查询维护状态
+	// 返回大厅时查询维护状态和在线人数
 	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
 
 	return nil
 }
