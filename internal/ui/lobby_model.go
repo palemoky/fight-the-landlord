@@ -190,11 +190,6 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
 	sb.WriteString(inputView)
 
-	if onlineModel.error != "" {
-		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
-		sb.WriteString(errorView)
-	}
-
 	// Credit footer
 	creditStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
 	credit := creditStyle.Render("Made with ❤️ by Palemoky")
@@ -205,7 +200,7 @@ func (m *LobbyModel) lobbyView(onlineModel *OnlineModel) string {
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
-func (m *LobbyModel) roomListView(onlineModel *OnlineModel) string {
+func (m *LobbyModel) roomListView() string {
 	var sb strings.Builder
 
 	title := titleStyle("📋 可加入的房间")
@@ -236,11 +231,6 @@ func (m *LobbyModel) roomListView(onlineModel *OnlineModel) string {
 
 	inputView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.input.View())
 	sb.WriteString(inputView)
-
-	if onlineModel.error != "" {
-		errorView := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, "\n"+errorStyle.Render(onlineModel.error))
-		sb.WriteString(errorView)
-	}
 
 	return sb.String()
 }

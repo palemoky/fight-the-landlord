@@ -219,63 +219,90 @@ func (m *OnlineModel) handleEnter() tea.Cmd {
 
 // handleLobbyEnter 处理大厅界面的回车
 func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
-	// 如果输入为空，使用选中的菜单项
+	// 如果没有输入，使用当前选中的菜单项
 	if input == "" {
 		input = fmt.Sprintf("%d", m.lobby.selectedIndex+1)
 	}
 
 	switch input {
 	case "1":
-		// 快速匹配
+		// 快速匹配 - 先检查状态
+		// 检查是否在维护模式
 		if m.maintenanceMode {
-			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停快速匹配", true)
+			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
 			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
 				return ClearSystemNotificationMsg{}
 			})
 		}
+
+		// 检查是否正在重连
+		if m.client.IsReconnecting() {
+			m.setNotification(NotifyError, "⚠️ 正在重连中，请稍后再试", true)
+			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+				return ClearSystemNotificationMsg{}
+			})
+		}
+
+		// 检查连接状态
+		if !m.client.IsConnected() {
+			m.setNotification(NotifyError, "⚠️ 未连接到服务器", true)
+			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+				return ClearSystemNotificationMsg{}
+			})
+		}
+
+		// 状态检查通过，进入匹配
 		m.phase = PhaseMatching
 		m.matchingStartTime = time.Now()
-		_ = m.client.QuickMatch()
+		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgQuickMatch, nil))
+
 	case "2":
 		// 创建房间
 		if m.maintenanceMode {
-			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停创建房间", true)
+			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
 			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
 				return ClearSystemNotificationMsg{}
 			})
 		}
-		_ = m.client.CreateRoom()
+		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgCreateRoom, nil))
+
 	case "3":
-		// 加入房间
+		// 加入房间 - 显示房间列表
 		if m.maintenanceMode {
-			m.error = "服务器维护中，暂停加入房间"
-			return nil
+			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
+			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+				return ClearSystemNotificationMsg{}
+			})
 		}
-		// 请求房间列表
 		m.phase = PhaseRoomList
-		m.lobby.selectedRoomIdx = 0
-		m.input.Placeholder = "或直接输入房间号..."
-		m.input.Focus()
-		_ = m.client.GetRoomList()
+		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetRoomList, nil))
+		m.input.Placeholder = "输入房间号或按 ESC 返回"
+
 	case "4":
+		// 排行榜
 		m.phase = PhaseLeaderboard
-		_ = m.client.GetLeaderboard("total", 0, 10)
+		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetLeaderboard, nil))
+
 	case "5":
+		// 我的战绩
 		m.phase = PhaseStats
-		_ = m.client.GetStats()
+		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetStats, nil))
+
 	case "6":
+		// 游戏规则
 		m.phase = PhaseRules
+
 	default:
-		// 可能是房间号
-		if len(input) > 0 {
-			if m.maintenanceMode {
-				m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停加入房间", true)
-				return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-					return ClearSystemNotificationMsg{}
-				})
-			}
-			_ = m.client.JoinRoom(input)
+		// 尝试作为房间号处理
+		if m.maintenanceMode {
+			m.setNotification(NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
+			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+				return ClearSystemNotificationMsg{}
+			})
 		}
+		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
+			RoomCode: input,
+		}))
 	}
 
 	return nil
@@ -353,7 +380,6 @@ func (m *OnlineModel) handleGameOverEnter() tea.Cmd {
 
 	// 返回大厅时查询维护状态和在线人数
 	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
-	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
 
 	return nil
 }

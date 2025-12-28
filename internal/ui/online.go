@@ -293,6 +293,9 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.reconnecting = false
 		// 清除重连中通知
 		m.clearNotification(NotifyReconnecting)
+		// 清除可能存在的错误通知（如"正在重连中，请稍后再试"）
+		m.clearNotification(NotifyError)
+		m.clearNotification(NotifyRateLimit)
 		// 设置重连成功通知（临时显示，3秒后消失）
 		m.setNotification(NotifyReconnectSuccess, "✅ 重连成功！", true)
 		// 3秒后清除重连成功消息并请求在线人数
@@ -390,7 +393,7 @@ func (m *OnlineModel) View() string {
 	case PhaseLobby:
 		content = m.lobby.lobbyView(m)
 	case PhaseRoomList:
-		content = m.lobby.roomListView(m)
+		content = m.lobby.roomListView()
 	case PhaseMatching:
 		content = m.matchingView()
 	case PhaseWaiting:
