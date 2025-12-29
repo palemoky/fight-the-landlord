@@ -325,7 +325,7 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// 恢复游戏阶段的默认 placeholder
 		if m.phase == PhaseBidding && m.game.bidTurn == m.playerID {
 			m.input.Placeholder = "叫地主? (Y/N)"
-		} else if m.phase == PhasePlaying && m.game.currentTurn == m.playerID {
+		} else if m.phase == PhasePlaying && m.game.state.CurrentTurn == m.playerID {
 			switch {
 			case m.game.mustPlay:
 				m.input.Placeholder = "你必须出牌 (如 33344)"

@@ -10,6 +10,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Game rules configuration
+const (
+	// BottomCardsPublic controls whether bottom cards are visible to all players
+	// true: All players see bottom cards, all counters deduct them
+	// false: Only landlord sees bottom cards, only landlord's counter deducts them
+	BottomCardsPublic = true
+)
+
 // Config 服务端配置
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`

@@ -15,27 +15,27 @@ import (
 
 // parseCardsInput 解析出牌输入
 func (m *OnlineModel) parseCardsInput(input string) ([]card.Card, error) {
-	return card.FindCardsInHand(m.game.hand, strings.ToUpper(input))
+	return card.FindCardsInHand(m.game.state.Hand, strings.ToUpper(input))
 }
 
 // sortHand 排序手牌
 func (m *OnlineModel) sortHand() {
-	sort.Slice(m.game.hand, func(i, j int) bool {
-		return m.game.hand[i].Rank > m.game.hand[j].Rank
+	sort.Slice(m.game.state.Hand, func(i, j int) bool {
+		return m.game.state.Hand[i].Rank > m.game.state.Hand[j].Rank
 	})
 }
 
 // resetGameState 重置游戏状态
 func (m *OnlineModel) resetGameState() {
-	m.game.roomCode = ""
-	m.game.players = nil
-	m.game.hand = nil
-	m.game.bottomCards = nil
-	m.game.currentTurn = ""
-	m.game.lastPlayedBy = ""
-	m.game.lastPlayed = nil
-	m.game.isLandlord = false
-	m.game.winner = ""
+	m.game.state.RoomCode = ""
+	m.game.state.Players = nil
+	m.game.state.Hand = nil
+	m.game.state.BottomCards = nil
+	m.game.state.CurrentTurn = ""
+	m.game.state.LastPlayedBy = ""
+	m.game.state.LastPlayed = nil
+	m.game.state.IsLandlord = false
+	m.game.state.Winner = ""
 	m.input.Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
 }
 
@@ -55,7 +55,7 @@ func (m *OnlineModel) shouldPlayBell() bool {
 
 	// 必须是自己的回合
 	isMyTurn := (m.phase == PhaseBidding && m.game.bidTurn == m.playerID) ||
-		(m.phase == PhasePlaying && m.game.currentTurn == m.playerID)
+		(m.phase == PhasePlaying && m.game.state.CurrentTurn == m.playerID)
 	if !isMyTurn {
 		return false
 	}

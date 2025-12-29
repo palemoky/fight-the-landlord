@@ -182,10 +182,10 @@ func (m *OnlineModel) handleRuneKey(msg tea.KeyMsg) (bool, tea.Cmd) {
 func (m *OnlineModel) handleTimeout() {
 	if m.phase == PhaseBidding && m.game.bidTurn == m.playerID {
 		_ = m.client.Bid(false) // 自动不叫
-	} else if m.phase == PhasePlaying && m.game.currentTurn == m.playerID {
-		if m.game.mustPlay && len(m.game.hand) > 0 {
+	} else if m.phase == PhasePlaying && m.game.state.CurrentTurn == m.playerID {
+		if m.game.mustPlay && len(m.game.state.Hand) > 0 {
 			// 自动出最小的牌
-			minCard := m.game.hand[len(m.game.hand)-1]
+			minCard := m.game.state.Hand[len(m.game.state.Hand)-1]
 			_ = m.client.PlayCards([]protocol.CardInfo{protocol.CardToInfo(minCard)})
 		} else {
 			_ = m.client.Pass()
@@ -352,7 +352,7 @@ func (m *OnlineModel) handleBiddingEnter(input string) tea.Cmd {
 
 // handlePlayingEnter 处理出牌阶段的回车
 func (m *OnlineModel) handlePlayingEnter(input string) tea.Cmd {
-	if m.game.currentTurn == m.playerID {
+	if m.game.state.CurrentTurn == m.playerID {
 		upperInput := strings.ToUpper(input)
 		if upperInput == "PASS" || upperInput == "P" {
 			_ = m.client.Pass()

@@ -8,14 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-)
-
-const (
-	// BottomCardsPublic 底牌是否公开
-	// true: 所有玩家都能看到底牌，记牌器扣除底牌
-	// false: 只有地主能看到底牌，只有地主的记牌器扣除底牌
-	BottomCardsPublic = true
 )
 
 // handleServerMessage 处理服务器消息
@@ -130,7 +124,7 @@ func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 	}
 
 	if payload.RoomCode != "" {
-		m.game.roomCode = payload.RoomCode
+		m.game.state.RoomCode = payload.RoomCode
 		if payload.GameState != nil {
 			m.restoreGameState(payload.GameState)
 		} else {
@@ -207,8 +201,8 @@ func (m *OnlineModel) handleMsgOnlineCount(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgRoomCreated(msg *protocol.Message) tea.Cmd {
 	var payload protocol.RoomCreatedPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.roomCode = payload.RoomCode
-	m.game.players = []protocol.PlayerInfo{payload.Player}
+	m.game.state.RoomCode = payload.RoomCode
+	m.game.state.Players = []protocol.PlayerInfo{payload.Player}
 	m.phase = PhaseWaiting
 	m.input.Placeholder = "输入 R 准备"
 	return nil
@@ -217,8 +211,8 @@ func (m *OnlineModel) handleMsgRoomCreated(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgRoomJoined(msg *protocol.Message) tea.Cmd {
 	var payload protocol.RoomJoinedPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.roomCode = payload.RoomCode
-	m.game.players = payload.Players
+	m.game.state.RoomCode = payload.RoomCode
+	m.game.state.Players = payload.Players
 	m.phase = PhaseWaiting
 	m.input.Placeholder = "输入 R 准备"
 	m.soundManager.Play("join")
@@ -228,16 +222,16 @@ func (m *OnlineModel) handleMsgRoomJoined(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgPlayerJoined(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerJoinedPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.players = append(m.game.players, payload.Player)
+	m.game.state.Players = append(m.game.state.Players, payload.Player)
 	return nil
 }
 
 func (m *OnlineModel) handleMsgPlayerLeft(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerLeftPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	for i, p := range m.game.players {
+	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
-			m.game.players = append(m.game.players[:i], m.game.players[i+1:]...)
+			m.game.state.Players = append(m.game.state.Players[:i], m.game.state.Players[i+1:]...)
 			break
 		}
 	}
@@ -247,9 +241,9 @@ func (m *OnlineModel) handleMsgPlayerLeft(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgPlayerReady(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerReadyPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	for i, p := range m.game.players {
+	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
-			m.game.players[i].Ready = payload.Ready
+			m.game.state.Players[i].Ready = payload.Ready
 			// 如果是自己的准备状态变化，更新 placeholder
 			if payload.PlayerID == m.playerID {
 				if payload.Ready {
@@ -277,9 +271,9 @@ func (m *OnlineModel) handleMsgRoomListResult(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgPlayerOffline(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerOfflinePayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	for i, p := range m.game.players {
+	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
-			m.game.players[i].Online = false
+			m.game.state.Players[i].Online = false
 			break
 		}
 	}
@@ -289,9 +283,9 @@ func (m *OnlineModel) handleMsgPlayerOffline(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgPlayerOnline(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerOnlinePayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	for i, p := range m.game.players {
+	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
-			m.game.players[i].Online = true
+			m.game.state.Players[i].Online = true
 			break
 		}
 	}
@@ -303,41 +297,27 @@ func (m *OnlineModel) handleMsgPlayerOnline(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgGameStart(msg *protocol.Message) tea.Cmd {
 	var payload protocol.GameStartPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.players = payload.Players
+	m.game.state.Players = payload.Players
 	return nil
 }
 
 func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 	var payload protocol.DealCardsPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.hand = protocol.InfosToCards(payload.Cards)
-	m.sortHand()
+	m.game.state.Hand = protocol.InfosToCards(payload.Cards)
+	m.game.state.SortHand()
 	if len(payload.LandlordCards) > 0 && payload.LandlordCards[0].Rank > 0 {
-		m.game.bottomCards = protocol.InfosToCards(payload.LandlordCards)
+		m.game.state.BottomCards = protocol.InfosToCards(payload.LandlordCards)
 	}
 
 	// 初始化所有玩家的牌数为 17
-	for i := range m.game.players {
-		m.game.players[i].CardsCount = 17
+	for i := range m.game.state.Players {
+		m.game.state.Players[i].CardsCount = 17
 	}
 
-	// 初始化记牌器
-	m.game.remainingCards = make(map[card.Rank]int)
-	// 3-A 和 2 各 4 张
-	for rank := card.Rank3; rank <= card.RankA; rank++ {
-		m.game.remainingCards[rank] = 4
-	}
-	m.game.remainingCards[card.Rank2] = 4
-	// 两个王各 1 张
-	m.game.remainingCards[card.RankBlackJoker] = 1
-	m.game.remainingCards[card.RankRedJoker] = 1
-
-	// 扣除自己的手牌
-	for _, c := range m.game.hand {
-		if m.game.remainingCards[c.Rank] > 0 {
-			m.game.remainingCards[c.Rank]--
-		}
-	}
+	// 初始化记牌器并扣除自己的手牌
+	m.game.state.CardCounter.Reset()
+	m.game.state.CardCounter.DeductCards(m.game.state.Hand)
 
 	m.soundManager.Play("deal")
 	return nil
@@ -354,7 +334,7 @@ func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 		m.input.Focus()
 	} else {
 		// 不是自己的回合，显示等待提示
-		for _, p := range m.game.players {
+		for _, p := range m.game.state.Players {
 			if p.ID == payload.PlayerID {
 				m.input.Placeholder = fmt.Sprintf("等待 %s 叫地主...", p.Name)
 				break
@@ -371,27 +351,23 @@ func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 	var payload protocol.LandlordPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.bottomCards = protocol.InfosToCards(payload.LandlordCards)
-	for i, p := range m.game.players {
-		m.game.players[i].IsLandlord = (p.ID == payload.PlayerID)
+	m.game.state.BottomCards = protocol.InfosToCards(payload.LandlordCards)
+	for i, p := range m.game.state.Players {
+		m.game.state.Players[i].IsLandlord = (p.ID == payload.PlayerID)
 		// 地主拿到底牌，牌数变为 20
 		if p.ID == payload.PlayerID {
-			m.game.players[i].CardsCount = 20
+			m.game.state.Players[i].CardsCount = 20
 		}
 	}
 	if payload.PlayerID == m.playerID {
-		m.game.isLandlord = true
+		m.game.state.IsLandlord = true
 	}
 
 	// 更新记牌器：根据底牌是否公开来决定如何扣除
 	// 底牌公开：所有玩家都扣除；底牌不公开：只有地主扣除
-	shouldDeductBottomCards := BottomCardsPublic || payload.PlayerID == m.playerID
+	shouldDeductBottomCards := config.BottomCardsPublic || payload.PlayerID == m.playerID
 	if shouldDeductBottomCards {
-		for _, c := range m.game.bottomCards {
-			if m.game.remainingCards[c.Rank] > 0 {
-				m.game.remainingCards[c.Rank]--
-			}
-		}
+		m.game.state.CardCounter.DeductCards(m.game.state.BottomCards)
 	}
 
 	m.soundManager.Play("landlord")
@@ -402,7 +378,7 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayTurnPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.phase = PhasePlaying
-	m.game.currentTurn = payload.PlayerID
+	m.game.state.CurrentTurn = payload.PlayerID
 	m.game.mustPlay = payload.MustPlay
 	m.game.canBeat = payload.CanBeat
 	m.resetBell()
@@ -419,7 +395,7 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 		m.soundManager.Play("turn")
 	} else {
 		// 不是自己的回合，显示等待提示
-		for _, p := range m.game.players {
+		for _, p := range m.game.state.Players {
 			if p.ID == payload.PlayerID {
 				m.input.Placeholder = fmt.Sprintf("等待 %s 出牌...", p.Name)
 				break
@@ -436,26 +412,22 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgCardPlayed(msg *protocol.Message) tea.Cmd {
 	var payload protocol.CardPlayedPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.lastPlayedBy = payload.PlayerID
-	m.game.lastPlayedName = payload.PlayerName
-	m.game.lastPlayed = protocol.InfosToCards(payload.Cards)
-	m.game.lastHandType = payload.HandType
-	for i, p := range m.game.players {
+	m.game.state.LastPlayedBy = payload.PlayerID
+	m.game.state.LastPlayedName = payload.PlayerName
+	m.game.state.LastPlayed = protocol.InfosToCards(payload.Cards)
+	m.game.state.LastHandType = payload.HandType
+	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
-			m.game.players[i].CardsCount = payload.CardsLeft
+			m.game.state.Players[i].CardsCount = payload.CardsLeft
 			break
 		}
 	}
 	if payload.PlayerID == m.playerID {
-		m.game.hand = card.RemoveCards(m.game.hand, m.game.lastPlayed)
+		m.game.state.Hand = card.RemoveCards(m.game.state.Hand, m.game.state.LastPlayed)
 	}
 
-	// 更新记牌器（扣除已出的牌）
-	for _, c := range m.game.lastPlayed {
-		if m.game.remainingCards[c.Rank] > 0 {
-			m.game.remainingCards[c.Rank]--
-		}
-	}
+	// 更新记牌器
+	m.game.state.CardCounter.DeductCards(m.game.state.LastPlayed)
 
 	m.soundManager.Play("play")
 	return nil
@@ -465,14 +437,14 @@ func (m *OnlineModel) handleMsgGameOver(msg *protocol.Message) tea.Cmd {
 	var payload protocol.GameOverPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.phase = PhaseGameOver
-	m.game.winner = payload.WinnerName
-	m.game.winnerIsLandlord = payload.IsLandlord
+	m.game.state.Winner = payload.WinnerName
+	m.game.state.WinnerIsLandlord = payload.IsLandlord
 	m.input.Placeholder = "按回车返回大厅"
 
 	isWinner := false
-	if m.game.isLandlord && m.game.winnerIsLandlord {
+	if m.game.state.IsLandlord && m.game.state.WinnerIsLandlord {
 		isWinner = true
-	} else if !m.game.isLandlord && !m.game.winnerIsLandlord {
+	} else if !m.game.state.IsLandlord && !m.game.state.WinnerIsLandlord {
 		isWinner = true
 	}
 

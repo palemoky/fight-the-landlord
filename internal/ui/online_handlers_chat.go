@@ -35,7 +35,7 @@ func (m *OnlineModel) handleMsgChat(msg *protocol.Message) tea.Cmd {
 	}
 
 	// Update Game chat history if in game/room
-	if m.game.roomCode != "" {
+	if m.game.state.RoomCode != "" {
 		m.game.chatHistory = append(m.game.chatHistory, chatLine)
 		if len(m.game.chatHistory) > 50 {
 			m.game.chatHistory = m.game.chatHistory[len(m.game.chatHistory)-50:]

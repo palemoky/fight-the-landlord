@@ -6,53 +6,44 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	gameClient "github.com/palemoky/fight-the-landlord/internal/client"
 	"github.com/palemoky/fight-the-landlord/internal/network/client"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
-// GameModel handles game-specific logic (Waiting, Game states)
+// GameModel handles game-specific UI state
 type GameModel struct {
+	// Network client
 	client *client.Client
+
+	// Game state (business logic)
+	state *gameClient.GameState
+
+	// UI dimensions
 	width  int
 	height int
 
+	// Input handling
 	input *textinput.Model
 
-	// Game Data
-	roomCode         string
-	players          []protocol.PlayerInfo
-	hand             []card.Card
-	bottomCards      []card.Card
-	currentTurn      string
-	lastPlayedBy     string
-	lastPlayedName   string
-	lastPlayed       []card.Card
-	lastHandType     string
-	isLandlord       bool
-	winner           string
-	winnerIsLandlord bool
-
-	// Bidding
+	// Bidding UI state
 	bidTurn string
 
-	// State flags
+	// UI state flags
 	mustPlay bool
 	canBeat  bool
 
-	// Helper state
+	// UI helper state
 	bellPlayed     bool
 	timerDuration  time.Duration
 	timerStartTime time.Time
 
 	// Features
 	cardCounterEnabled bool
-	remainingCards     map[card.Rank]int
 	showingHelp        bool
 
-	// Chat & Quick Messages
+	// Chat UI
 	chatHistory      []string
-	chatInput        textinput.Model // Reuse for chat
+	chatInput        textinput.Model
 	showQuickMsgMenu bool
 }
 
@@ -64,6 +55,7 @@ func NewGameModel(c *client.Client, input *textinput.Model) *GameModel {
 
 	return &GameModel{
 		client:    c,
+		state:     gameClient.NewGameState(),
 		input:     input,
 		chatInput: chatInput,
 	}

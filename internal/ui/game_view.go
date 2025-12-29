@@ -15,13 +15,13 @@ import (
 func (m *GameModel) waitingView(onlineModel *OnlineModel) string {
 	var sb strings.Builder
 
-	title := titleStyle(fmt.Sprintf("🏠 房间: %s", m.roomCode))
+	title := titleStyle(fmt.Sprintf("🏠 房间: %s", m.state.RoomCode))
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, title))
 	sb.WriteString("\n\n")
 
 	var playerList strings.Builder
 	playerList.WriteString("玩家列表:\n")
-	for _, p := range m.players {
+	for _, p := range m.state.Players {
 		readyStr := "❌"
 		if p.Ready {
 			readyStr = "✅"
@@ -32,7 +32,7 @@ func (m *GameModel) waitingView(onlineModel *OnlineModel) string {
 		}
 		playerList.WriteString(fmt.Sprintf("  %s %s%s\n", readyStr, p.Name, meStr))
 	}
-	playerList.WriteString(fmt.Sprintf("\n等待玩家: %d/3", len(m.players)))
+	playerList.WriteString(fmt.Sprintf("\n等待玩家: %d/3", len(m.state.Players)))
 
 	playerBox := boxStyle.Render(playerList.String())
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, playerBox))
@@ -62,7 +62,7 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, middleSection))
 	sb.WriteString("\n")
 
-	myHand := m.renderPlayerHand(m.hand)
+	myHand := m.renderPlayerHand(m.state.Hand)
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, myHand))
 	sb.WriteString("\n")
 
@@ -103,11 +103,11 @@ func (m *GameModel) gameView(onlineModel *OnlineModel) string {
 
 func (m *GameModel) gameOverView() string {
 	winnerType := "农民"
-	if m.winnerIsLandlord {
+	if m.state.WinnerIsLandlord {
 		winnerType = "地主"
 	}
 
-	msg := fmt.Sprintf("🎮 游戏结束!\n\n🏆 %s (%s) 获胜!\n\n按 ESC 返回大厅", m.winner, winnerType)
+	msg := fmt.Sprintf("🎮 游戏结束!\n\n🏆 %s (%s) 获胜!\n\n按 ESC 返回大厅", m.state.Winner, winnerType)
 
 	return lipgloss.NewStyle().
 		Width(m.width).
@@ -125,12 +125,12 @@ func (m *GameModel) renderTopSection() string {
 }
 
 func (m *GameModel) renderLandlordCardsOnline() string {
-	if len(m.bottomCards) == 0 {
+	if len(m.state.BottomCards) == 0 {
 		return boxStyle.Render("底牌: (待揭晓)")
 	}
 
 	var rankStr, suitStr strings.Builder
-	for _, c := range m.bottomCards {
+	for _, c := range m.state.BottomCards {
 		style := blackStyle
 		if c.Color == card.Red {
 			style = redStyle
@@ -174,7 +174,7 @@ func (m *GameModel) renderCardCounter() string {
 
 	var counts []string
 	for _, rank := range ranks {
-		count := m.remainingCards[rank]
+		count := m.state.CardCounter.GetRemaining()[rank]
 		counts = append(counts, fmt.Sprintf("%-2d", count))
 	}
 	sb.WriteString(strings.Join(counts, "│"))
@@ -185,7 +185,7 @@ func (m *GameModel) renderCardCounter() string {
 func (m *GameModel) renderMiddleSection(myPlayerID string) string {
 	var parts []string
 
-	for _, p := range m.players {
+	for _, p := range m.state.Players {
 		if p.ID == myPlayerID {
 			continue
 		}
@@ -196,7 +196,7 @@ func (m *GameModel) renderMiddleSection(myPlayerID string) string {
 		}
 
 		nameStyle := lipgloss.NewStyle()
-		if m.currentTurn == p.ID {
+		if m.state.CurrentTurn == p.ID {
 			nameStyle = nameStyle.Foreground(lipgloss.Color("220")).Bold(true)
 		}
 
@@ -205,17 +205,17 @@ func (m *GameModel) renderMiddleSection(myPlayerID string) string {
 	}
 
 	lastPlayView := "(等待出牌...)"
-	if len(m.lastPlayed) > 0 {
+	if len(m.state.LastPlayed) > 0 {
 		var cardStrs []string
-		for i := len(m.lastPlayed) - 1; i >= 0; i-- {
-			c := m.lastPlayed[i]
+		for i := len(m.state.LastPlayed) - 1; i >= 0; i-- {
+			c := m.state.LastPlayed[i]
 			style := blackStyle
 			if c.Color == card.Red {
 				style = redStyle
 			}
 			cardStrs = append(cardStrs, style.Render(c.Rank.String()))
 		}
-		lastPlayView = fmt.Sprintf("%s: %s\n%s", m.lastPlayedName, strings.Join(cardStrs, " "), m.lastHandType)
+		lastPlayView = fmt.Sprintf("%s: %s\n%s", m.state.LastPlayedName, strings.Join(cardStrs, " "), m.state.LastHandType)
 	}
 	parts = append(parts, boxStyle.Width(25).Render(lastPlayView))
 
@@ -239,7 +239,7 @@ func (m *GameModel) renderPlayerHand(hand []card.Card) string {
 	}
 
 	icon := FarmerIcon
-	if m.isLandlord {
+	if m.state.IsLandlord {
 		icon = LandlordIcon
 	}
 	title := fmt.Sprintf("我的手牌 %s (%d张)", icon, len(hand))
@@ -256,14 +256,14 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *time
 	case PhaseBidding:
 		isMyTurn = m.bidTurn == myPlayerID
 	case PhasePlaying:
-		isMyTurn = m.currentTurn == myPlayerID
+		isMyTurn = m.state.CurrentTurn == myPlayerID
 	}
 
 	if phase == PhaseBidding {
 		if m.bidTurn == myPlayerID {
 			fmt.Fprintf(&sb, "⏳ %s | 轮到你叫地主!\n", timer.View())
 		} else {
-			for _, p := range m.players {
+			for _, p := range m.state.Players {
 				if p.ID == m.bidTurn {
 					fmt.Fprintf(&sb, "等待 %s 叫地主...\n", p.Name)
 					break
@@ -271,15 +271,15 @@ func (m *GameModel) renderPrompt(myPlayerID string, phase GamePhase, timer *time
 			}
 		}
 	} else if phase == PhasePlaying {
-		if m.currentTurn == myPlayerID {
+		if m.state.CurrentTurn == myPlayerID {
 			icon := FarmerIcon
-			if m.isLandlord {
+			if m.state.IsLandlord {
 				icon = LandlordIcon
 			}
 			fmt.Fprintf(&sb, "⏳ %s | 轮到你出牌! %s\n", timer.View(), icon)
 		} else {
-			for _, p := range m.players {
-				if p.ID == m.currentTurn {
+			for _, p := range m.state.Players {
+				if p.ID == m.state.CurrentTurn {
 					fmt.Fprintf(&sb, "等待 %s 出牌...\n", p.Name)
 					break
 				}
