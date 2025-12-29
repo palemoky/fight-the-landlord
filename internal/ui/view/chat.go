@@ -1,11 +1,13 @@
-package ui
+// Package view provides UI rendering functions.
+package view
 
 import (
 	"fmt"
 	"strings"
 )
 
-var quickMessages = []string{
+// QuickMessages is the list of quick messages for in-game chat.
+var QuickMessages = []string{
 	"时间不多了哦～",
 	"别想了，出吧！",
 	"天亮前能打完吗？",
@@ -31,33 +33,33 @@ var quickMessages = []string{
 	"输赢不重要，开心最重要！",
 }
 
-func (m *GameModel) renderQuickMsgMenu() string {
+// RenderQuickMsgMenu renders the quick message menu.
+func RenderQuickMsgMenu() string {
 	var sb strings.Builder
 	sb.WriteString("💬 快捷消息 (数字键选择)\n")
 	sb.WriteString(strings.Repeat("─", 40) + "\n")
 
-	for i, msg := range quickMessages {
+	for i, msg := range QuickMessages {
 		fmt.Fprintf(&sb, "%d. %s\n", i+1, msg)
 	}
-	// sb.WriteString(strings.Repeat("─", 30) + "\n")
-	// sb.WriteString("ESC 关闭")
 
-	return boxStyle.Render(sb.String())
+	return BoxStyle.Render(sb.String())
 }
 
-func (m *GameModel) renderChatBox() string {
-	if len(m.chatHistory) == 0 {
+// RenderChatBox renders the chat box for game view.
+func RenderChatBox(history []string) string {
+	if len(history) == 0 {
 		return ""
 	}
 
 	var chatBuilder strings.Builder
-	count := len(m.chatHistory)
+	count := len(history)
 	start := 0
 	if count > 5 {
 		start = count - 5
 	}
 	for i := start; i < count; i++ {
-		chatBuilder.WriteString(m.chatHistory[i] + "\n")
+		chatBuilder.WriteString(history[i] + "\n")
 	}
-	return boxStyle.Width(40).Render(chatBuilder.String())
+	return BoxStyle.Width(40).Render(chatBuilder.String())
 }
