@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
@@ -306,7 +307,7 @@ func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 	m.game.hand = protocol.InfosToCards(payload.Cards)
 	m.sortHand()
 	if len(payload.LandlordCards) > 0 && payload.LandlordCards[0].Rank > 0 {
-		m.game.landlordCards = protocol.InfosToCards(payload.LandlordCards)
+		m.game.bottomCards = protocol.InfosToCards(payload.LandlordCards)
 	}
 
 	// 初始化所有玩家的牌数为 17
@@ -364,7 +365,7 @@ func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 	var payload protocol.LandlordPayload
 	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.landlordCards = protocol.InfosToCards(payload.LandlordCards)
+	m.game.bottomCards = protocol.InfosToCards(payload.LandlordCards)
 	for i, p := range m.game.players {
 		m.game.players[i].IsLandlord = (p.ID == payload.PlayerID)
 		// 地主拿到底牌，牌数变为 20
@@ -375,6 +376,18 @@ func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 	if payload.PlayerID == m.playerID {
 		m.game.isLandlord = true
 	}
+
+	// 更新记牌器：根据底牌是否公开来决定如何扣除
+	// 底牌公开：所有玩家都扣除；底牌不公开：只有地主扣除
+	shouldDeductBottomCards := game.BottomCardsPublic || payload.PlayerID == m.playerID
+	if shouldDeductBottomCards {
+		for _, c := range m.game.bottomCards {
+			if m.game.remainingCards[c.Rank] > 0 {
+				m.game.remainingCards[c.Rank]--
+			}
+		}
+	}
+
 	m.soundManager.Play("landlord")
 	return nil
 }

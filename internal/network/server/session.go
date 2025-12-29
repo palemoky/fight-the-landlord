@@ -39,8 +39,8 @@ type GameSession struct {
 	state   GameState
 	players []*GamePlayer // 按座位顺序
 
-	deck          card.Deck
-	landlordCards []card.Card
+	deck        card.Deck
+	bottomCards []card.Card
 
 	// 叫地主相关
 	currentBidder int // 当前叫地主的玩家索引
@@ -117,7 +117,7 @@ func (gs *GameSession) deal() {
 	}
 
 	// 剩余 3 张为底牌
-	gs.landlordCards = gs.deck
+	gs.bottomCards = gs.deck
 
 	// 排序手牌
 	for _, p := range gs.players {
@@ -207,7 +207,7 @@ func (gs *GameSession) setLandlord(idx int) {
 	landlord.IsLandlord = true
 
 	// 底牌给地主
-	landlord.Hand = append(landlord.Hand, gs.landlordCards...)
+	landlord.Hand = append(landlord.Hand, gs.bottomCards...)
 	sort.Slice(landlord.Hand, func(i, j int) bool {
 		return landlord.Hand[i].Rank > landlord.Hand[j].Rank
 	})
@@ -219,14 +219,14 @@ func (gs *GameSession) setLandlord(idx int) {
 	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
 		PlayerID:      landlord.ID,
 		PlayerName:    landlord.Name,
-		LandlordCards: protocol.CardsToInfos(gs.landlordCards),
+		LandlordCards: protocol.CardsToInfos(gs.bottomCards),
 	}))
 
 	// 给地主发送更新后的手牌
 	client := gs.room.Players[landlord.ID].Client
 	client.SendMessage(protocol.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
 		Cards:         protocol.CardsToInfos(landlord.Hand),
-		LandlordCards: protocol.CardsToInfos(gs.landlordCards),
+		LandlordCards: protocol.CardsToInfos(gs.bottomCards),
 	}))
 
 	// 开始游戏，地主先出牌

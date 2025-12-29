@@ -252,8 +252,8 @@ func (rs *RedisStore) serializeGameSession(gs *GameSession) *GameSessionData {
 	}
 
 	// 保存底牌
-	data.LandlordCards = make([]int, len(gs.landlordCards))
-	for i, c := range gs.landlordCards {
+	data.LandlordCards = make([]int, len(gs.bottomCards))
+	for i, c := range gs.bottomCards {
 		data.LandlordCards[i] = int(c.Rank)
 	}
 

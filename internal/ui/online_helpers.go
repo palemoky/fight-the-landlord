@@ -30,7 +30,7 @@ func (m *OnlineModel) resetGameState() {
 	m.game.roomCode = ""
 	m.game.players = nil
 	m.game.hand = nil
-	m.game.landlordCards = nil
+	m.game.bottomCards = nil
 	m.game.currentTurn = ""
 	m.game.lastPlayedBy = ""
 	m.game.lastPlayed = nil

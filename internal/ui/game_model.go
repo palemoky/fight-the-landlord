@@ -23,7 +23,7 @@ type GameModel struct {
 	roomCode         string
 	players          []protocol.PlayerInfo
 	hand             []card.Card
-	landlordCards    []card.Card
+	bottomCards      []card.Card
 	currentTurn      string
 	lastPlayedBy     string
 	lastPlayedName   string

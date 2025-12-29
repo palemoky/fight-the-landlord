@@ -224,7 +224,7 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 		Phase:         phase,
 		Players:       players,
 		Hand:          hand,
-		LandlordCards: protocol.CardsToInfos(game.landlordCards),
+		LandlordCards: protocol.CardsToInfos(game.bottomCards),
 		CurrentTurn:   currentTurnID,
 		LastPlayed:    lastPlayed,
 		LastPlayerID:  lastPlayerID,

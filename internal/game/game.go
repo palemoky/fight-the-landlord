@@ -13,6 +13,11 @@ import (
 
 const (
 	PlayerTurnTimeout = 30 * time.Second
+
+	// BottomCardsPublic 底牌是否公开
+	// true: 所有玩家都能看到底牌，记牌器扣除底牌
+	// false: 只有地主能看到底牌，只有地主的记牌器扣除底牌
+	BottomCardsPublic = true
 )
 
 // Game 定义游戏状态
@@ -58,6 +63,9 @@ func (g *Game) Deal() {
 	for _, p := range g.Players {
 		p.SortHand()
 	}
+
+	// 更新记牌器：扣除玩家1（你）的手牌
+	g.CardCounter.Update(g.Players[0].Hand)
 }
 
 // Bidding 叫地主（此处为简化版，随机选择一个）
@@ -69,6 +77,11 @@ func (g *Game) Bidding() {
 
 	g.CurrentTurn = landlordIdx
 	g.LastPlayerIdx = landlordIdx
+
+	// 更新记牌器：如果底牌公开，扣除3张底牌
+	if BottomCardsPublic {
+		g.CardCounter.Update(g.LandlordCards)
+	}
 }
 
 // PlayTurn 处理玩家的一次出牌操作

@@ -125,12 +125,12 @@ func (m *GameModel) renderTopSection() string {
 }
 
 func (m *GameModel) renderLandlordCardsOnline() string {
-	if len(m.landlordCards) == 0 {
+	if len(m.bottomCards) == 0 {
 		return boxStyle.Render("底牌: (待揭晓)")
 	}
 
 	var rankStr, suitStr strings.Builder
-	for _, c := range m.landlordCards {
+	for _, c := range m.bottomCards {
 		style := blackStyle
 		if c.Color == card.Red {
 			style = redStyle
