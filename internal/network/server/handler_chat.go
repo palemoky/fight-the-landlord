@@ -4,11 +4,12 @@ import (
 	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // handleChat 处理聊天消息
 func (h *Handler) handleChat(client *Client, msg *protocol.Message) {
-	payload, err := protocol.ParsePayload[protocol.ChatPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.ChatPayload](msg)
 	if err != nil {
 		return
 	}
@@ -16,7 +17,7 @@ func (h *Handler) handleChat(client *Client, msg *protocol.Message) {
 	// 聊天限流检查
 	allowed, reason := h.server.chatLimiter.AllowChat(client.ID)
 	if !allowed {
-		client.SendMessage(protocol.NewErrorMessageWithText(
+		client.SendMessage(encoding.NewErrorMessageWithText(
 			protocol.ErrCodeRateLimit, reason))
 		return
 	}
@@ -26,13 +27,13 @@ func (h *Handler) handleChat(client *Client, msg *protocol.Message) {
 	payload.SenderName = client.Name
 	payload.Time = time.Now().Unix()
 
-	chatMsg := protocol.MustNewMessage(protocol.MsgChat, payload)
+	chatMsg := encoding.MustNewMessage(protocol.MsgChat, payload)
 
 	if payload.Scope == "room" {
 		// 房间内聊天
 		roomID := client.GetRoom()
 		if roomID == "" {
-			client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeNotInRoom, "不在房间中，无法发送房间消息"))
+			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeNotInRoom, "不在房间中，无法发送房间消息"))
 			return
 		}
 

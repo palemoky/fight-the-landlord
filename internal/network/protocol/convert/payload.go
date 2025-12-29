@@ -1,17 +1,18 @@
-package protocol
+package convert
 
 import (
 	"encoding/json"
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/pb"
 )
 
-// EncodePayload 将 Go struct payload 编码为 protobuf bytes
+// protocol.EncodePayload 将 Go struct payload 编码为 protobuf bytes
 //
 //nolint:gocyclo // Payload conversion function with many message types
-func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
+func EncodePayload(msgType protocol.MessageType, payload any) ([]byte, error) {
 	if payload == nil {
 		return nil, nil
 	}
@@ -20,53 +21,53 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 
 	switch msgType {
 	// 客户端请求
-	case MsgReconnect:
-		p := payload.(ReconnectPayload)
+	case protocol.MsgReconnect:
+		p := payload.(protocol.ReconnectPayload)
 		pbPayload = &pb.ReconnectPayload{
 			Token:    p.Token,
 			PlayerId: p.PlayerID,
 		}
-	case MsgPing:
-		p := payload.(PingPayload)
+	case protocol.MsgPing:
+		p := payload.(protocol.PingPayload)
 		pbPayload = &pb.PingPayload{
 			Timestamp: p.Timestamp,
 		}
-	case MsgJoinRoom:
-		p := payload.(JoinRoomPayload)
+	case protocol.MsgJoinRoom:
+		p := payload.(protocol.JoinRoomPayload)
 		pbPayload = &pb.JoinRoomPayload{
 			RoomCode: p.RoomCode,
 		}
-	case MsgBid:
-		p := payload.(BidPayload)
+	case protocol.MsgBid:
+		p := payload.(protocol.BidPayload)
 		pbPayload = &pb.BidPayload{
 			Bid: p.Bid,
 		}
-	case MsgPlayCards:
-		p := payload.(PlayCardsPayload)
+	case protocol.MsgPlayCards:
+		p := payload.(protocol.PlayCardsPayload)
 		pbPayload = &pb.PlayCardsPayload{
 			Cards: cardsToProto(p.Cards),
 		}
-	case MsgGetLeaderboard:
-		p := payload.(GetLeaderboardPayload)
+	case protocol.MsgGetLeaderboard:
+		p := payload.(protocol.GetLeaderboardPayload)
 		pbPayload = &pb.GetLeaderboardPayload{
 			Type:   p.Type,
 			Offset: int32(p.Offset),
 			Limit:  int32(p.Limit),
 		}
-	case MsgGetOnlineCount, MsgGetMaintenanceStatus:
+	case protocol.MsgGetOnlineCount, protocol.MsgGetMaintenanceStatus:
 		// No payload needed for these messages
 		return nil, nil
 
 	// 服务端响应
-	case MsgConnected:
-		p := payload.(ConnectedPayload)
+	case protocol.MsgConnected:
+		p := payload.(protocol.ConnectedPayload)
 		pbPayload = &pb.ConnectedPayload{
 			PlayerId:       p.PlayerID,
 			PlayerName:     p.PlayerName,
 			ReconnectToken: p.ReconnectToken,
 		}
-	case MsgReconnected:
-		p := payload.(ReconnectedPayload)
+	case protocol.MsgReconnected:
+		p := payload.(protocol.ReconnectedPayload)
 		var gameState *pb.GameStateDTO
 		if p.GameState != nil {
 			gameState = gameStateDTOToProto(p.GameState)
@@ -77,111 +78,111 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 			RoomCode:   p.RoomCode,
 			GameState:  gameState,
 		}
-	case MsgPong:
-		p := payload.(PongPayload)
+	case protocol.MsgPong:
+		p := payload.(protocol.PongPayload)
 		pbPayload = &pb.PongPayload{
 			ClientTimestamp: p.ClientTimestamp,
 			ServerTimestamp: p.ServerTimestamp,
 		}
-	case MsgPlayerOffline:
-		p := payload.(PlayerOfflinePayload)
+	case protocol.MsgPlayerOffline:
+		p := payload.(protocol.PlayerOfflinePayload)
 		pbPayload = &pb.PlayerOfflinePayload{
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
 			Timeout:    int32(p.Timeout),
 		}
-	case MsgPlayerOnline:
-		p := payload.(PlayerOnlinePayload)
+	case protocol.MsgPlayerOnline:
+		p := payload.(protocol.PlayerOnlinePayload)
 		pbPayload = &pb.PlayerOnlinePayload{
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
 		}
-	case MsgOnlineCount:
-		p := payload.(OnlineCountPayload)
+	case protocol.MsgOnlineCount:
+		p := payload.(protocol.OnlineCountPayload)
 		pbPayload = &pb.OnlineCountPayload{
 			Count: int32(p.Count),
 		}
-	case MsgMaintenanceStatus:
-		p := payload.(MaintenanceStatusPayload)
+	case protocol.MsgMaintenanceStatus:
+		p := payload.(protocol.MaintenanceStatusPayload)
 		pbPayload = &pb.MaintenanceStatusPayload{
 			Maintenance: p.Maintenance,
 		}
-	case MsgMaintenance:
-		p := payload.(MaintenancePayload)
+	case protocol.MsgMaintenance:
+		p := payload.(protocol.MaintenancePayload)
 		pbPayload = &pb.MaintenancePayload{
 			Maintenance: p.Maintenance,
 		}
-	case MsgRoomCreated:
-		p := payload.(RoomCreatedPayload)
+	case protocol.MsgRoomCreated:
+		p := payload.(protocol.RoomCreatedPayload)
 		pbPayload = &pb.RoomCreatedPayload{
 			RoomCode: p.RoomCode,
 			Player:   playerInfoToProto(&p.Player),
 		}
-	case MsgRoomJoined:
-		p := payload.(RoomJoinedPayload)
+	case protocol.MsgRoomJoined:
+		p := payload.(protocol.RoomJoinedPayload)
 		pbPayload = &pb.RoomJoinedPayload{
 			RoomCode: p.RoomCode,
 			Player:   playerInfoToProto(&p.Player),
 			Players:  playerInfosToProto(p.Players),
 		}
-	case MsgPlayerJoined:
-		p := payload.(PlayerJoinedPayload)
+	case protocol.MsgPlayerJoined:
+		p := payload.(protocol.PlayerJoinedPayload)
 		pbPayload = &pb.PlayerJoinedPayload{
 			Player: playerInfoToProto(&p.Player),
 		}
-	case MsgPlayerLeft:
-		p := payload.(PlayerLeftPayload)
+	case protocol.MsgPlayerLeft:
+		p := payload.(protocol.PlayerLeftPayload)
 		pbPayload = &pb.PlayerLeftPayload{
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
 		}
-	case MsgPlayerReady:
-		p := payload.(PlayerReadyPayload)
+	case protocol.MsgPlayerReady:
+		p := payload.(protocol.PlayerReadyPayload)
 		pbPayload = &pb.PlayerReadyPayload{
 			PlayerId: p.PlayerID,
 			Ready:    p.Ready,
 		}
-	case MsgGameStart:
-		p := payload.(GameStartPayload)
+	case protocol.MsgGameStart:
+		p := payload.(protocol.GameStartPayload)
 		pbPayload = &pb.GameStartPayload{
 			Players: playerInfosToProto(p.Players),
 		}
-	case MsgDealCards:
-		p := payload.(DealCardsPayload)
+	case protocol.MsgDealCards:
+		p := payload.(protocol.DealCardsPayload)
 		pbPayload = &pb.DealCardsPayload{
 			Cards:         cardsToProto(p.Cards),
 			LandlordCards: cardsToProto(p.LandlordCards),
 		}
-	case MsgBidTurn:
-		p := payload.(BidTurnPayload)
+	case protocol.MsgBidTurn:
+		p := payload.(protocol.BidTurnPayload)
 		pbPayload = &pb.BidTurnPayload{
 			PlayerId: p.PlayerID,
 			Timeout:  int32(p.Timeout),
 		}
-	case MsgBidResult:
-		p := payload.(BidResultPayload)
+	case protocol.MsgBidResult:
+		p := payload.(protocol.BidResultPayload)
 		pbPayload = &pb.BidResultPayload{
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
 			Bid:        p.Bid,
 		}
-	case MsgLandlord:
-		p := payload.(LandlordPayload)
+	case protocol.MsgLandlord:
+		p := payload.(protocol.LandlordPayload)
 		pbPayload = &pb.LandlordPayload{
 			PlayerId:      p.PlayerID,
 			PlayerName:    p.PlayerName,
 			LandlordCards: cardsToProto(p.LandlordCards),
 		}
-	case MsgPlayTurn:
-		p := payload.(PlayTurnPayload)
+	case protocol.MsgPlayTurn:
+		p := payload.(protocol.PlayTurnPayload)
 		pbPayload = &pb.PlayTurnPayload{
 			PlayerId: p.PlayerID,
 			Timeout:  int32(p.Timeout),
 			MustPlay: p.MustPlay,
 			CanBeat:  p.CanBeat,
 		}
-	case MsgCardPlayed:
-		p := payload.(CardPlayedPayload)
+	case protocol.MsgCardPlayed:
+		p := payload.(protocol.CardPlayedPayload)
 		pbPayload = &pb.CardPlayedPayload{
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
@@ -189,22 +190,22 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 			CardsLeft:  int32(p.CardsLeft),
 			HandType:   p.HandType,
 		}
-	case MsgPlayerPass:
-		p := payload.(PlayerPassPayload)
+	case protocol.MsgPlayerPass:
+		p := payload.(protocol.PlayerPassPayload)
 		pbPayload = &pb.PlayerPassPayload{
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
 		}
-	case MsgGameOver:
-		p := payload.(GameOverPayload)
+	case protocol.MsgGameOver:
+		p := payload.(protocol.GameOverPayload)
 		pbPayload = &pb.GameOverPayload{
 			WinnerId:    p.WinnerID,
 			WinnerName:  p.WinnerName,
 			IsLandlord:  p.IsLandlord,
 			PlayerHands: playerHandsToProto(p.PlayerHands),
 		}
-	case MsgStatsResult:
-		p := payload.(StatsResultPayload)
+	case protocol.MsgStatsResult:
+		p := payload.(protocol.StatsResultPayload)
 		pbPayload = &pb.StatsResultPayload{
 			PlayerId:      p.PlayerID,
 			PlayerName:    p.PlayerName,
@@ -221,19 +222,19 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 			CurrentStreak: int32(p.CurrentStreak),
 			MaxWinStreak:  int32(p.MaxWinStreak),
 		}
-	case MsgLeaderboardResult:
-		p := payload.(LeaderboardResultPayload)
+	case protocol.MsgLeaderboardResult:
+		p := payload.(protocol.LeaderboardResultPayload)
 		pbPayload = &pb.LeaderboardResultPayload{
 			Type:    p.Type,
 			Entries: leaderboardEntriesToProto(p.Entries),
 		}
-	case MsgRoomListResult:
-		p := payload.(RoomListResultPayload)
+	case protocol.MsgRoomListResult:
+		p := payload.(protocol.RoomListResultPayload)
 		pbPayload = &pb.RoomListResultPayload{
 			Rooms: roomListItemsToProto(p.Rooms),
 		}
-	case MsgError:
-		p := payload.(ErrorPayload)
+	case protocol.MsgError:
+		p := payload.(protocol.ErrorPayload)
 		pbPayload = &pb.ErrorPayload{
 			Code:    int32(p.Code),
 			Message: p.Message,
@@ -247,295 +248,295 @@ func EncodePayload(msgType MessageType, payload any) ([]byte, error) {
 	return proto.Marshal(pbPayload)
 }
 
-// DecodePayload 从 protobuf bytes 解码为 Go struct
+// protocol.DecodePayload 从 protobuf bytes 解码为 Go struct
 //
 //nolint:gocyclo // Payload decoding function with many message types
-func DecodePayload(msgType MessageType, data []byte, target any) error {
+func DecodePayload(msgType protocol.MessageType, data []byte, target any) error {
 	if len(data) == 0 {
 		return nil
 	}
 
 	switch msgType {
 	// 客户端请求
-	case MsgReconnect:
-		var pb pb.ReconnectPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgReconnect:
+		var pbMsg pb.ReconnectPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*ReconnectPayload) = ReconnectPayload{
-			Token:    pb.Token,
-			PlayerID: pb.PlayerId,
+		*target.(*protocol.ReconnectPayload) = protocol.ReconnectPayload{
+			Token:    pbMsg.Token,
+			PlayerID: pbMsg.PlayerId,
 		}
-	case MsgPing:
-		var pb pb.PingPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgPing:
+		var pbMsg pb.PingPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PingPayload) = PingPayload{
-			Timestamp: pb.Timestamp,
+		*target.(*protocol.PingPayload) = protocol.PingPayload{
+			Timestamp: pbMsg.Timestamp,
 		}
-	case MsgJoinRoom:
-		var pb pb.JoinRoomPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgJoinRoom:
+		var pbMsg pb.JoinRoomPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*JoinRoomPayload) = JoinRoomPayload{
-			RoomCode: pb.RoomCode,
+		*target.(*protocol.JoinRoomPayload) = protocol.JoinRoomPayload{
+			RoomCode: pbMsg.RoomCode,
 		}
-	case MsgBid:
-		var pb pb.BidPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgBid:
+		var pbMsg pb.BidPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*BidPayload) = BidPayload{
-			Bid: pb.Bid,
+		*target.(*protocol.BidPayload) = protocol.BidPayload{
+			Bid: pbMsg.Bid,
 		}
-	case MsgPlayCards:
-		var pb pb.PlayCardsPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgPlayCards:
+		var pbMsg pb.PlayCardsPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayCardsPayload) = PlayCardsPayload{
-			Cards: protoToCards(pb.Cards),
+		*target.(*protocol.PlayCardsPayload) = protocol.PlayCardsPayload{
+			Cards: protoToCards(pbMsg.Cards),
 		}
-	case MsgGetLeaderboard:
-		var pb pb.GetLeaderboardPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgGetLeaderboard:
+		var pbMsg pb.GetLeaderboardPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*GetLeaderboardPayload) = GetLeaderboardPayload{
-			Type:   pb.Type,
-			Offset: int(pb.Offset),
-			Limit:  int(pb.Limit),
+		*target.(*protocol.GetLeaderboardPayload) = protocol.GetLeaderboardPayload{
+			Type:   pbMsg.Type,
+			Offset: int(pbMsg.Offset),
+			Limit:  int(pbMsg.Limit),
 		}
 
 	// 服务端响应
-	case MsgConnected:
-		var pb pb.ConnectedPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgConnected:
+		var pbMsg pb.ConnectedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*ConnectedPayload) = ConnectedPayload{
-			PlayerID:       pb.PlayerId,
-			PlayerName:     pb.PlayerName,
-			ReconnectToken: pb.ReconnectToken,
+		*target.(*protocol.ConnectedPayload) = protocol.ConnectedPayload{
+			PlayerID:       pbMsg.PlayerId,
+			PlayerName:     pbMsg.PlayerName,
+			ReconnectToken: pbMsg.ReconnectToken,
 		}
-	case MsgPong:
-		var pb pb.PongPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgPong:
+		var pbMsg pb.PongPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PongPayload) = PongPayload{
-			ClientTimestamp: pb.ClientTimestamp,
-			ServerTimestamp: pb.ServerTimestamp,
+		*target.(*protocol.PongPayload) = protocol.PongPayload{
+			ClientTimestamp: pbMsg.ClientTimestamp,
+			ServerTimestamp: pbMsg.ServerTimestamp,
 		}
-	case MsgOnlineCount:
-		var pb pb.OnlineCountPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgOnlineCount:
+		var pbMsg pb.OnlineCountPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*OnlineCountPayload) = OnlineCountPayload{
-			Count: int(pb.Count),
+		*target.(*protocol.OnlineCountPayload) = protocol.OnlineCountPayload{
+			Count: int(pbMsg.Count),
 		}
-	case MsgMaintenanceStatus:
+	case protocol.MsgMaintenanceStatus:
 		var pbMsg pb.MaintenanceStatusPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*MaintenanceStatusPayload) = MaintenanceStatusPayload{
+		*target.(*protocol.MaintenanceStatusPayload) = protocol.MaintenanceStatusPayload{
 			Maintenance: pbMsg.Maintenance,
 		}
-	case MsgMaintenance:
+	case protocol.MsgMaintenance:
 		var pbMsg pb.MaintenancePayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*MaintenancePayload) = MaintenancePayload{
+		*target.(*protocol.MaintenancePayload) = protocol.MaintenancePayload{
 			Maintenance: pbMsg.Maintenance,
 		}
-	case MsgError:
-		var pb pb.ErrorPayload
-		if err := proto.Unmarshal(data, &pb); err != nil {
+	case protocol.MsgError:
+		var pbMsg pb.ErrorPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*ErrorPayload) = ErrorPayload{
-			Code:    int(pb.Code),
-			Message: pb.Message,
+		*target.(*protocol.ErrorPayload) = protocol.ErrorPayload{
+			Code:    int(pbMsg.Code),
+			Message: pbMsg.Message,
 		}
-	case MsgReconnected:
+	case protocol.MsgReconnected:
 		var pbMsg pb.ReconnectedPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		var gameState *GameStateDTO
+		var gameState *protocol.GameStateDTO
 		if pbMsg.GameState != nil {
 			gameState = protoToGameStateDTO(pbMsg.GameState)
 		}
-		*target.(*ReconnectedPayload) = ReconnectedPayload{
+		*target.(*protocol.ReconnectedPayload) = protocol.ReconnectedPayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
 			RoomCode:   pbMsg.RoomCode,
 			GameState:  gameState,
 		}
-	case MsgPlayerOffline:
+	case protocol.MsgPlayerOffline:
 		var pbMsg pb.PlayerOfflinePayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayerOfflinePayload) = PlayerOfflinePayload{
+		*target.(*protocol.PlayerOfflinePayload) = protocol.PlayerOfflinePayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
 			Timeout:    int(pbMsg.Timeout),
 		}
-	case MsgPlayerOnline:
+	case protocol.MsgPlayerOnline:
 		var pbMsg pb.PlayerOnlinePayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayerOnlinePayload) = PlayerOnlinePayload{
+		*target.(*protocol.PlayerOnlinePayload) = protocol.PlayerOnlinePayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
 		}
-	case MsgRoomCreated:
+	case protocol.MsgRoomCreated:
 		var pbMsg pb.RoomCreatedPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*RoomCreatedPayload) = RoomCreatedPayload{
+		*target.(*protocol.RoomCreatedPayload) = protocol.RoomCreatedPayload{
 			RoomCode: pbMsg.RoomCode,
 			Player:   protoToPlayerInfo(pbMsg.Player),
 		}
-	case MsgRoomJoined:
+	case protocol.MsgRoomJoined:
 		var pbMsg pb.RoomJoinedPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*RoomJoinedPayload) = RoomJoinedPayload{
+		*target.(*protocol.RoomJoinedPayload) = protocol.RoomJoinedPayload{
 			RoomCode: pbMsg.RoomCode,
 			Player:   protoToPlayerInfo(pbMsg.Player),
 			Players:  protoToPlayerInfos(pbMsg.Players),
 		}
-	case MsgPlayerJoined:
+	case protocol.MsgPlayerJoined:
 		var pbMsg pb.PlayerJoinedPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayerJoinedPayload) = PlayerJoinedPayload{
+		*target.(*protocol.PlayerJoinedPayload) = protocol.PlayerJoinedPayload{
 			Player: protoToPlayerInfo(pbMsg.Player),
 		}
-	case MsgPlayerLeft:
+	case protocol.MsgPlayerLeft:
 		var pbMsg pb.PlayerLeftPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayerLeftPayload) = PlayerLeftPayload{
+		*target.(*protocol.PlayerLeftPayload) = protocol.PlayerLeftPayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
 		}
-	case MsgPlayerReady:
+	case protocol.MsgPlayerReady:
 		var pbMsg pb.PlayerReadyPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayerReadyPayload) = PlayerReadyPayload{
+		*target.(*protocol.PlayerReadyPayload) = protocol.PlayerReadyPayload{
 			PlayerID: pbMsg.PlayerId,
 			Ready:    pbMsg.Ready,
 		}
-	case MsgGameStart:
+	case protocol.MsgGameStart:
 		var pbMsg pb.GameStartPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*GameStartPayload) = GameStartPayload{
+		*target.(*protocol.GameStartPayload) = protocol.GameStartPayload{
 			Players: protoToPlayerInfos(pbMsg.Players),
 		}
-	case MsgDealCards:
+	case protocol.MsgDealCards:
 		var pbMsg pb.DealCardsPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*DealCardsPayload) = DealCardsPayload{
+		*target.(*protocol.DealCardsPayload) = protocol.DealCardsPayload{
 			Cards:         protoToCards(pbMsg.Cards),
 			LandlordCards: protoToCards(pbMsg.LandlordCards),
 		}
-	case MsgBidTurn:
+	case protocol.MsgBidTurn:
 		var pbMsg pb.BidTurnPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*BidTurnPayload) = BidTurnPayload{
+		*target.(*protocol.BidTurnPayload) = protocol.BidTurnPayload{
 			PlayerID: pbMsg.PlayerId,
 			Timeout:  int(pbMsg.Timeout),
 		}
-	case MsgBidResult:
+	case protocol.MsgBidResult:
 		var pbMsg pb.BidResultPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*BidResultPayload) = BidResultPayload{
+		*target.(*protocol.BidResultPayload) = protocol.BidResultPayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
 			Bid:        pbMsg.Bid,
 		}
-	case MsgLandlord:
+	case protocol.MsgLandlord:
 		var pbMsg pb.LandlordPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*LandlordPayload) = LandlordPayload{
+		*target.(*protocol.LandlordPayload) = protocol.LandlordPayload{
 			PlayerID:      pbMsg.PlayerId,
 			PlayerName:    pbMsg.PlayerName,
 			LandlordCards: protoToCards(pbMsg.LandlordCards),
 		}
-	case MsgPlayTurn:
+	case protocol.MsgPlayTurn:
 		var pbMsg pb.PlayTurnPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayTurnPayload) = PlayTurnPayload{
+		*target.(*protocol.PlayTurnPayload) = protocol.PlayTurnPayload{
 			PlayerID: pbMsg.PlayerId,
 			Timeout:  int(pbMsg.Timeout),
 			MustPlay: pbMsg.MustPlay,
 			CanBeat:  pbMsg.CanBeat,
 		}
-	case MsgCardPlayed:
+	case protocol.MsgCardPlayed:
 		var pbMsg pb.CardPlayedPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*CardPlayedPayload) = CardPlayedPayload{
+		*target.(*protocol.CardPlayedPayload) = protocol.CardPlayedPayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
 			Cards:      protoToCards(pbMsg.Cards),
 			CardsLeft:  int(pbMsg.CardsLeft),
 			HandType:   pbMsg.HandType,
 		}
-	case MsgPlayerPass:
+	case protocol.MsgPlayerPass:
 		var pbMsg pb.PlayerPassPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*PlayerPassPayload) = PlayerPassPayload{
+		*target.(*protocol.PlayerPassPayload) = protocol.PlayerPassPayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
 		}
-	case MsgGameOver:
+	case protocol.MsgGameOver:
 		var pbMsg pb.GameOverPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*GameOverPayload) = GameOverPayload{
+		*target.(*protocol.GameOverPayload) = protocol.GameOverPayload{
 			WinnerID:    pbMsg.WinnerId,
 			WinnerName:  pbMsg.WinnerName,
 			IsLandlord:  pbMsg.IsLandlord,
 			PlayerHands: protoToPlayerHands(pbMsg.PlayerHands),
 		}
-	case MsgStatsResult:
+	case protocol.MsgStatsResult:
 		var pbMsg pb.StatsResultPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*StatsResultPayload) = StatsResultPayload{
+		*target.(*protocol.StatsResultPayload) = protocol.StatsResultPayload{
 			PlayerID:      pbMsg.PlayerId,
 			PlayerName:    pbMsg.PlayerName,
 			TotalGames:    int(pbMsg.TotalGames),
@@ -551,21 +552,21 @@ func DecodePayload(msgType MessageType, data []byte, target any) error {
 			CurrentStreak: int(pbMsg.CurrentStreak),
 			MaxWinStreak:  int(pbMsg.MaxWinStreak),
 		}
-	case MsgLeaderboardResult:
+	case protocol.MsgLeaderboardResult:
 		var pbMsg pb.LeaderboardResultPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*LeaderboardResultPayload) = LeaderboardResultPayload{
+		*target.(*protocol.LeaderboardResultPayload) = protocol.LeaderboardResultPayload{
 			Type:    pbMsg.Type,
 			Entries: protoToLeaderboardEntries(pbMsg.Entries),
 		}
-	case MsgRoomListResult:
+	case protocol.MsgRoomListResult:
 		var pbMsg pb.RoomListResultPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
 		}
-		*target.(*RoomListResultPayload) = RoomListResultPayload{
+		*target.(*protocol.RoomListResultPayload) = protocol.RoomListResultPayload{
 			Rooms: protoToRoomListItems(pbMsg.Rooms),
 		}
 
@@ -578,7 +579,7 @@ func DecodePayload(msgType MessageType, data []byte, target any) error {
 }
 
 // 辅助转换函数
-func cardToProto(c CardInfo) *pb.CardInfo {
+func cardToProto(c protocol.CardInfo) *pb.CardInfo {
 	return &pb.CardInfo{
 		Suit:  int32(c.Suit),
 		Rank:  int32(c.Rank),
@@ -586,7 +587,7 @@ func cardToProto(c CardInfo) *pb.CardInfo {
 	}
 }
 
-func cardsToProto(cards []CardInfo) []*pb.CardInfo {
+func cardsToProto(cards []protocol.CardInfo) []*pb.CardInfo {
 	result := make([]*pb.CardInfo, len(cards))
 	for i, c := range cards {
 		result[i] = cardToProto(c)
@@ -594,23 +595,23 @@ func cardsToProto(cards []CardInfo) []*pb.CardInfo {
 	return result
 }
 
-func protoToCard(pb *pb.CardInfo) CardInfo {
-	return CardInfo{
+func protoToCard(pb *pb.CardInfo) protocol.CardInfo {
+	return protocol.CardInfo{
 		Suit:  int(pb.Suit),
 		Rank:  int(pb.Rank),
 		Color: int(pb.Color),
 	}
 }
 
-func protoToCards(pbs []*pb.CardInfo) []CardInfo {
-	result := make([]CardInfo, len(pbs))
+func protoToCards(pbs []*pb.CardInfo) []protocol.CardInfo {
+	result := make([]protocol.CardInfo, len(pbs))
 	for i, pb := range pbs {
 		result[i] = protoToCard(pb)
 	}
 	return result
 }
 
-func playerInfoToProto(p *PlayerInfo) *pb.PlayerInfo {
+func playerInfoToProto(p *protocol.PlayerInfo) *pb.PlayerInfo {
 	return &pb.PlayerInfo{
 		Id:         p.ID,
 		Name:       p.Name,
@@ -622,7 +623,7 @@ func playerInfoToProto(p *PlayerInfo) *pb.PlayerInfo {
 	}
 }
 
-func playerInfosToProto(players []PlayerInfo) []*pb.PlayerInfo {
+func playerInfosToProto(players []protocol.PlayerInfo) []*pb.PlayerInfo {
 	result := make([]*pb.PlayerInfo, len(players))
 	for i, p := range players {
 		result[i] = playerInfoToProto(&p)
@@ -630,7 +631,7 @@ func playerInfosToProto(players []PlayerInfo) []*pb.PlayerInfo {
 	return result
 }
 
-func gameStateDTOToProto(gs *GameStateDTO) *pb.GameStateDTO {
+func gameStateDTOToProto(gs *protocol.GameStateDTO) *pb.GameStateDTO {
 	return &pb.GameStateDTO{
 		Phase:         gs.Phase,
 		Players:       playerInfosToProto(gs.Players),
@@ -644,7 +645,7 @@ func gameStateDTOToProto(gs *GameStateDTO) *pb.GameStateDTO {
 	}
 }
 
-func playerHandsToProto(hands []PlayerHand) []*pb.PlayerHand {
+func playerHandsToProto(hands []protocol.PlayerHand) []*pb.PlayerHand {
 	result := make([]*pb.PlayerHand, len(hands))
 	for i, h := range hands {
 		result[i] = &pb.PlayerHand{
@@ -656,7 +657,7 @@ func playerHandsToProto(hands []PlayerHand) []*pb.PlayerHand {
 	return result
 }
 
-func leaderboardEntriesToProto(entries []LeaderboardEntry) []*pb.LeaderboardEntry {
+func leaderboardEntriesToProto(entries []protocol.LeaderboardEntry) []*pb.LeaderboardEntry {
 	result := make([]*pb.LeaderboardEntry, len(entries))
 	for i, e := range entries {
 		result[i] = &pb.LeaderboardEntry{
@@ -671,7 +672,7 @@ func leaderboardEntriesToProto(entries []LeaderboardEntry) []*pb.LeaderboardEntr
 	return result
 }
 
-func roomListItemsToProto(rooms []RoomListItem) []*pb.RoomListItem {
+func roomListItemsToProto(rooms []protocol.RoomListItem) []*pb.RoomListItem {
 	result := make([]*pb.RoomListItem, len(rooms))
 	for i, r := range rooms {
 		result[i] = &pb.RoomListItem{
@@ -683,9 +684,9 @@ func roomListItemsToProto(rooms []RoomListItem) []*pb.RoomListItem {
 	return result
 }
 
-// protoToPlayerInfo converts protobuf PlayerInfo to Go struct
-func protoToPlayerInfo(pb *pb.PlayerInfo) PlayerInfo {
-	return PlayerInfo{
+// protoToPlayerInfo converts protobuf protocol.PlayerInfo to Go struct
+func protoToPlayerInfo(pb *pb.PlayerInfo) protocol.PlayerInfo {
+	return protocol.PlayerInfo{
 		ID:         pb.Id,
 		Name:       pb.Name,
 		Seat:       int(pb.Seat),
@@ -696,9 +697,9 @@ func protoToPlayerInfo(pb *pb.PlayerInfo) PlayerInfo {
 	}
 }
 
-// protoToPlayerInfos converts protobuf PlayerInfo slice to Go struct slice
-func protoToPlayerInfos(pbs []*pb.PlayerInfo) []PlayerInfo {
-	result := make([]PlayerInfo, len(pbs))
+// protoToPlayerInfos converts protobuf protocol.PlayerInfo slice to Go struct slice
+func protoToPlayerInfos(pbs []*pb.PlayerInfo) []protocol.PlayerInfo {
+	result := make([]protocol.PlayerInfo, len(pbs))
 	for i, pb := range pbs {
 		result[i] = protoToPlayerInfo(pb)
 	}
@@ -706,8 +707,8 @@ func protoToPlayerInfos(pbs []*pb.PlayerInfo) []PlayerInfo {
 }
 
 // protoToGameStateDTO converts protobuf GameStateDTO to Go struct
-func protoToGameStateDTO(pb *pb.GameStateDTO) *GameStateDTO {
-	return &GameStateDTO{
+func protoToGameStateDTO(pb *pb.GameStateDTO) *protocol.GameStateDTO {
+	return &protocol.GameStateDTO{
 		Phase:         pb.Phase,
 		Players:       protoToPlayerInfos(pb.Players),
 		Hand:          protoToCards(pb.Hand),
@@ -721,10 +722,10 @@ func protoToGameStateDTO(pb *pb.GameStateDTO) *GameStateDTO {
 }
 
 // protoToPlayerHands converts protobuf PlayerHand slice to Go struct slice
-func protoToPlayerHands(pbs []*pb.PlayerHand) []PlayerHand {
-	result := make([]PlayerHand, len(pbs))
+func protoToPlayerHands(pbs []*pb.PlayerHand) []protocol.PlayerHand {
+	result := make([]protocol.PlayerHand, len(pbs))
 	for i, pb := range pbs {
-		result[i] = PlayerHand{
+		result[i] = protocol.PlayerHand{
 			PlayerID:   pb.PlayerId,
 			PlayerName: pb.PlayerName,
 			Cards:      protoToCards(pb.Cards),
@@ -734,10 +735,10 @@ func protoToPlayerHands(pbs []*pb.PlayerHand) []PlayerHand {
 }
 
 // protoToLeaderboardEntries converts protobuf LeaderboardEntry slice to Go struct slice
-func protoToLeaderboardEntries(pbs []*pb.LeaderboardEntry) []LeaderboardEntry {
-	result := make([]LeaderboardEntry, len(pbs))
+func protoToLeaderboardEntries(pbs []*pb.LeaderboardEntry) []protocol.LeaderboardEntry {
+	result := make([]protocol.LeaderboardEntry, len(pbs))
 	for i, pb := range pbs {
-		result[i] = LeaderboardEntry{
+		result[i] = protocol.LeaderboardEntry{
 			Rank:       int(pb.Rank),
 			PlayerID:   pb.PlayerId,
 			PlayerName: pb.PlayerName,
@@ -750,10 +751,10 @@ func protoToLeaderboardEntries(pbs []*pb.LeaderboardEntry) []LeaderboardEntry {
 }
 
 // protoToRoomListItems converts protobuf RoomListItem slice to Go struct slice
-func protoToRoomListItems(pbs []*pb.RoomListItem) []RoomListItem {
-	result := make([]RoomListItem, len(pbs))
+func protoToRoomListItems(pbs []*pb.RoomListItem) []protocol.RoomListItem {
+	result := make([]protocol.RoomListItem, len(pbs))
 	for i, pb := range pbs {
-		result[i] = RoomListItem{
+		result[i] = protocol.RoomListItem{
 			RoomCode:    pb.RoomCode,
 			PlayerCount: int(pb.PlayerCount),
 			MaxPlayers:  int(pb.MaxPlayers),

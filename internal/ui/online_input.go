@@ -8,6 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // handleKeyPress 处理按键消息，返回是否已处理和命令
@@ -20,7 +22,7 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 				// 发送消息
 				content := m.lobby.chatInput.Value()
 				if content != "" {
-					chatMsg := protocol.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
+					chatMsg := encoding.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
 						Content: content,
 						Scope:   "lobby",
 					})
@@ -67,7 +69,7 @@ func (m *OnlineModel) handleKeyPress(msg tea.KeyMsg) (bool, tea.Cmd) {
 					idx := int(msg.Runes[0] - '1')
 					if idx < len(quickMessages) {
 						content := quickMessages[idx]
-						chatMsg := protocol.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
+						chatMsg := encoding.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
 							Content: content,
 							Scope:   "room",
 						})
@@ -186,7 +188,7 @@ func (m *OnlineModel) handleTimeout() {
 		if m.game.mustPlay && len(m.game.state.Hand) > 0 {
 			// 自动出最小的牌
 			minCard := m.game.state.Hand[len(m.game.state.Hand)-1]
-			_ = m.client.PlayCards([]protocol.CardInfo{protocol.CardToInfo(minCard)})
+			_ = m.client.PlayCards([]protocol.CardInfo{convert.CardToInfo(minCard)})
 		} else {
 			_ = m.client.Pass()
 		}
@@ -254,7 +256,7 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 		// 状态检查通过，进入匹配
 		m.phase = PhaseMatching
 		m.matchingStartTime = time.Now()
-		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgQuickMatch, nil))
+		_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgQuickMatch, nil))
 
 	case "2":
 		// 创建房间
@@ -264,7 +266,7 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 				return ClearSystemNotificationMsg{}
 			})
 		}
-		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgCreateRoom, nil))
+		_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgCreateRoom, nil))
 
 	case "3":
 		// 加入房间 - 显示房间列表
@@ -275,18 +277,18 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 			})
 		}
 		m.phase = PhaseRoomList
-		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetRoomList, nil))
+		_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetRoomList, nil))
 		m.input.Placeholder = "输入房间号或按 ESC 返回"
 
 	case "4":
 		// 排行榜
 		m.phase = PhaseLeaderboard
-		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetLeaderboard, nil))
+		_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetLeaderboard, nil))
 
 	case "5":
 		// 我的战绩
 		m.phase = PhaseStats
-		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetStats, nil))
+		_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetStats, nil))
 
 	case "6":
 		// 游戏规则
@@ -300,7 +302,7 @@ func (m *OnlineModel) handleLobbyEnter(input string) tea.Cmd {
 				return ClearSystemNotificationMsg{}
 			})
 		}
-		_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
+		_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
 			RoomCode: input,
 		}))
 	}
@@ -366,7 +368,7 @@ func (m *OnlineModel) handlePlayingEnter(input string) tea.Cmd {
 					return ClearInputErrorMsg{}
 				})
 			} else {
-				_ = m.client.PlayCards(protocol.CardsToInfos(cards))
+				_ = m.client.PlayCards(convert.CardsToInfos(cards))
 			}
 		}
 	}
@@ -379,7 +381,7 @@ func (m *OnlineModel) handleGameOverEnter() tea.Cmd {
 	m.resetGameState()
 
 	// 返回大厅时查询维护状态和在线人数
-	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+	_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
 
 	return nil
 }

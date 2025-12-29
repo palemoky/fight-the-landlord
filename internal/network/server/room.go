@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 const (
@@ -141,7 +142,7 @@ func (rm *RoomManager) JoinRoom(client *Client, code string) (*Room, error) {
 	log.Printf("👤 玩家 %s 加入房间 %s", client.Name, code)
 
 	// 通知房间内其他玩家
-	room.broadcastExcept(client.ID, protocol.MustNewMessage(protocol.MsgPlayerJoined, protocol.PlayerJoinedPayload{
+	room.broadcastExcept(client.ID, encoding.MustNewMessage(protocol.MsgPlayerJoined, protocol.PlayerJoinedPayload{
 		Player: room.getPlayerInfo(client.ID),
 	}))
 
@@ -175,7 +176,7 @@ func (rm *RoomManager) LeaveRoom(client *Client) {
 	}
 
 	// 通知其他玩家
-	room.broadcastExcept(client.ID, protocol.MustNewMessage(protocol.MsgPlayerLeft, protocol.PlayerLeftPayload{
+	room.broadcastExcept(client.ID, encoding.MustNewMessage(protocol.MsgPlayerLeft, protocol.PlayerLeftPayload{
 		PlayerID:   client.ID,
 		PlayerName: client.Name,
 	}))
@@ -232,7 +233,7 @@ func (rm *RoomManager) SetPlayerReady(client *Client, ready bool) error {
 	player.Ready = ready
 
 	// 广播准备状态
-	room.broadcast(protocol.MustNewMessage(protocol.MsgPlayerReady, protocol.PlayerReadyPayload{
+	room.broadcast(encoding.MustNewMessage(protocol.MsgPlayerReady, protocol.PlayerReadyPayload{
 		PlayerID: client.ID,
 		Ready:    ready,
 	}))
@@ -292,7 +293,7 @@ func (rm *RoomManager) NotifyPlayerOffline(client *Client) {
 	// 通知其他在线玩家
 	for id, player := range room.Players {
 		if id != client.ID && player.Client != nil {
-			player.Client.SendMessage(protocol.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
+			player.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
 				PlayerID:   client.ID,
 				PlayerName: client.Name,
 				Timeout:    20, // 20秒离线等待
@@ -340,7 +341,7 @@ func (rm *RoomManager) ReconnectPlayer(oldClient *Client, newClient *Client) err
 	// 通知其他玩家该玩家已上线
 	for id, p := range room.Players {
 		if id != newClient.ID && p.Client != nil {
-			p.Client.SendMessage(protocol.MustNewMessage(protocol.MsgPlayerOnline, protocol.PlayerOnlinePayload{
+			p.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOnline, protocol.PlayerOnlinePayload{
 				PlayerID:   newClient.ID,
 				PlayerName: newClient.Name,
 			}))
@@ -414,7 +415,7 @@ func (rm *RoomManager) cleanup() {
 		if room.State == RoomStateWaiting && now.Sub(room.CreatedAt) > timeout {
 			room.mu.RUnlock()
 			// 通知所有玩家房间已关闭
-			room.broadcast(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, "房间超时已关闭"))
+			room.broadcast(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "房间超时已关闭"))
 			// 清理玩家状态
 			for _, p := range room.Players {
 				p.Client.SetRoom("")
@@ -519,7 +520,7 @@ func (r *Room) startGame() {
 	r.State = RoomStateReady
 
 	// 广播游戏开始
-	r.broadcast(protocol.MustNewMessage(protocol.MsgGameStart, protocol.GameStartPayload{
+	r.broadcast(encoding.MustNewMessage(protocol.MsgGameStart, protocol.GameStartPayload{
 		Players: r.getAllPlayersInfo(),
 	}))
 

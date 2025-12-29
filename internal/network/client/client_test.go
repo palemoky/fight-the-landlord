@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -52,7 +53,7 @@ func TestClient_ConnectAndSend(t *testing.T) {
 	assert.True(t, client.IsConnected())
 
 	// Send a message
-	msg := protocol.MustNewMessage(protocol.MsgPing, protocol.PingPayload{Timestamp: 123456})
+	msg := encoding.MustNewMessage(protocol.MsgPing, protocol.PingPayload{Timestamp: 123456})
 	err = client.SendMessage(msg)
 	assert.NoError(t, err)
 

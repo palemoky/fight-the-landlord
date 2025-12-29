@@ -11,6 +11,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/client"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 	"github.com/palemoky/fight-the-landlord/internal/sound"
 )
 
@@ -314,8 +315,8 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.clearNotification(NotifyReconnectSuccess)
 		// 如果在大厅，请求在线人数和维护状态
 		if m.phase == PhaseLobby {
-			_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
-			_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+			_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+			_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
 		}
 
 	case ClearErrorMsg:

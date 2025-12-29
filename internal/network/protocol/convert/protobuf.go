@@ -1,13 +1,13 @@
-package protocol
+package convert
 
 import (
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/pb"
 )
 
-// stringToProtoMessageType 字符串消息类型转 protobuf 枚举
+// StringToProtoMessageType 字符串消息类型转 protobuf 枚举
 //
 //nolint:gocyclo // Simple mapping function with many cases
-func stringToProtoMessageType(s string) pb.MessageType {
+func StringToProtoMessageType(s string) pb.MessageType {
 	switch s {
 	case "reconnect":
 		return pb.MessageType_MSG_RECONNECT
@@ -104,10 +104,10 @@ func stringToProtoMessageType(s string) pb.MessageType {
 	}
 }
 
-// protoMessageTypeToString protobuf 枚举转字符串消息类型
+// ProtoMessageTypeToString protobuf 枚举转字符串消息类型
 //
 //nolint:gocyclo // Simple mapping function with many cases
-func protoMessageTypeToString(t pb.MessageType) string {
+func ProtoMessageTypeToString(t pb.MessageType) string {
 	switch t {
 	case pb.MessageType_MSG_RECONNECT:
 		return "reconnect"

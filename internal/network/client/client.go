@@ -11,6 +11,8 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/logger"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 const (
@@ -121,7 +123,7 @@ func (c *Client) readPump() {
 			return
 		}
 
-		msg, err := protocol.Decode(message)
+		msg, err := encoding.Decode(message)
 		if err != nil {
 			log.Printf("消息解析错误: %v", err)
 			continue
@@ -130,7 +132,7 @@ func (c *Client) readPump() {
 		// 处理连接成功消息
 		if msg.Type == protocol.MsgConnected {
 			var payload protocol.ConnectedPayload
-			if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
+			if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
 				c.PlayerID = payload.PlayerID
 				c.PlayerName = payload.PlayerName
 				c.ReconnectToken = payload.ReconnectToken
@@ -148,7 +150,7 @@ func (c *Client) readPump() {
 		// 处理 pong 消息计算延迟
 		if msg.Type == protocol.MsgPong {
 			var payload protocol.PongPayload
-			if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
+			if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
 				latency := time.Now().UnixMilli() - payload.ClientTimestamp
 				c.Latency = latency
 				if c.OnLatencyUpdate != nil {
@@ -221,7 +223,7 @@ func (c *Client) SendMessage(msg *protocol.Message) error {
 	}
 	c.mu.RUnlock()
 
-	data, err := msg.Encode()
+	data, err := encoding.Encode(msg)
 	if err != nil {
 		return err
 	}
@@ -281,63 +283,63 @@ func (c *Client) IsConnected() bool {
 
 // CreateRoom 创建房间
 func (c *Client) CreateRoom() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgCreateRoom, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgCreateRoom, nil))
 }
 
 // JoinRoom 加入房间
 func (c *Client) JoinRoom(roomCode string) error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
 		RoomCode: roomCode,
 	}))
 }
 
 // LeaveRoom 离开房间
 func (c *Client) LeaveRoom() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgLeaveRoom, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgLeaveRoom, nil))
 }
 
 // QuickMatch 快速匹配
 func (c *Client) QuickMatch() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgQuickMatch, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgQuickMatch, nil))
 }
 
 // Ready 准备
 func (c *Client) Ready() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgReady, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgReady, nil))
 }
 
 // CancelReady 取消准备
 func (c *Client) CancelReady() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgCancelReady, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgCancelReady, nil))
 }
 
 // Bid 叫地主
 func (c *Client) Bid(bid bool) error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgBid, protocol.BidPayload{
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgBid, protocol.BidPayload{
 		Bid: bid,
 	}))
 }
 
 // PlayCards 出牌
 func (c *Client) PlayCards(cards []protocol.CardInfo) error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgPlayCards, protocol.PlayCardsPayload{
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgPlayCards, protocol.PlayCardsPayload{
 		Cards: cards,
 	}))
 }
 
 // Pass 不出
 func (c *Client) Pass() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgPass, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgPass, nil))
 }
 
 // GetStats 获取个人统计
 func (c *Client) GetStats() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgGetStats, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgGetStats, nil))
 }
 
 // GetLeaderboard 获取排行榜
 func (c *Client) GetLeaderboard(leaderboardType string, offset, limit int) error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgGetLeaderboard, protocol.GetLeaderboardPayload{
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgGetLeaderboard, protocol.GetLeaderboardPayload{
 		Type:   leaderboardType,
 		Offset: offset,
 		Limit:  limit,
@@ -346,12 +348,12 @@ func (c *Client) GetLeaderboard(leaderboardType string, offset, limit int) error
 
 // GetRoomList 获取房间列表
 func (c *Client) GetRoomList() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgGetRoomList, nil))
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgGetRoomList, nil))
 }
 
 // Ping 发送心跳
 func (c *Client) Ping() error {
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgPing, protocol.PingPayload{
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgPing, protocol.PingPayload{
 		Timestamp: time.Now().UnixMilli(),
 	}))
 }
@@ -361,7 +363,7 @@ func (c *Client) Reconnect() error {
 	if c.ReconnectToken == "" || c.PlayerID == "" {
 		return errors.New("no reconnect token")
 	}
-	return c.SendMessage(protocol.MustNewMessage(protocol.MsgReconnect, protocol.ReconnectPayload{
+	return c.SendMessage(encoding.MustNewMessage(protocol.MsgReconnect, protocol.ReconnectPayload{
 		Token:    c.ReconnectToken,
 		PlayerID: c.PlayerID,
 	}))

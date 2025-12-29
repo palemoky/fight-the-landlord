@@ -7,12 +7,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
 )
 
 // handleMsgChat handles incoming chat messages
 func (m *OnlineModel) handleMsgChat(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ChatPayload
-	if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
@@ -48,7 +49,7 @@ func (m *OnlineModel) handleMsgChat(msg *protocol.Message) tea.Cmd {
 // handleMsgMaintenance handles server maintenance notifications
 func (m *OnlineModel) handleMsgMaintenance(msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenancePayload
-	if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
@@ -68,7 +69,7 @@ func (m *OnlineModel) handleMsgMaintenance(msg *protocol.Message) tea.Cmd {
 // handleMsgMaintenanceStatus handles maintenance status response
 func (m *OnlineModel) handleMsgMaintenanceStatus(msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenanceStatusPayload
-	if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
 	"github.com/palemoky/fight-the-landlord/internal/rule"
 )
 
@@ -57,7 +58,7 @@ func (gs *GameSession) handlePlayTimeout() {
 	if cardsToPlay != nil {
 		// 找到了能打的牌，出牌
 		playerID := currentPlayer.ID
-		cardInfos := protocol.CardsToInfos(cardsToPlay)
+		cardInfos := convert.CardsToInfos(cardsToPlay)
 		gs.mu.Unlock()
 		_ = gs.HandlePlayCards(playerID, cardInfos)
 		return
@@ -221,7 +222,7 @@ func (gs *GameSession) handleOfflineTimeout(playerID string) {
 			// 出最小的牌
 			minCard := currentPlayer.Hand[len(currentPlayer.Hand)-1]
 			gs.mu.Unlock()
-			_ = gs.HandlePlayCards(playerID, []protocol.CardInfo{protocol.CardToInfo(minCard)})
+			_ = gs.HandlePlayCards(playerID, []protocol.CardInfo{convert.CardToInfo(minCard)})
 			return
 		}
 		gs.mu.Unlock()

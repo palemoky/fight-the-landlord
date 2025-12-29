@@ -1,9 +1,10 @@
-package protocol
+package encoding
 
 import (
 	"bytes"
 	"sync"
 
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/pb"
 )
 
@@ -11,7 +12,7 @@ import (
 var (
 	messagePool = sync.Pool{
 		New: func() any {
-			return &Message{}
+			return &protocol.Message{}
 		},
 	}
 
@@ -29,13 +30,13 @@ var (
 )
 
 // GetMessage retrieves a Message from the pool
-func GetMessage() *Message {
-	return messagePool.Get().(*Message)
+func GetMessage() *protocol.Message {
+	return messagePool.Get().(*protocol.Message)
 }
 
 // PutMessage returns a Message to the pool
 // The message fields are reset to prevent memory leaks
-func PutMessage(msg *Message) {
+func PutMessage(msg *protocol.Message) {
 	if msg == nil {
 		return
 	}

@@ -8,11 +8,12 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
 )
 
 // Helper to create a fake Message
 func createMessage(msgType protocol.MessageType, payload interface{}) *protocol.Message {
-	data, _ := protocol.EncodePayload(msgType, payload)
+	data, _ := convert.EncodePayload(msgType, payload)
 	return &protocol.Message{
 		Type:    msgType,
 		Payload: data,

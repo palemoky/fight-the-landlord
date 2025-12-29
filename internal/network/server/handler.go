@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // Handler 消息处理器
@@ -66,19 +68,19 @@ func (h *Handler) Handle(client *Client, msg *protocol.Message) {
 	default:
 		log.Printf("⚠️  未知消息类型: '%s' (来自玩家: %s, ID: %s)", msg.Type, client.Name, client.ID)
 		log.Printf("    消息详情: Payload长度=%d bytes", len(msg.Payload))
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 	}
 }
 
 // handlePing 处理心跳消息
 func (h *Handler) handlePing(client *Client, msg *protocol.Message) {
-	payload, err := protocol.ParsePayload[protocol.PingPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.PingPayload](msg)
 	if err != nil {
 		return
 	}
 
 	// 立即回复 pong
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgPong, protocol.PongPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgPong, protocol.PongPayload{
 		ClientTimestamp: payload.Timestamp,
 		ServerTimestamp: time.Now().UnixMilli(),
 	}))
@@ -86,22 +88,22 @@ func (h *Handler) handlePing(client *Client, msg *protocol.Message) {
 
 // handleReconnect 处理断线重连
 func (h *Handler) handleReconnect(client *Client, msg *protocol.Message) {
-	payload, err := protocol.ParsePayload[protocol.ReconnectPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.ReconnectPayload](msg)
 	if err != nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 		return
 	}
 
 	// 验证重连令牌
 	if !h.server.sessionManager.CanReconnect(payload.Token, payload.PlayerID) {
-		client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, "重连令牌无效或已过期"))
+		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "重连令牌无效或已过期"))
 		return
 	}
 
 	// 获取旧会话
 	session := h.server.sessionManager.GetSession(payload.PlayerID)
 	if session == nil {
-		client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, "会话不存在"))
+		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "会话不存在"))
 		return
 	}
 
@@ -143,7 +145,7 @@ func (h *Handler) handleReconnect(client *Client, msg *protocol.Message) {
 			room.mu.RLock()
 			for id, p := range room.Players {
 				if id != client.ID && p.Client != nil {
-					p.Client.SendMessage(protocol.MustNewMessage(protocol.MsgPlayerOnline, protocol.PlayerOnlinePayload{
+					p.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOnline, protocol.PlayerOnlinePayload{
 						PlayerID:   client.ID,
 						PlayerName: client.Name,
 					}))
@@ -160,7 +162,7 @@ func (h *Handler) handleReconnect(client *Client, msg *protocol.Message) {
 	}
 
 	// 发送重连成功消息
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgReconnected, reconnectPayload))
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgReconnected, reconnectPayload))
 
 	log.Printf("🔄 玩家 %s (%s) 重连成功", client.Name, client.ID)
 }
@@ -174,7 +176,7 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 	var hand []protocol.CardInfo
 	for _, p := range game.players {
 		if p.ID == playerID {
-			hand = protocol.CardsToInfos(p.Hand)
+			hand = convert.CardsToInfos(p.Hand)
 			break
 		}
 	}
@@ -216,7 +218,7 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 	var lastPlayed []protocol.CardInfo
 	lastPlayerID := ""
 	if !game.lastPlayedHand.IsEmpty() {
-		lastPlayed = protocol.CardsToInfos(game.lastPlayedHand.Cards)
+		lastPlayed = convert.CardsToInfos(game.lastPlayedHand.Cards)
 		lastPlayerID = game.players[game.lastPlayerIdx].ID
 	}
 
@@ -224,7 +226,7 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 		Phase:         phase,
 		Players:       players,
 		Hand:          hand,
-		LandlordCards: protocol.CardsToInfos(game.bottomCards),
+		LandlordCards: convert.CardsToInfos(game.bottomCards),
 		CurrentTurn:   currentTurnID,
 		LastPlayed:    lastPlayed,
 		LastPlayerID:  lastPlayerID,
@@ -237,7 +239,7 @@ func (h *Handler) buildGameStateDTO(game *GameSession, playerID string) *protoco
 func (h *Handler) handleCreateRoom(client *Client) {
 	// 维护模式检查
 	if h.server.IsMaintenanceMode() {
-		client.SendMessage(protocol.NewErrorMessageWithText(
+		client.SendMessage(encoding.NewErrorMessageWithText(
 			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停创建房间"))
 		return
 	}
@@ -249,11 +251,11 @@ func (h *Handler) handleCreateRoom(client *Client) {
 
 	room, err := h.server.roomManager.CreateRoom(client)
 	if err != nil {
-		client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		return
 	}
 
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgRoomCreated, protocol.RoomCreatedPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgRoomCreated, protocol.RoomCreatedPayload{
 		RoomCode: room.Code,
 		Player:   room.getPlayerInfo(client.ID),
 	}))
@@ -263,14 +265,14 @@ func (h *Handler) handleCreateRoom(client *Client) {
 func (h *Handler) handleJoinRoom(client *Client, msg *protocol.Message) {
 	// 维护模式检查
 	if h.server.IsMaintenanceMode() {
-		client.SendMessage(protocol.NewErrorMessageWithText(
+		client.SendMessage(encoding.NewErrorMessageWithText(
 			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停加入房间"))
 		return
 	}
 
-	payload, err := protocol.ParsePayload[protocol.JoinRoomPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.JoinRoomPayload](msg)
 	if err != nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 		return
 	}
 
@@ -282,14 +284,14 @@ func (h *Handler) handleJoinRoom(client *Client, msg *protocol.Message) {
 	room, err := h.server.roomManager.JoinRoom(client, payload.RoomCode)
 	if err != nil {
 		if roomErr, ok := err.(*RoomError); ok {
-			client.SendMessage(protocol.NewErrorMessage(roomErr.Code))
+			client.SendMessage(encoding.NewErrorMessage(roomErr.Code))
 		} else {
-			client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 		return
 	}
 
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgRoomJoined, protocol.RoomJoinedPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgRoomJoined, protocol.RoomJoinedPayload{
 		RoomCode: room.Code,
 		Player:   room.getPlayerInfo(client.ID),
 		Players:  room.getAllPlayersInfo(),
@@ -305,7 +307,7 @@ func (h *Handler) handleLeaveRoom(client *Client) {
 func (h *Handler) handleQuickMatch(client *Client) {
 	// 维护模式检查
 	if h.server.IsMaintenanceMode() {
-		client.SendMessage(protocol.NewErrorMessageWithText(
+		client.SendMessage(encoding.NewErrorMessageWithText(
 			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停快速匹配"))
 		return
 	}
@@ -323,67 +325,67 @@ func (h *Handler) handleReady(client *Client, ready bool) {
 	err := h.server.roomManager.SetPlayerReady(client, ready)
 	if err != nil {
 		if roomErr, ok := err.(*RoomError); ok {
-			client.SendMessage(protocol.NewErrorMessage(roomErr.Code))
+			client.SendMessage(encoding.NewErrorMessage(roomErr.Code))
 		} else {
-			client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 	}
 }
 
 // handleBid 处理叫地主
 func (h *Handler) handleBid(client *Client, msg *protocol.Message) {
-	payload, err := protocol.ParsePayload[protocol.BidPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.BidPayload](msg)
 	if err != nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 		return
 	}
 
 	room := h.server.roomManager.GetRoom(client.GetRoom())
 	if room == nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeNotInRoom))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeNotInRoom))
 		return
 	}
 
 	game := room.GetGameSession()
 	if game == nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeGameNotStart))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeGameNotStart))
 		return
 	}
 
 	if err := game.HandleBid(client.ID, payload.Bid); err != nil {
 		if roomErr, ok := err.(*RoomError); ok {
-			client.SendMessage(protocol.NewErrorMessage(roomErr.Code))
+			client.SendMessage(encoding.NewErrorMessage(roomErr.Code))
 		} else {
-			client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 	}
 }
 
 // handlePlayCards 处理出牌
 func (h *Handler) handlePlayCards(client *Client, msg *protocol.Message) {
-	payload, err := protocol.ParsePayload[protocol.PlayCardsPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.PlayCardsPayload](msg)
 	if err != nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 		return
 	}
 
 	room := h.server.roomManager.GetRoom(client.GetRoom())
 	if room == nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeNotInRoom))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeNotInRoom))
 		return
 	}
 
 	game := room.GetGameSession()
 	if game == nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeGameNotStart))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeGameNotStart))
 		return
 	}
 
 	if err := game.HandlePlayCards(client.ID, payload.Cards); err != nil {
 		if roomErr, ok := err.(*RoomError); ok {
-			client.SendMessage(protocol.NewErrorMessage(roomErr.Code))
+			client.SendMessage(encoding.NewErrorMessage(roomErr.Code))
 		} else {
-			client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 	}
 }
@@ -392,21 +394,21 @@ func (h *Handler) handlePlayCards(client *Client, msg *protocol.Message) {
 func (h *Handler) handlePass(client *Client) {
 	room := h.server.roomManager.GetRoom(client.GetRoom())
 	if room == nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeNotInRoom))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeNotInRoom))
 		return
 	}
 
 	game := room.GetGameSession()
 	if game == nil {
-		client.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeGameNotStart))
+		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeGameNotStart))
 		return
 	}
 
 	if err := game.HandlePass(client.ID); err != nil {
 		if roomErr, ok := err.(*RoomError); ok {
-			client.SendMessage(protocol.NewErrorMessage(roomErr.Code))
+			client.SendMessage(encoding.NewErrorMessage(roomErr.Code))
 		} else {
-			client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 	}
 }
@@ -418,13 +420,13 @@ func (h *Handler) handleGetStats(client *Client) {
 	ctx := context.Background()
 	stats, err := h.server.leaderboard.GetPlayerStats(ctx, client.ID)
 	if err != nil {
-		client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取统计失败"))
+		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取统计失败"))
 		return
 	}
 
 	if stats == nil {
 		// 没有统计数据，返回空数据
-		client.SendMessage(protocol.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
+		client.SendMessage(encoding.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
 			PlayerID:   client.ID,
 			PlayerName: client.Name,
 		}))
@@ -439,7 +441,7 @@ func (h *Handler) handleGetStats(client *Client) {
 		winRate = float64(stats.Wins) / float64(stats.TotalGames) * 100
 	}
 
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
 		PlayerID:      stats.PlayerID,
 		PlayerName:    stats.PlayerName,
 		TotalGames:    stats.TotalGames,
@@ -459,7 +461,7 @@ func (h *Handler) handleGetStats(client *Client) {
 
 // handleGetLeaderboard 获取排行榜
 func (h *Handler) handleGetLeaderboard(client *Client, msg *protocol.Message) {
-	payload, err := protocol.ParsePayload[protocol.GetLeaderboardPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.GetLeaderboardPayload](msg)
 	if err != nil {
 		// 默认获取总排行榜前 10
 		payload = &protocol.GetLeaderboardPayload{
@@ -479,7 +481,7 @@ func (h *Handler) handleGetLeaderboard(client *Client, msg *protocol.Message) {
 
 	entries, err := h.server.leaderboard.GetLeaderboard(context.Background(), payload.Type, payload.Offset, payload.Limit)
 	if err != nil {
-		client.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取排行榜失败"))
+		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取排行榜失败"))
 		return
 	}
 
@@ -496,7 +498,7 @@ func (h *Handler) handleGetLeaderboard(client *Client, msg *protocol.Message) {
 		}
 	}
 
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgLeaderboardResult, protocol.LeaderboardResultPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgLeaderboardResult, protocol.LeaderboardResultPayload{
 		Type:    payload.Type,
 		Entries: protocolEntries,
 	}))
@@ -506,7 +508,7 @@ func (h *Handler) handleGetLeaderboard(client *Client, msg *protocol.Message) {
 func (h *Handler) handleGetRoomList(client *Client) {
 	rooms := h.server.roomManager.GetRoomList()
 
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgRoomListResult, protocol.RoomListResultPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgRoomListResult, protocol.RoomListResultPayload{
 		Rooms: rooms,
 	}))
 }
@@ -515,7 +517,7 @@ func (h *Handler) handleGetRoomList(client *Client) {
 func (h *Handler) handleGetOnlineCount(client *Client) {
 	count := h.server.GetOnlineCount()
 
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgOnlineCount, protocol.OnlineCountPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgOnlineCount, protocol.OnlineCountPayload{
 		Count: count,
 	}))
 }
@@ -524,7 +526,7 @@ func (h *Handler) handleGetOnlineCount(client *Client) {
 func (h *Handler) handleGetMaintenanceStatus(client *Client) {
 	maintenance := h.server.IsMaintenanceMode()
 
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgMaintenanceStatus, protocol.MaintenanceStatusPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgMaintenanceStatus, protocol.MaintenanceStatusPayload{
 		Maintenance: maintenance,
 	}))
 }

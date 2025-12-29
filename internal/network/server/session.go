@@ -10,6 +10,8 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 	"github.com/palemoky/fight-the-landlord/internal/rule"
 )
 
@@ -129,8 +131,8 @@ func (gs *GameSession) deal() {
 	// 发送手牌给各玩家（先不显示底牌具体内容）
 	for _, p := range gs.players {
 		client := gs.room.Players[p.ID].Client
-		client.SendMessage(protocol.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
-			Cards:         protocol.CardsToInfos(p.Hand),
+		client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
+			Cards:         convert.CardsToInfos(p.Hand),
 			LandlordCards: make([]protocol.CardInfo, 3), // 暂时不显示
 		}))
 	}
@@ -142,7 +144,7 @@ func (gs *GameSession) notifyBidTurn() {
 	timeout := gs.room.server.config.Game.BidTimeout
 
 	// 广播叫地主轮次
-	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgBidTurn, protocol.BidTurnPayload{
+	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgBidTurn, protocol.BidTurnPayload{
 		PlayerID: player.ID,
 		Timeout:  timeout,
 	}))
@@ -171,7 +173,7 @@ func (gs *GameSession) HandleBid(playerID string, bid bool) error {
 	gs.bidCount++
 
 	// 广播叫地主结果
-	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgBidResult, protocol.BidResultPayload{
+	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgBidResult, protocol.BidResultPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 		Bid:        bid,
@@ -216,17 +218,17 @@ func (gs *GameSession) setLandlord(idx int) {
 	gs.room.Players[landlord.ID].IsLandlord = true
 
 	// 广播地主信息
-	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
+	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
 		PlayerID:      landlord.ID,
 		PlayerName:    landlord.Name,
-		LandlordCards: protocol.CardsToInfos(gs.bottomCards),
+		LandlordCards: convert.CardsToInfos(gs.bottomCards),
 	}))
 
 	// 给地主发送更新后的手牌
 	client := gs.room.Players[landlord.ID].Client
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
-		Cards:         protocol.CardsToInfos(landlord.Hand),
-		LandlordCards: protocol.CardsToInfos(gs.bottomCards),
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
+		Cards:         convert.CardsToInfos(landlord.Hand),
+		LandlordCards: convert.CardsToInfos(gs.bottomCards),
 	}))
 
 	// 开始游戏，地主先出牌
@@ -250,7 +252,7 @@ func (gs *GameSession) notifyPlayTurn() {
 	canBeat := mustPlay || rule.CanBeatWithHand(player.Hand, gs.lastPlayedHand)
 
 	// 广播出牌轮次
-	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgPlayTurn, protocol.PlayTurnPayload{
+	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgPlayTurn, protocol.PlayTurnPayload{
 		PlayerID: player.ID,
 		Timeout:  timeout,
 		MustPlay: mustPlay,
@@ -279,7 +281,7 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 	gs.stopTimer()
 
 	// 转换牌
-	cards := protocol.InfosToCards(cardInfos)
+	cards := convert.InfosToCards(cardInfos)
 
 	// 验证牌是否在手中
 	if !gs.validateCardsInHand(currentPlayer, cards) {
@@ -314,10 +316,10 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 	})
 
 	// 广播出牌信息
-	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgCardPlayed, protocol.CardPlayedPayload{
+	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgCardPlayed, protocol.CardPlayedPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
-		Cards:      protocol.CardsToInfos(sortedCards), // 使用排序后的牌
+		Cards:      convert.CardsToInfos(sortedCards), // 使用排序后的牌
 		CardsLeft:  len(currentPlayer.Hand),
 		HandType:   handToPlay.Type.String(),
 	}))
@@ -361,7 +363,7 @@ func (gs *GameSession) HandlePass(playerID string) error {
 	gs.consecutivePasses++
 
 	// 广播不出
-	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgPlayerPass, protocol.PlayerPassPayload{
+	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgPlayerPass, protocol.PlayerPassPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 	}))
@@ -391,12 +393,12 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 		playerHands[i] = protocol.PlayerHand{
 			PlayerID:   p.ID,
 			PlayerName: p.Name,
-			Cards:      protocol.CardsToInfos(p.Hand),
+			Cards:      convert.CardsToInfos(p.Hand),
 		}
 	}
 
 	// 广播游戏结束
-	gs.room.broadcast(protocol.MustNewMessage(protocol.MsgGameOver, protocol.GameOverPayload{
+	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgGameOver, protocol.GameOverPayload{
 		WinnerID:    winner.ID,
 		WinnerName:  winner.Name,
 		IsLandlord:  winner.IsLandlord,

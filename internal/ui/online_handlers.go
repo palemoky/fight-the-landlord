@@ -10,6 +10,8 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/card"
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // handleServerMessage 处理服务器消息
@@ -92,15 +94,15 @@ func (m *OnlineModel) handleServerMessage(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ConnectedPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 
 	m.playerID = payload.PlayerID
 	m.playerName = payload.PlayerName
 	m.client.ReconnectToken = payload.ReconnectToken
 
 	// Request online count and maintenance status on connect
-	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetOnlineCount, nil))
-	_ = m.client.SendMessage(protocol.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+	_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+	_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
 
 	m.input.Placeholder = "输入选项 (1-5) 或房间号"
 	m.input.Focus()
@@ -110,7 +112,7 @@ func (m *OnlineModel) handleMsgConnected(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 	var payload protocol.ReconnectedPayload
-	if err := protocol.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
@@ -144,13 +146,13 @@ func (m *OnlineModel) handleMsgReconnected(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgPong(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PongPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.latency = time.Now().UnixMilli() - payload.ClientTimestamp
 	return nil
 }
 
 func (m *OnlineModel) handleMsgError(msg *protocol.Message) tea.Cmd {
-	payload, err := protocol.ParsePayload[protocol.ErrorPayload](msg)
+	payload, err := encoding.ParsePayload[protocol.ErrorPayload](msg)
 	if err != nil {
 		return nil
 	}
@@ -188,7 +190,7 @@ func (m *OnlineModel) handleMsgError(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgOnlineCount(msg *protocol.Message) tea.Cmd {
 	var payload protocol.OnlineCountPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	// m.onlineCount moved to LobbyModel
 	m.lobby.onlineCount = payload.Count
 	// 设置在线人数通知（持久显示）
@@ -200,7 +202,7 @@ func (m *OnlineModel) handleMsgOnlineCount(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgRoomCreated(msg *protocol.Message) tea.Cmd {
 	var payload protocol.RoomCreatedPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.game.state.RoomCode = payload.RoomCode
 	m.game.state.Players = []protocol.PlayerInfo{payload.Player}
 	m.phase = PhaseWaiting
@@ -210,7 +212,7 @@ func (m *OnlineModel) handleMsgRoomCreated(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgRoomJoined(msg *protocol.Message) tea.Cmd {
 	var payload protocol.RoomJoinedPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.game.state.RoomCode = payload.RoomCode
 	m.game.state.Players = payload.Players
 	m.phase = PhaseWaiting
@@ -221,14 +223,14 @@ func (m *OnlineModel) handleMsgRoomJoined(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgPlayerJoined(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerJoinedPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.game.state.Players = append(m.game.state.Players, payload.Player)
 	return nil
 }
 
 func (m *OnlineModel) handleMsgPlayerLeft(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerLeftPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
 			m.game.state.Players = append(m.game.state.Players[:i], m.game.state.Players[i+1:]...)
@@ -240,7 +242,7 @@ func (m *OnlineModel) handleMsgPlayerLeft(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgPlayerReady(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerReadyPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
 			m.game.state.Players[i].Ready = payload.Ready
@@ -262,7 +264,7 @@ func (m *OnlineModel) handleMsgPlayerReady(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgRoomListResult(msg *protocol.Message) tea.Cmd {
 	var payload protocol.RoomListResultPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.lobby.availableRooms = payload.Rooms
 	m.lobby.selectedRoomIdx = 0
 	return nil
@@ -270,7 +272,7 @@ func (m *OnlineModel) handleMsgRoomListResult(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgPlayerOffline(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerOfflinePayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
 			m.game.state.Players[i].Online = false
@@ -282,7 +284,7 @@ func (m *OnlineModel) handleMsgPlayerOffline(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgPlayerOnline(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayerOnlinePayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
 			m.game.state.Players[i].Online = true
@@ -296,18 +298,18 @@ func (m *OnlineModel) handleMsgPlayerOnline(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgGameStart(msg *protocol.Message) tea.Cmd {
 	var payload protocol.GameStartPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.game.state.Players = payload.Players
 	return nil
 }
 
 func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 	var payload protocol.DealCardsPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.state.Hand = protocol.InfosToCards(payload.Cards)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	m.game.state.Hand = convert.InfosToCards(payload.Cards)
 	m.game.state.SortHand()
 	if len(payload.LandlordCards) > 0 && payload.LandlordCards[0].Rank > 0 {
-		m.game.state.BottomCards = protocol.InfosToCards(payload.LandlordCards)
+		m.game.state.BottomCards = convert.InfosToCards(payload.LandlordCards)
 	}
 
 	// 初始化所有玩家的牌数为 17
@@ -325,7 +327,7 @@ func (m *OnlineModel) handleMsgDealCards(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 	var payload protocol.BidTurnPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.phase = PhaseBidding
 	m.game.bidTurn = payload.PlayerID
 	m.resetBell()
@@ -350,8 +352,8 @@ func (m *OnlineModel) handleMsgBidTurn(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 	var payload protocol.LandlordPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.game.state.BottomCards = protocol.InfosToCards(payload.LandlordCards)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	m.game.state.BottomCards = convert.InfosToCards(payload.LandlordCards)
 	for i, p := range m.game.state.Players {
 		m.game.state.Players[i].IsLandlord = (p.ID == payload.PlayerID)
 		// 地主拿到底牌，牌数变为 20
@@ -376,7 +378,7 @@ func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayTurnPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.phase = PhasePlaying
 	m.game.state.CurrentTurn = payload.PlayerID
 	m.game.mustPlay = payload.MustPlay
@@ -411,10 +413,10 @@ func (m *OnlineModel) handleMsgPlayTurn(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgCardPlayed(msg *protocol.Message) tea.Cmd {
 	var payload protocol.CardPlayedPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.game.state.LastPlayedBy = payload.PlayerID
 	m.game.state.LastPlayedName = payload.PlayerName
-	m.game.state.LastPlayed = protocol.InfosToCards(payload.Cards)
+	m.game.state.LastPlayed = convert.InfosToCards(payload.Cards)
 	m.game.state.LastHandType = payload.HandType
 	for i, p := range m.game.state.Players {
 		if p.ID == payload.PlayerID {
@@ -435,7 +437,7 @@ func (m *OnlineModel) handleMsgCardPlayed(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgGameOver(msg *protocol.Message) tea.Cmd {
 	var payload protocol.GameOverPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.phase = PhaseGameOver
 	m.game.state.Winner = payload.WinnerName
 	m.game.state.WinnerIsLandlord = payload.IsLandlord
@@ -461,14 +463,14 @@ func (m *OnlineModel) handleMsgGameOver(msg *protocol.Message) tea.Cmd {
 
 func (m *OnlineModel) handleMsgStatsResult(msg *protocol.Message) tea.Cmd {
 	var payload protocol.StatsResultPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.lobby.myStats = &payload
 	return nil
 }
 
 func (m *OnlineModel) handleMsgLeaderboardResult(msg *protocol.Message) tea.Cmd {
 	var payload protocol.LeaderboardResultPayload
-	_ = protocol.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.lobby.leaderboard = payload.Entries
 	return nil
 }

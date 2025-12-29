@@ -16,6 +16,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 var upgrader = websocket.Upgrader{
@@ -189,7 +190,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	session := s.sessionManager.CreateSession(client.ID, client.Name)
 
 	// 发送连接成功消息（包含重连令牌）
-	client.SendMessage(protocol.MustNewMessage(protocol.MsgConnected, protocol.ConnectedPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgConnected, protocol.ConnectedPayload{
 		PlayerID:       client.ID,
 		PlayerName:     client.Name,
 		ReconnectToken: session.ReconnectToken,
