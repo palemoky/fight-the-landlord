@@ -8,8 +8,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/palemoky/fight-the-landlord/internal/card"
-	"github.com/palemoky/fight-the-landlord/internal/game"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+)
+
+const (
+	// BottomCardsPublic 底牌是否公开
+	// true: 所有玩家都能看到底牌，记牌器扣除底牌
+	// false: 只有地主能看到底牌，只有地主的记牌器扣除底牌
+	BottomCardsPublic = true
 )
 
 // handleServerMessage 处理服务器消息
@@ -379,7 +385,7 @@ func (m *OnlineModel) handleMsgLandlord(msg *protocol.Message) tea.Cmd {
 
 	// 更新记牌器：根据底牌是否公开来决定如何扣除
 	// 底牌公开：所有玩家都扣除；底牌不公开：只有地主扣除
-	shouldDeductBottomCards := game.BottomCardsPublic || payload.PlayerID == m.playerID
+	shouldDeductBottomCards := BottomCardsPublic || payload.PlayerID == m.playerID
 	if shouldDeductBottomCards {
 		for _, c := range m.game.bottomCards {
 			if m.game.remainingCards[c.Rank] > 0 {
