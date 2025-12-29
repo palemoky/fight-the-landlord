@@ -50,6 +50,6 @@ func (h *Handler) handleChat(client types.ClientInterface, msg *protocol.Message
 		// 大厅聊天 (广播给所有人)
 		// 也可以优化为只广播给不在房间的人，或者大厅的人
 		// 这里简单处理：广播给所有连接的客户端
-		h.server.Broadcast(chatMsg)
+		h.server.BroadcastToLobby(chatMsg)
 	}
 }

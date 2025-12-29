@@ -250,6 +250,18 @@ func (s *Server) Broadcast(msg *protocol.Message) {
 	}
 }
 
+// BroadcastToLobby 广播消息给大厅玩家（未在房间内的玩家）
+func (s *Server) BroadcastToLobby(msg *protocol.Message) {
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+
+	for _, client := range s.clients {
+		if client.GetRoom() == "" {
+			client.SendMessage(msg)
+		}
+	}
+}
+
 // monitorStats 定期监控服务器状态
 func (s *Server) monitorStats() {
 	ticker := time.NewTicker(30 * time.Second)

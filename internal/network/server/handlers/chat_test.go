@@ -26,8 +26,8 @@ func TestHandler_HandleChat_Lobby(t *testing.T) {
 	mockClient.On("GetName").Return("Player1")
 	mockLimiter.On("AllowChat", "p1").Return(true, "")
 
-	// Expect Broadcast to be called with a MsgChat message
-	mockServer.On("Broadcast", mock.MatchedBy(func(msg *protocol.Message) bool {
+	// Expect BroadcastToLobby to be called with a MsgChat message
+	mockServer.On("BroadcastToLobby", mock.MatchedBy(func(msg *protocol.Message) bool {
 		return msg.Type == protocol.MsgChat
 	})).Return()
 

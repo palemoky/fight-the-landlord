@@ -20,7 +20,7 @@ func setupGameRoom(t *testing.T) (*game.Room, []*MockClient) {
 	}
 
 	clients := make([]*MockClient, 3)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		c := new(MockClient)
 		id := room.PlayerOrder[i]
 		c.On("GetID").Return(id)

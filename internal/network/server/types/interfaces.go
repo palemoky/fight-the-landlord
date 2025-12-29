@@ -16,6 +16,7 @@ type ServerContext interface {
 	IsMaintenanceMode() bool
 	GetOnlineCount() int
 	Broadcast(msg *protocol.Message)
+	BroadcastToLobby(msg *protocol.Message)
 	GetChatLimiter() ChatLimiterInterface
 	GetClientByID(id string) ClientInterface
 	RegisterClient(id string, client ClientInterface)

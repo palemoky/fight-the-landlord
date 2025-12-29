@@ -200,6 +200,7 @@ func (m *MockServerContext) UnregisterClient(id string)                         
 func (m *MockServerContext) IsMaintenanceMode() bool                                { return false }
 func (m *MockServerContext) GetOnlineCount() int                                    { return 0 }
 func (m *MockServerContext) Broadcast(msg *protocol.Message)                        {}
+func (m *MockServerContext) BroadcastToLobby(msg *protocol.Message)                 {}
 
 // Satisfy RoomManagerInterface for LeaveRoom called in endGame
 

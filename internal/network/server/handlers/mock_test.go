@@ -103,6 +103,10 @@ func (m *MockServer) Broadcast(msg *protocol.Message) {
 	m.Called(msg)
 }
 
+func (m *MockServer) BroadcastToLobby(msg *protocol.Message) {
+	m.Called(msg)
+}
+
 func (m *MockServer) GetChatLimiter() types.ChatLimiterInterface {
 	args := m.Called()
 	if args.Get(0) == nil {
