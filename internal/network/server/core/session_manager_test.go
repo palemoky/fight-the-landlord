@@ -1,4 +1,4 @@
-package server
+package core
 
 import (
 	"testing"
@@ -38,13 +38,13 @@ func TestSessionManager_OnlineStatus(t *testing.T) {
 
 	// Set Offline
 	sm.SetOffline("p1")
-	s1 := sm.GetSession("p1")
+	s1 := sm.GetSession("p1").(*PlayerSession)
 	assert.False(t, s1.IsOnline)
 	assert.False(t, s1.DisconnectedAt.IsZero())
 
 	// Set Online
 	sm.SetOnline("p1")
-	s2 := sm.GetSession("p1")
+	s2 := sm.GetSession("p1").(*PlayerSession)
 	assert.True(t, s2.IsOnline)
 	assert.True(t, s2.DisconnectedAt.IsZero())
 }

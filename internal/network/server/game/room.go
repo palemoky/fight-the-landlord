@@ -1,4 +1,4 @@
-package server
+package game
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
 const (
@@ -31,7 +32,7 @@ const (
 
 // RoomPlayer 房间中的玩家
 type RoomPlayer struct {
-	Client     *Client
+	Client     types.ClientInterface
 	Seat       int  // 座位号 0-2
 	Ready      bool // 是否准备
 	IsLandlord bool // 是否是地主
@@ -46,19 +47,19 @@ type Room struct {
 	CreatedAt   time.Time              // 创建时间
 
 	game   *GameSession // 游戏会话
-	server *Server
+	server types.ServerContext
 	mu     sync.RWMutex
 }
 
 // RoomManager 房间管理器
 type RoomManager struct {
-	server *Server
+	server types.ServerContext
 	rooms  map[string]*Room
 	mu     sync.RWMutex
 }
 
 // NewRoomManager 创建房间管理器
-func NewRoomManager(s *Server) *RoomManager {
+func NewRoomManager(s types.ServerContext) *RoomManager {
 	rm := &RoomManager{
 		server: s,
 		rooms:  make(map[string]*Room),
@@ -71,7 +72,7 @@ func NewRoomManager(s *Server) *RoomManager {
 }
 
 // CreateRoom 创建房间
-func (rm *RoomManager) CreateRoom(client *Client) (*Room, error) {
+func (rm *RoomManager) CreateRoom(client types.ClientInterface) (interface{}, error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -93,22 +94,22 @@ func (rm *RoomManager) CreateRoom(client *Client) (*Room, error) {
 		Seat:   0,
 		Ready:  false,
 	}
-	room.Players[client.ID] = player
-	room.PlayerOrder = append(room.PlayerOrder, client.ID)
+	room.Players[client.GetID()] = player
+	room.PlayerOrder = append(room.PlayerOrder, client.GetID())
 	client.SetRoom(code)
 
 	rm.rooms[code] = room
 
 	// 保存到 Redis
-	go func() { _ = rm.server.redisStore.SaveRoom(context.Background(), room) }()
+	go func() { _ = rm.server.GetRedisStore().SaveRoom(context.Background(), room) }()
 
-	log.Printf("🏠 房间 %s 已创建，玩家 %s", code, client.Name)
+	log.Printf("🏠 房间 %s 已创建，玩家 %s", code, client.GetName())
 
 	return room, nil
 }
 
 // JoinRoom 加入房间
-func (rm *RoomManager) JoinRoom(client *Client, code string) (*Room, error) {
+func (rm *RoomManager) JoinRoom(client types.ClientInterface, code string) (interface{}, error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -135,25 +136,25 @@ func (rm *RoomManager) JoinRoom(client *Client, code string) (*Room, error) {
 		Seat:   seat,
 		Ready:  false,
 	}
-	room.Players[client.ID] = player
-	room.PlayerOrder = append(room.PlayerOrder, client.ID)
+	room.Players[client.GetID()] = player
+	room.PlayerOrder = append(room.PlayerOrder, client.GetID())
 	client.SetRoom(code)
 
-	log.Printf("👤 玩家 %s 加入房间 %s", client.Name, code)
+	log.Printf("👤 玩家 %s 加入房间 %s", client.GetName(), code)
 
 	// 通知房间内其他玩家
-	room.broadcastExcept(client.ID, encoding.MustNewMessage(protocol.MsgPlayerJoined, protocol.PlayerJoinedPayload{
-		Player: room.getPlayerInfo(client.ID),
+	room.broadcastExcept(client.GetID(), encoding.MustNewMessage(protocol.MsgPlayerJoined, protocol.PlayerJoinedPayload{
+		Player: room.GetPlayerInfo(client.GetID()),
 	}))
 
 	// 保存到 Redis
-	go func() { _ = rm.server.redisStore.SaveRoom(context.Background(), room) }()
+	go func() { _ = rm.server.GetRedisStore().SaveRoom(context.Background(), room) }()
 
 	return room, nil
 }
 
 // LeaveRoom 离开房间
-func (rm *RoomManager) LeaveRoom(client *Client) {
+func (rm *RoomManager) LeaveRoom(client types.ClientInterface) {
 	roomCode := client.GetRoom()
 	if roomCode == "" {
 		return
@@ -170,29 +171,29 @@ func (rm *RoomManager) LeaveRoom(client *Client) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	player, exists := room.Players[client.ID]
+	player, exists := room.Players[client.GetID()]
 	if !exists {
 		return
 	}
 
 	// 通知其他玩家
-	room.broadcastExcept(client.ID, encoding.MustNewMessage(protocol.MsgPlayerLeft, protocol.PlayerLeftPayload{
-		PlayerID:   client.ID,
-		PlayerName: client.Name,
+	room.broadcastExcept(client.GetID(), encoding.MustNewMessage(protocol.MsgPlayerLeft, protocol.PlayerLeftPayload{
+		PlayerID:   client.GetID(),
+		PlayerName: client.GetName(),
 	}))
 
 	// 移除玩家
-	delete(room.Players, client.ID)
+	delete(room.Players, client.GetID())
 	// 从顺序列表中移除
 	for i, id := range room.PlayerOrder {
-		if id == client.ID {
+		if id == client.GetID() {
 			room.PlayerOrder = append(room.PlayerOrder[:i], room.PlayerOrder[i+1:]...)
 			break
 		}
 	}
 	client.SetRoom("")
 
-	log.Printf("👋 玩家 %s 离开房间 %s (座位 %d)", client.Name, roomCode, player.Seat)
+	log.Printf("👋 玩家 %s 离开房间 %s (座位 %d)", client.GetName(), roomCode, player.Seat)
 
 	// 如果房间空了，删除房间
 	if len(room.Players) == 0 {
@@ -200,16 +201,16 @@ func (rm *RoomManager) LeaveRoom(client *Client) {
 		delete(rm.rooms, roomCode)
 		rm.mu.Unlock()
 		// 从 Redis 删除
-		go func() { _ = rm.server.redisStore.DeleteRoom(context.Background(), roomCode) }()
+		go func() { _ = rm.server.GetRedisStore().DeleteRoom(context.Background(), roomCode) }()
 		log.Printf("🏠 房间 %s 已解散", roomCode)
 	} else {
 		// 更新 Redis
-		go func() { _ = rm.server.redisStore.SaveRoom(context.Background(), room) }()
+		go func() { _ = rm.server.GetRedisStore().SaveRoom(context.Background(), room) }()
 	}
 }
 
 // SetPlayerReady 设置玩家准备状态
-func (rm *RoomManager) SetPlayerReady(client *Client, ready bool) error {
+func (rm *RoomManager) SetPlayerReady(client types.ClientInterface, ready bool) error {
 	roomCode := client.GetRoom()
 	if roomCode == "" {
 		return ErrNotInRoom
@@ -225,7 +226,7 @@ func (rm *RoomManager) SetPlayerReady(client *Client, ready bool) error {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	player, exists := room.Players[client.ID]
+	player, exists := room.Players[client.GetID()]
 	if !exists {
 		return ErrNotInRoom
 	}
@@ -234,7 +235,7 @@ func (rm *RoomManager) SetPlayerReady(client *Client, ready bool) error {
 
 	// 广播准备状态
 	room.broadcast(encoding.MustNewMessage(protocol.MsgPlayerReady, protocol.PlayerReadyPayload{
-		PlayerID: client.ID,
+		PlayerID: client.GetID(),
 		Ready:    ready,
 	}))
 
@@ -247,18 +248,18 @@ func (rm *RoomManager) SetPlayerReady(client *Client, ready bool) error {
 }
 
 // GetRoom 获取房间
-func (rm *RoomManager) GetRoom(code string) *Room {
+func (rm *RoomManager) GetRoom(code string) interface{} {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 	return rm.rooms[code]
 }
 
 // GetRoomList 获取可加入的房间列表
-func (rm *RoomManager) GetRoomList() []protocol.RoomListItem {
+func (rm *RoomManager) GetRoomList() []interface{} {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
-	var rooms []protocol.RoomListItem
+	var rooms []interface{}
 	for code, room := range rm.rooms {
 		room.mu.RLock()
 		// 只返回等待中且未满的房间
@@ -275,7 +276,7 @@ func (rm *RoomManager) GetRoomList() []protocol.RoomListItem {
 }
 
 // NotifyPlayerOffline 通知房间内其他玩家某个玩家掉线
-func (rm *RoomManager) NotifyPlayerOffline(client *Client) {
+func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 	roomCode := client.GetRoom()
 	if roomCode == "" {
 		return
@@ -292,10 +293,10 @@ func (rm *RoomManager) NotifyPlayerOffline(client *Client) {
 
 	// 通知其他在线玩家
 	for id, player := range room.Players {
-		if id != client.ID && player.Client != nil {
+		if id != client.GetID() && player.Client != nil {
 			player.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
-				PlayerID:   client.ID,
-				PlayerName: client.Name,
+				PlayerID:   client.GetID(),
+				PlayerName: client.GetName(),
 				Timeout:    20, // 20秒离线等待
 			}))
 		}
@@ -306,14 +307,14 @@ func (rm *RoomManager) NotifyPlayerOffline(client *Client) {
 	room.mu.Unlock()
 
 	if game != nil {
-		game.PlayerOffline(client.ID)
+		game.PlayerOffline(client.GetID())
 	}
 
-	log.Printf("📴 玩家 %s 在房间 %s 中掉线", client.Name, roomCode)
+	log.Printf("📴 玩家 %s 在房间 %s 中掉线", client.GetName(), roomCode)
 }
 
 // ReconnectPlayer 玩家重连到房间
-func (rm *RoomManager) ReconnectPlayer(oldClient *Client, newClient *Client) error {
+func (rm *RoomManager) ReconnectPlayer(oldClient types.ClientInterface, newClient types.ClientInterface) error {
 	roomCode := oldClient.GetRoom()
 	if roomCode == "" {
 		return nil // 不在房间中，无需重连
@@ -328,7 +329,7 @@ func (rm *RoomManager) ReconnectPlayer(oldClient *Client, newClient *Client) err
 
 	room.mu.Lock()
 
-	player, exists := room.Players[oldClient.ID]
+	player, exists := room.Players[oldClient.GetID()]
 	if !exists {
 		room.mu.Unlock()
 		return ErrNotInRoom
@@ -340,10 +341,10 @@ func (rm *RoomManager) ReconnectPlayer(oldClient *Client, newClient *Client) err
 
 	// 通知其他玩家该玩家已上线
 	for id, p := range room.Players {
-		if id != newClient.ID && p.Client != nil {
+		if id != newClient.GetID() && p.Client != nil {
 			p.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOnline, protocol.PlayerOnlinePayload{
-				PlayerID:   newClient.ID,
-				PlayerName: newClient.Name,
+				PlayerID:   newClient.GetID(),
+				PlayerName: newClient.GetName(),
 			}))
 		}
 	}
@@ -353,16 +354,16 @@ func (rm *RoomManager) ReconnectPlayer(oldClient *Client, newClient *Client) err
 	room.mu.Unlock()
 
 	if game != nil {
-		game.PlayerOnline(newClient.ID)
+		game.PlayerOnline(newClient.GetID())
 	}
 
-	log.Printf("📶 玩家 %s 重连到房间 %s", newClient.Name, roomCode)
+	log.Printf("📶 玩家 %s 重连到房间 %s", newClient.GetName(), roomCode)
 
 	return nil
 }
 
 // GetRoomByPlayerID 通过玩家 ID 获取房间
-func (rm *RoomManager) GetRoomByPlayerID(playerID string) *Room {
+func (rm *RoomManager) GetRoomByPlayerID(playerID string) interface{} {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -406,7 +407,7 @@ func (rm *RoomManager) cleanup() {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
-	timeout := rm.server.config.Game.RoomTimeoutDuration()
+	timeout := 2 * time.Hour
 	now := time.Now()
 
 	for code, room := range rm.rooms {
@@ -446,124 +447,24 @@ func (rm *RoomManager) GetActiveGamesCount() int {
 	return count
 }
 
-// --- Room 方法 ---
+// Interface implementations for types.RoomInterface
+func (r *Room) GetServer() types.ServerContext { return r.server }
 
-// Broadcast 广播消息给房间内所有玩家
-func (r *Room) Broadcast(msg *protocol.Message) {
-	for _, player := range r.Players {
-		player.Client.SendMessage(msg)
-	}
-}
-
-// broadcast 内部使用的广播方法（保留以兼容现有代码）
-func (r *Room) broadcast(msg *protocol.Message) {
-	r.Broadcast(msg)
-}
-
-// broadcastExcept 广播消息给除指定玩家外的所有玩家
-func (r *Room) broadcastExcept(excludeID string, msg *protocol.Message) {
-	for id, player := range r.Players {
-		if id != excludeID {
-			player.Client.SendMessage(msg)
-		}
-	}
-}
-
-// checkAllReady 检查是否所有玩家都准备好
-func (r *Room) checkAllReady() bool {
-	if len(r.Players) < 3 {
-		return false
-	}
-	for _, player := range r.Players {
-		if !player.Ready {
-			return false
-		}
-	}
-	return true
-}
-
-// getPlayerInfo 获取玩家信息
-func (r *Room) getPlayerInfo(playerID string) protocol.PlayerInfo {
-	player := r.Players[playerID]
-	cardsCount := 0
-	if r.game != nil {
-		cardsCount = r.game.GetPlayerCardsCount(playerID)
-	}
-	return protocol.PlayerInfo{
-		ID:         player.Client.ID,
-		Name:       player.Client.Name,
-		Seat:       player.Seat,
-		Ready:      player.Ready,
-		IsLandlord: player.IsLandlord,
-		CardsCount: cardsCount,
-	}
-}
-
-// getAllPlayersInfo 获取所有玩家信息
-func (r *Room) getAllPlayersInfo() []protocol.PlayerInfo {
-	infos := make([]protocol.PlayerInfo, 0, len(r.Players))
-	for _, id := range r.PlayerOrder {
-		infos = append(infos, r.getPlayerInfo(id))
-	}
-	return infos
-}
-
-// startGame 开始游戏
-func (r *Room) startGame() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if r.State != RoomStateWaiting || len(r.Players) < 3 {
-		return
-	}
-
-	r.State = RoomStateReady
-
-	// 广播游戏开始
-	r.broadcast(encoding.MustNewMessage(protocol.MsgGameStart, protocol.GameStartPayload{
-		Players: r.getAllPlayersInfo(),
-	}))
-
-	// 创建游戏会话
-	r.game = NewGameSession(r)
-
-	// 开始游戏流程
-	r.game.Start()
-
-	// 保存到 Redis
-	go func() { _ = r.server.redisStore.SaveRoom(context.Background(), r) }()
-}
-
-// GetGameSession 获取游戏会话
-func (r *Room) GetGameSession() *GameSession {
+// SerializeForRedis 为Redis序列化准备数据（提供只读访问）
+func (r *Room) SerializeForRedis(serialize func()) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+	serialize()
+}
+
+// GetGameForSerialization 获取game用于序列化（只读）
+func (r *Room) GetGameForSerialization() *GameSession {
 	return r.game
 }
 
-// SaveToRedis 保存房间状态到 Redis
-// SaveToRedis 保存房间状态到 Redis
-func (r *Room) SaveToRedis(ctx context.Context) error {
-	if r.server != nil && r.server.redisStore != nil {
-		return r.server.redisStore.SaveRoom(ctx, r)
-	}
-	return nil
+// SetGameSession 设置游戏会话（主要用于测试或状态恢复）
+func (r *Room) SetGameSession(gs *GameSession) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.game = gs
 }
-
-// --- 错误定义 ---
-
-type RoomError struct {
-	Code    int
-	Message string
-}
-
-func (e *RoomError) Error() string {
-	return e.Message
-}
-
-var (
-	ErrRoomNotFound = &RoomError{Code: protocol.ErrCodeRoomNotFound, Message: "房间不存在"}
-	ErrRoomFull     = &RoomError{Code: protocol.ErrCodeRoomFull, Message: "房间已满"}
-	ErrNotInRoom    = &RoomError{Code: protocol.ErrCodeNotInRoom, Message: "您不在房间中"}
-	ErrGameStarted  = &RoomError{Code: protocol.ErrCodeGameNotStart, Message: "游戏已开始"}
-)

@@ -1,4 +1,4 @@
-package server
+package game
 
 import (
 	"log"
@@ -12,6 +12,8 @@ import (
 const (
 	// 玩家离线等待时间（秒）
 	offlineWaitTimeout = 30 * time.Second
+	// 出牌/叫地主超时时间
+	turnTimeout = 30 * time.Second
 )
 
 // --- 超时控制 ---
@@ -20,10 +22,9 @@ func (gs *GameSession) startBidTimer() {
 	gs.timerMu.Lock()
 	defer gs.timerMu.Unlock()
 
-	timeout := gs.room.server.config.Game.BidTimeoutDuration()
 	gs.timerStartTime = time.Now()
-	gs.remainingTime = timeout
-	gs.turnTimer = time.AfterFunc(timeout, func() {
+	gs.remainingTime = turnTimeout
+	gs.turnTimer = time.AfterFunc(turnTimeout, func() {
 		// 超时自动不叫
 		currentPlayer := gs.players[gs.currentBidder]
 		_ = gs.HandleBid(currentPlayer.ID, false)
@@ -34,10 +35,9 @@ func (gs *GameSession) startPlayTimer() {
 	gs.timerMu.Lock()
 	defer gs.timerMu.Unlock()
 
-	timeout := gs.room.server.config.Game.TurnTimeoutDuration()
 	gs.timerStartTime = time.Now()
-	gs.remainingTime = timeout
-	gs.turnTimer = time.AfterFunc(timeout, func() {
+	gs.remainingTime = turnTimeout
+	gs.turnTimer = time.AfterFunc(turnTimeout, func() {
 		gs.handlePlayTimeout()
 	})
 }

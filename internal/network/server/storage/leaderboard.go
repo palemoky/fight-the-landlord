@@ -1,4 +1,4 @@
-package server
+package storage
 
 import (
 	"context"
@@ -80,7 +80,7 @@ func NewLeaderboardManager(client *redis.Client) *LeaderboardManager {
 }
 
 // GetPlayerStats 获取玩家统计
-func (lm *LeaderboardManager) GetPlayerStats(ctx context.Context, playerID string) (*PlayerStats, error) {
+func (lm *LeaderboardManager) GetPlayerStats(ctx context.Context, playerID string) (interface{}, error) {
 	key := playerStatsKey + playerID
 	data, err := lm.redis.Get(ctx, key).Bytes()
 	if err != nil {
@@ -110,15 +110,23 @@ func (lm *LeaderboardManager) SavePlayerStats(ctx context.Context, stats *Player
 // RecordGameResult 记录游戏结果
 func (lm *LeaderboardManager) RecordGameResult(ctx context.Context, playerID, playerName string, isLandlord, isWinner bool) error {
 	// 获取或创建玩家统计
-	stats, err := lm.GetPlayerStats(ctx, playerID)
+	statsInterface, err := lm.GetPlayerStats(ctx, playerID)
 	if err != nil {
 		return err
 	}
-	if stats == nil {
+
+	var stats *PlayerStats
+	if statsInterface == nil {
 		stats = &PlayerStats{
 			PlayerID:   playerID,
 			PlayerName: playerName,
 			CreatedAt:  time.Now().Unix(),
+		}
+	} else {
+		var ok bool
+		stats, ok = statsInterface.(*PlayerStats)
+		if !ok {
+			return fmt.Errorf("invalid stats type")
 		}
 	}
 
@@ -225,7 +233,9 @@ func (lm *LeaderboardManager) UpdateLeaderboard(ctx context.Context, stats *Play
 }
 
 // GetLeaderboard 获取排行榜
-func (lm *LeaderboardManager) GetLeaderboard(ctx context.Context, leaderboardType string, offset, limit int) ([]LeaderboardEntry, error) {
+func (lm *LeaderboardManager) GetLeaderboard(ctx context.Context, limit int) ([]interface{}, error) {
+	leaderboardType := "total"
+	offset := 0
 	// 确定使用哪个排行榜
 	key := leaderboardKey
 	switch leaderboardType {
@@ -243,13 +253,18 @@ func (lm *LeaderboardManager) GetLeaderboard(ctx context.Context, leaderboardTyp
 		return nil, err
 	}
 
-	entries := make([]LeaderboardEntry, 0, len(results))
+	entries := make([]interface{}, 0, len(results))
 	for i, result := range results {
 		playerID := result.Member.(string)
 
 		// 获取玩家详细统计
-		stats, err := lm.GetPlayerStats(ctx, playerID)
-		if err != nil || stats == nil {
+		statsInterface, err := lm.GetPlayerStats(ctx, playerID)
+		if err != nil || statsInterface == nil {
+			continue
+		}
+
+		stats, ok := statsInterface.(*PlayerStats)
+		if !ok {
 			continue
 		}
 
@@ -258,7 +273,7 @@ func (lm *LeaderboardManager) GetLeaderboard(ctx context.Context, leaderboardTyp
 			winRate = float64(stats.Wins) / float64(stats.TotalGames) * 100
 		}
 
-		entries = append(entries, LeaderboardEntry{
+		entries = append(entries, &LeaderboardEntry{
 			Rank:       offset + i + 1,
 			PlayerID:   playerID,
 			PlayerName: stats.PlayerName,
@@ -281,24 +296,6 @@ func (lm *LeaderboardManager) GetPlayerRank(ctx context.Context, playerID string
 		return -1, err
 	}
 	return rank + 1, nil // Redis 排名从 0 开始
-}
-
-// GetTopPlayers 获取前 N 名玩家（带详细信息）
-func (lm *LeaderboardManager) GetTopPlayers(ctx context.Context, n int) ([]LeaderboardEntry, error) {
-	return lm.GetLeaderboard(ctx, "total", 0, n)
-}
-
-// GetAroundPlayer 获取玩家附近的排名
-func (lm *LeaderboardManager) GetAroundPlayer(ctx context.Context, playerID string, count int) ([]LeaderboardEntry, error) {
-	rank, err := lm.GetPlayerRank(ctx, playerID)
-	if err != nil || rank == -1 {
-		return nil, err
-	}
-
-	// 计算偏移量
-	offset := max(int(rank)-count/2-1, 0)
-
-	return lm.GetLeaderboard(ctx, "total", offset, count)
 }
 
 // SortByScore 按积分排序

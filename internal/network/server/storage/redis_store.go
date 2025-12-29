@@ -1,4 +1,4 @@
-package server
+package storage
 
 import (
 	"context"
@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+
+	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
 )
 
 const (
@@ -19,7 +22,7 @@ const (
 	roomExpiration = 2 * time.Hour
 )
 
-// RoomData 房间数据（用于 Redis 序列化）
+// game.RoomData 房间数据（用于 Redis 序列化）
 type RoomData struct {
 	Code        string           `json:"code"`
 	State       int              `json:"state"`
@@ -38,7 +41,7 @@ type PlayerData struct {
 	IsLandlord bool   `json:"is_landlord"`
 }
 
-// GameSessionData 游戏会话数据（简化版，用于恢复基本信息）
+// game.GameSessionData 游戏会话数据（简化版，用于恢复基本信息）
 type GameSessionData struct {
 	State         int     `json:"state"`
 	CurrentPlayer int     `json:"current_player"`
@@ -59,34 +62,42 @@ func NewRedisStore(client *redis.Client) *RedisStore {
 
 // --- 房间存储 ---
 
+// Savegame.Room 保存房间到 Redis
 // SaveRoom 保存房间到 Redis
-func (rs *RedisStore) SaveRoom(ctx context.Context, room *Room) error {
-	room.mu.RLock()
-	defer room.mu.RUnlock()
-
-	// 转换为可序列化的数据
-	data := RoomData{
-		Code:        room.Code,
-		State:       int(room.State),
-		Players:     make([]PlayerData, 0, len(room.Players)),
-		PlayerOrder: room.PlayerOrder,
-		CreatedAt:   room.CreatedAt.Unix(),
+func (rs *RedisStore) SaveRoom(ctx context.Context, roomInterface any) error {
+	room, ok := roomInterface.(*game.Room)
+	if !ok {
+		return fmt.Errorf("invalid room type")
 	}
+	var data RoomData
 
-	for _, player := range room.Players {
-		data.Players = append(data.Players, PlayerData{
-			ID:         player.Client.ID,
-			Name:       player.Client.Name,
-			Seat:       player.Seat,
-			Ready:      player.Ready,
-			IsLandlord: player.IsLandlord,
-		})
-	}
+	// 使用Room的序列化方法来安全访问数据
+	room.SerializeForRedis(func() {
+		// 转换为可序列化的数据
+		data = RoomData{
+			Code:        room.Code,
+			State:       int(room.State),
+			Players:     make([]PlayerData, 0, len(room.Players)),
+			PlayerOrder: room.PlayerOrder,
+			CreatedAt:   room.CreatedAt.Unix(),
+		}
 
-	// 如果有游戏会话，也保存
-	if room.game != nil {
-		data.GameData = rs.serializeGameSession(room.game)
-	}
+		for _, player := range room.Players {
+			data.Players = append(data.Players, PlayerData{
+				ID:         player.Client.GetID(),
+				Name:       player.Client.GetName(),
+				Seat:       player.Seat,
+				Ready:      player.Ready,
+				IsLandlord: player.IsLandlord,
+			})
+		}
+
+		// 如果有游戏会话，也保存
+		gameSession := room.GetGameForSerialization()
+		if gameSession != nil {
+			data.GameData = rs.serializeGameSession(gameSession)
+		}
+	})
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -97,7 +108,7 @@ func (rs *RedisStore) SaveRoom(ctx context.Context, room *Room) error {
 	return rs.client.Set(ctx, key, jsonData, roomExpiration).Err()
 }
 
-// LoadRoom 从 Redis 加载房间（仅返回数据，需要外部重建）
+// Loadgame.Room 从 Redis 加载房间（仅返回数据，需要外部重建）
 func (rs *RedisStore) LoadRoom(ctx context.Context, code string) (*RoomData, error) {
 	key := roomKeyPrefix + code
 	data, err := rs.client.Get(ctx, key).Bytes()
@@ -116,13 +127,13 @@ func (rs *RedisStore) LoadRoom(ctx context.Context, code string) (*RoomData, err
 	return &roomData, nil
 }
 
-// DeleteRoom 从 Redis 删除房间
+// Deletegame.Room 从 Redis 删除房间
 func (rs *RedisStore) DeleteRoom(ctx context.Context, code string) error {
 	key := roomKeyPrefix + code
 	return rs.client.Del(ctx, key).Err()
 }
 
-// GetAllRoomCodes 获取所有房间号
+// GetAllgame.RoomCodes 获取所有房间号
 func (rs *RedisStore) GetAllRoomCodes(ctx context.Context) ([]string, error) {
 	keys, err := rs.client.Keys(ctx, roomKeyPrefix+"*").Result()
 	if err != nil {
@@ -180,11 +191,8 @@ func (rs *RedisStore) PopFromMatchQueue(ctx context.Context, count int) ([]strin
 // --- 会话存储 ---
 
 // SaveSession 保存会话到 Redis
-func (rs *RedisStore) SaveSession(ctx context.Context, session *PlayerSession) error {
-	session.mu.RLock()
-	defer session.mu.RUnlock()
-
-	data := map[string]interface{}{
+func (rs *RedisStore) SaveSession(ctx context.Context, session *core.PlayerSession) error {
+	data := map[string]any{
 		"player_id":   session.PlayerID,
 		"player_name": session.PlayerName,
 		"token":       session.ReconnectToken,
@@ -201,7 +209,7 @@ func (rs *RedisStore) SaveSession(ctx context.Context, session *PlayerSession) e
 }
 
 // LoadSession 从 Redis 加载会话
-func (rs *RedisStore) LoadSession(ctx context.Context, playerID string) (*PlayerSession, error) {
+func (rs *RedisStore) LoadSession(ctx context.Context, playerID string) (*core.PlayerSession, error) {
 	key := sessionKeyPrefix + playerID
 	data, err := rs.client.HGetAll(ctx, key).Result()
 	if err != nil {
@@ -211,7 +219,7 @@ func (rs *RedisStore) LoadSession(ctx context.Context, playerID string) (*Player
 		return nil, nil
 	}
 
-	session := &PlayerSession{
+	session := &core.PlayerSession{
 		PlayerID:       data["player_id"],
 		PlayerName:     data["player_name"],
 		ReconnectToken: data["token"],
@@ -230,37 +238,40 @@ func (rs *RedisStore) DeleteSession(ctx context.Context, playerID string) error 
 
 // --- 辅助方法 ---
 
-// serializeGameSession 序列化游戏会话（简化版）
-func (rs *RedisStore) serializeGameSession(gs *GameSession) *GameSessionData {
-	gs.mu.RLock()
-	defer gs.mu.RUnlock()
+// serializegame.GameSession 序列化游戏会话（简化版）
+func (rs *RedisStore) serializeGameSession(gs *game.GameSession) *GameSessionData {
+	var data *GameSessionData
 
-	data := &GameSessionData{
-		State:         int(gs.state),
-		CurrentPlayer: gs.currentPlayer,
-		LandlordIdx:   gs.highestBidder,
-	}
-
-	// 保存玩家手牌（简化为点数）
-	data.PlayerHands = make([][]int, len(gs.players))
-	for i, p := range gs.players {
-		hand := make([]int, len(p.Hand))
-		for j, c := range p.Hand {
-			hand[j] = int(c.Rank)
+	gs.SerializeForRedis(func() {
+		data = &GameSessionData{
+			State:         int(gs.GetStateForSerialization()),
+			CurrentPlayer: gs.GetCurrentPlayerForSerialization(),
+			LandlordIdx:   gs.GetHighestBidderForSerialization(),
 		}
-		data.PlayerHands[i] = hand
-	}
 
-	// 保存底牌
-	data.LandlordCards = make([]int, len(gs.bottomCards))
-	for i, c := range gs.bottomCards {
-		data.LandlordCards[i] = int(c.Rank)
-	}
+		// 保存玩家手牌（简化为点数）
+		players := gs.GetPlayersForSerialization()
+		data.PlayerHands = make([][]int, len(players))
+		for i, p := range players {
+			hand := make([]int, len(p.Hand))
+			for j, c := range p.Hand {
+				hand[j] = int(c.Rank)
+			}
+			data.PlayerHands[i] = hand
+		}
+
+		// 保存底牌
+		bottomCards := gs.GetBottomCardsForSerialization()
+		data.LandlordCards = make([]int, len(bottomCards))
+		for i, c := range bottomCards {
+			data.LandlordCards[i] = int(c.Rank)
+		}
+	})
 
 	return data
 }
 
-// SetRoomExpiration 设置房间过期时间
+// Setgame.RoomExpiration 设置房间过期时间
 func (rs *RedisStore) SetRoomExpiration(ctx context.Context, code string, expiration time.Duration) error {
 	key := roomKeyPrefix + code
 	return rs.client.Expire(ctx, key, expiration).Err()

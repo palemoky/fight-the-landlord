@@ -1,4 +1,4 @@
-package server
+package game
 
 import (
 	"testing"
@@ -11,8 +11,8 @@ func TestMatcher_QueueOps(t *testing.T) {
 	// As long as we keep queue size < 3, it won't call CreateRoom.
 	matcher := NewMatcher(nil) // nil server should be safe
 
-	c1 := &Client{ID: "p1", Name: "Player1"}
-	c2 := &Client{ID: "p2", Name: "Player2"}
+	c1 := &MockClient{ID: "p1", Name: "Player1"}
+	c2 := &MockClient{ID: "p2", Name: "Player2"}
 
 	// Add c1
 	matcher.AddToQueue(c1)

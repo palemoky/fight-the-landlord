@@ -1,4 +1,4 @@
-package server
+package utils
 
 import (
 	"math/rand"

@@ -1,21 +1,23 @@
-package server
+package handlers
 
 import (
 	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
 // handleChat 处理聊天消息
-func (h *Handler) handleChat(client *Client, msg *protocol.Message) {
+func (h *Handler) handleChat(client types.ClientInterface, msg *protocol.Message) {
 	payload, err := encoding.ParsePayload[protocol.ChatPayload](msg)
 	if err != nil {
 		return
 	}
 
 	// 聊天限流检查
-	allowed, reason := h.server.chatLimiter.AllowChat(client.ID)
+	allowed, reason := h.server.GetChatLimiter().AllowChat(client.GetID())
 	if !allowed {
 		client.SendMessage(encoding.NewErrorMessageWithText(
 			protocol.ErrCodeRateLimit, reason))
@@ -23,8 +25,8 @@ func (h *Handler) handleChat(client *Client, msg *protocol.Message) {
 	}
 
 	// 填充发送者信息
-	payload.SenderID = client.ID
-	payload.SenderName = client.Name
+	payload.SenderID = client.GetID()
+	payload.SenderName = client.GetName()
 	payload.Time = time.Now().Unix()
 
 	chatMsg := encoding.MustNewMessage(protocol.MsgChat, payload)
@@ -37,9 +39,12 @@ func (h *Handler) handleChat(client *Client, msg *protocol.Message) {
 			return
 		}
 
-		room := h.server.roomManager.GetRoom(roomID)
-		if room != nil {
-			room.Broadcast(chatMsg)
+		roomInterface := h.server.GetRoomManager().GetRoom(roomID)
+		if roomInterface != nil {
+			room, ok := roomInterface.(*game.Room)
+			if ok && room != nil {
+				room.Broadcast(chatMsg)
+			}
 		}
 	} else {
 		// 大厅聊天 (广播给所有人)

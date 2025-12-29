@@ -17,6 +17,11 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/handlers"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/storage"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
 var upgrader = websocket.Upgrader{
@@ -35,21 +40,21 @@ var upgrader = websocket.Upgrader{
 type Server struct {
 	config         *config.Config
 	redis          *redis.Client
-	redisStore     *RedisStore
-	leaderboard    *LeaderboardManager
-	roomManager    *RoomManager
-	matcher        *Matcher
-	sessionManager *SessionManager
+	redisStore     *storage.RedisStore
+	leaderboard    *storage.LeaderboardManager
+	roomManager    *game.RoomManager
+	matcher        *game.Matcher
+	sessionManager *core.SessionManager
 	clients        map[string]*Client
 	clientsMu      sync.RWMutex
-	handler        *Handler
+	handler        *handlers.Handler
 
 	// 安全组件
-	rateLimiter    *RateLimiter
-	originChecker  *OriginChecker
-	messageLimiter *MessageRateLimiter
-	chatLimiter    *ChatRateLimiter
-	ipFilter       *IPFilter
+	rateLimiter    *core.RateLimiter
+	originChecker  *core.OriginChecker
+	messageLimiter *core.MessageRateLimiter
+	chatLimiter    *core.ChatRateLimiter
+	ipFilter       *core.IPFilter
 
 	// 连接控制
 	maxConnections int
@@ -79,37 +84,37 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	s := &Server{
 		config:         cfg,
 		redis:          rdb,
-		redisStore:     NewRedisStore(rdb),
-		leaderboard:    NewLeaderboardManager(rdb),
+		redisStore:     storage.NewRedisStore(rdb),
+		leaderboard:    storage.NewLeaderboardManager(rdb),
 		clients:        make(map[string]*Client),
-		sessionManager: NewSessionManager(),
+		sessionManager: core.NewSessionManager(),
 		// 初始化安全组件
-		rateLimiter: NewRateLimiter(
+		rateLimiter: core.NewRateLimiter(
 			cfg.Security.RateLimit.MaxPerSecond,
 			cfg.Security.RateLimit.MaxPerMinute,
 			cfg.Security.RateLimit.BanDurationTime(),
 		),
-		originChecker:  NewOriginChecker(cfg.Security.AllowedOrigins),
-		messageLimiter: NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
-		chatLimiter: NewChatRateLimiter(
+		originChecker:  core.NewOriginChecker(cfg.Security.AllowedOrigins),
+		messageLimiter: core.NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
+		chatLimiter: core.NewChatRateLimiter(
 			cfg.Security.ChatLimit.MaxPerSecond,
 			cfg.Security.ChatLimit.MaxPerMinute,
 			cfg.Security.ChatLimit.CooldownDuration(),
 		),
-		ipFilter: NewIPFilter(),
+		ipFilter: core.NewIPFilter(),
 		// 初始化连接控制
 		maxConnections: cfg.Server.MaxConnections,
 		semaphore:      make(chan struct{}, cfg.Server.MaxConnections),
 	}
 
 	// 初始化房间管理器
-	s.roomManager = NewRoomManager(s)
+	s.roomManager = game.NewRoomManager(s)
 
 	// 初始化匹配器
-	s.matcher = NewMatcher(s)
+	s.matcher = game.NewMatcher(s)
 
 	// 初始化消息处理器
-	s.handler = NewHandler(s)
+	s.handler = handlers.NewHandler(s)
 
 	log.Printf("🔒 安全配置: 连接限制=%d/s, 消息限制=%d/s, 聊天限制=%d/s, 最大连接数=%d",
 		cfg.Security.RateLimit.MaxPerSecond, cfg.Security.MessageLimit.MaxPerSecond, cfg.Security.ChatLimit.MaxPerSecond, cfg.Server.MaxConnections)
@@ -133,7 +138,8 @@ func (s *Server) Start() error {
 
 // handleWebSocket 处理 WebSocket 连接
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	clientIP := GetClientIP(r)
+	// 获取真实客户端IP
+	clientIP := core.GetClientIP(r)
 
 	// 维护模式检查（最优先）
 	if s.IsMaintenanceMode() {
@@ -374,4 +380,32 @@ func (s *Server) Shutdown() {
 	_ = s.redis.Close()
 
 	log.Println("服务器已关闭")
+}
+
+// Interface implementations for types.ServerContext
+func (s *Server) GetRedisStore() types.RedisStoreInterface         { return s.redisStore }
+func (s *Server) GetLeaderboard() types.LeaderboardInterface       { return s.leaderboard }
+func (s *Server) GetSessionManager() types.SessionManagerInterface { return s.sessionManager }
+func (s *Server) GetRoomManager() types.RoomManagerInterface       { return s.roomManager }
+func (s *Server) GetMatcher() types.MatcherInterface               { return s.matcher }
+func (s *Server) GetChatLimiter() types.ChatLimiterInterface       { return s.chatLimiter }
+
+func (s *Server) GetClientByID(id string) types.ClientInterface {
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+	return s.clients[id]
+}
+
+func (s *Server) RegisterClient(id string, client types.ClientInterface) {
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
+	if c, ok := client.(*Client); ok {
+		s.clients[id] = c
+	}
+}
+
+func (s *Server) UnregisterClient(id string) {
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
+	delete(s.clients, id)
 }

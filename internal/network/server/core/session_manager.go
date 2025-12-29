@@ -1,4 +1,4 @@
-package server
+package core
 
 import (
 	"crypto/rand"
@@ -68,7 +68,7 @@ func (sm *SessionManager) CreateSession(playerID, playerName string) *PlayerSess
 }
 
 // GetSession 获取会话
-func (sm *SessionManager) GetSession(playerID string) *PlayerSession {
+func (sm *SessionManager) GetSession(playerID string) interface{} {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 	return sm.sessions[playerID]

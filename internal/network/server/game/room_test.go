@@ -1,10 +1,12 @@
-package server
+package game
 
 import (
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
 
 func TestRoomManager_GetRoomList(t *testing.T) {
@@ -21,7 +23,7 @@ func TestRoomManager_GetRoomList(t *testing.T) {
 	}
 	// Add a dummy player
 	room.Players["p1"] = &RoomPlayer{
-		Client: &Client{ID: "p1", Name: "Player1"},
+		Client: &MockClient{ID: "p1", Name: "Player1"},
 		Seat:   0,
 	}
 
@@ -32,9 +34,10 @@ func TestRoomManager_GetRoomList(t *testing.T) {
 
 	// Verify
 	assert.Len(t, rooms, 1)
-	assert.Equal(t, "123456", rooms[0].RoomCode)
-	assert.Equal(t, 1, rooms[0].PlayerCount)
-	assert.Equal(t, 3, rooms[0].MaxPlayers)
+	roomItem := rooms[0].(protocol.RoomListItem)
+	assert.Equal(t, "123456", roomItem.RoomCode)
+	assert.Equal(t, 1, roomItem.PlayerCount)
+	assert.Equal(t, 3, roomItem.MaxPlayers)
 }
 
 func TestRoom_CheckAllReady(t *testing.T) {
@@ -60,7 +63,7 @@ func TestRoom_GetPlayerInfo(t *testing.T) {
 	room := &Room{
 		Players: make(map[string]*RoomPlayer),
 	}
-	client := &Client{ID: "p1", Name: "TestPlayer"}
+	client := &MockClient{ID: "p1", Name: "TestPlayer"}
 	room.Players["p1"] = &RoomPlayer{
 		Client:     client,
 		Seat:       1,
@@ -68,7 +71,7 @@ func TestRoom_GetPlayerInfo(t *testing.T) {
 		IsLandlord: false,
 	}
 
-	info := room.getPlayerInfo("p1")
+	info := room.GetPlayerInfo("p1")
 
 	assert.Equal(t, "p1", info.ID)
 	assert.Equal(t, "TestPlayer", info.Name)

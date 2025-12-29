@@ -10,6 +10,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/utils"
 )
 
 const (
@@ -45,7 +46,7 @@ type Client struct {
 func NewClient(s *Server, conn *websocket.Conn) *Client {
 	return &Client{
 		ID:     uuid.New().String(),
-		Name:   GenerateNickname(),
+		Name:   utils.GenerateNickname(),
 		server: s,
 		conn:   conn,
 		send:   make(chan []byte, 256),
@@ -207,3 +208,7 @@ func (c *Client) GetRoom() string {
 	defer c.mu.RUnlock()
 	return c.RoomID
 }
+
+// Interface implementations for types.ClientInterface
+func (c *Client) GetID() string   { return c.ID }
+func (c *Client) GetName() string { return c.Name }
