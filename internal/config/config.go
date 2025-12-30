@@ -249,7 +249,7 @@ func setDefaults(cfg *Config) {
 // Default 返回默认配置
 func Default() *Config {
 	// 尝试加载默认配置文件
-	if cfg, err := Load("configs/config.yaml"); err == nil {
+	if cfg, err := Load("config.yaml"); err == nil {
 		return cfg
 	} else {
 		log.Printf("无法加载默认配置文件，使用最小默认值: %v", err)
