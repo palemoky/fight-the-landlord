@@ -4,7 +4,7 @@ package common
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/card"
 )
 
 // Icon constants

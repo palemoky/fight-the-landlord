@@ -1,6 +1,6 @@
 package rule
 
-import "github.com/palemoky/fight-the-landlord/internal/card"
+import "github.com/palemoky/fight-the-landlord/internal/game/card"
 
 // FindSmallestBeatingCards 找到能打过 opponentHand 的最小牌组
 // 如果找不到，返回 nil

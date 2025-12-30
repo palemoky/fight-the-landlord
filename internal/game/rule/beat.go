@@ -4,7 +4,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/card"
 )
 
 // hasWinningBombOrRocket checks for any bomb or rocket that can beat the opponent's hand.

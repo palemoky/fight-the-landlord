@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/card"
 )
 
 // HandType 定义牌型

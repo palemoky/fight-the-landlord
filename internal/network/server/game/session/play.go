@@ -3,11 +3,11 @@ package session
 import (
 	"sort"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/rule"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
-	"github.com/palemoky/fight-the-landlord/internal/rule"
 )
 
 // HandlePlayCards 处理出牌
