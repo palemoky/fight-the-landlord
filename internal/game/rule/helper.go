@@ -50,75 +50,44 @@ func FindSmallestBeatingCards(playerHand []card.Card, opponentHand ParsedHand) [
 	return nil
 }
 
-// findSmallestBeatingSingle 找到能打过的最小单牌
-func findSmallestBeatingSingle(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand) []card.Card {
-	for _, r := range analysis.ones {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
-		}
-	}
-	for _, r := range analysis.pairs {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
-		}
-	}
-	for _, r := range analysis.trios {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
-		}
-	}
-	for _, r := range analysis.fours {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
+// findFirstBeating 从多个点数列表中找第一个能打过的牌
+func findFirstBeating(playerHand []card.Card, rankLists [][]card.Rank, keyRank card.Rank, count int) []card.Card {
+	for _, ranks := range rankLists {
+		for _, r := range ranks {
+			if r > keyRank {
+				return findCardsWithRank(playerHand, r, count)
+			}
 		}
 	}
 	return nil
+}
+
+// findSmallestBeatingSingle 找到能打过的最小单牌
+func findSmallestBeatingSingle(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand) []card.Card {
+	return findFirstBeating(playerHand,
+		[][]card.Rank{analysis.ones, analysis.pairs, analysis.trios, analysis.fours},
+		opponentHand.KeyRank, 1)
 }
 
 // findSmallestBeatingPair 找到能打过的最小对子
 func findSmallestBeatingPair(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand) []card.Card {
-	for _, r := range analysis.pairs {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 2)
-		}
-	}
-	for _, r := range analysis.trios {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 2)
-		}
-	}
-	for _, r := range analysis.fours {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 2)
-		}
-	}
-	return nil
+	return findFirstBeating(playerHand,
+		[][]card.Rank{analysis.pairs, analysis.trios, analysis.fours},
+		opponentHand.KeyRank, 2)
 }
 
 // findSmallestBeatingTrio 找到能打过的最小三张（带或不带）
 func findSmallestBeatingTrio(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand, kickerType int) []card.Card {
-	for _, r := range analysis.trios {
-		if r > opponentHand.KeyRank {
-			result := findCardsWithRank(playerHand, r, 3)
-			if kickerType == 0 {
-				return result
-			}
-			// 需要带牌
-			kickers := findSmallestKickers(playerHand, analysis, r, kickerType)
-			if kickers != nil {
-				return append(result, kickers...)
-			}
-		}
-	}
-	for _, r := range analysis.fours {
-		if r > opponentHand.KeyRank {
-			result := findCardsWithRank(playerHand, r, 3)
-			if kickerType == 0 {
-				return result
-			}
-			kickers := findSmallestKickers(playerHand, analysis, r, kickerType)
-			if kickers != nil {
-				return append(result, kickers...)
+	for _, ranks := range [][]card.Rank{analysis.trios, analysis.fours} {
+		for _, r := range ranks {
+			if r > opponentHand.KeyRank {
+				result := findCardsWithRank(playerHand, r, 3)
+				if kickerType == 0 {
+					return result
+				}
+				if kickers := findSmallestKickers(playerHand, analysis, r, kickerType); kickers != nil {
+					return append(result, kickers...)
+				}
 			}
 		}
 	}
