@@ -136,38 +136,54 @@ func findSmallestBomb(playerHand []card.Card, analysis HandAnalysis, opponentHan
 }
 
 // findSmallestKickers 找到最小的带牌
+// kickerType: 1=带单张, 2=带对子
 func findSmallestKickers(playerHand []card.Card, analysis HandAnalysis, excludeRank card.Rank, kickerType int) []card.Card {
 	var kickers []card.Card
-	needed := 1
-	if kickerType == 2 {
-		needed = 2
-	}
+	neededCards := kickerType // 1张单牌或2张(1对)
 
 	if kickerType == 1 {
 		// 带单张
 		for _, r := range analysis.ones {
 			if r != excludeRank {
 				kickers = append(kickers, findCardsWithRank(playerHand, r, 1)...)
-				if len(kickers) >= needed {
-					return kickers[:needed]
+				if len(kickers) >= neededCards {
+					return kickers[:neededCards]
 				}
 			}
 		}
 		for _, r := range analysis.pairs {
 			if r != excludeRank {
 				kickers = append(kickers, findCardsWithRank(playerHand, r, 1)...)
-				if len(kickers) >= needed {
-					return kickers[:needed]
+				if len(kickers) >= neededCards {
+					return kickers[:neededCards]
 				}
 			}
 		}
 	} else {
-		// 带对子
+		// 带对子 - 需要从 pairs, trios, fours 中查找
 		for _, r := range analysis.pairs {
 			if r != excludeRank {
 				kickers = append(kickers, findCardsWithRank(playerHand, r, 2)...)
-				if len(kickers) >= needed*2 {
-					return kickers[:needed*2]
+				if len(kickers) >= neededCards {
+					return kickers[:neededCards]
+				}
+			}
+		}
+		// 从三张中拆出对子
+		for _, r := range analysis.trios {
+			if r != excludeRank {
+				kickers = append(kickers, findCardsWithRank(playerHand, r, 2)...)
+				if len(kickers) >= neededCards {
+					return kickers[:neededCards]
+				}
+			}
+		}
+		// 从四张中拆出对子
+		for _, r := range analysis.fours {
+			if r != excludeRank {
+				kickers = append(kickers, findCardsWithRank(playerHand, r, 2)...)
+				if len(kickers) >= neededCards {
+					return kickers[:neededCards]
 				}
 			}
 		}

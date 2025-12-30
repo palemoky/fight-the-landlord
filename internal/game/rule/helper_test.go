@@ -9,6 +9,8 @@ import (
 )
 
 func TestFindSmallestBeatingCards(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name         string
 		playerHand   []card.Card
@@ -54,6 +56,86 @@ func TestFindSmallestBeatingCards(t *testing.T) {
 				{Rank: card.Rank4, Suit: card.Spade},
 				{Rank: card.Rank4, Suit: card.Heart},
 			},
+		},
+		{
+			name: "Trio: Beat 3s with 4s",
+			playerHand: []card.Card{
+				{Rank: card.Rank4, Suit: card.Spade},
+				{Rank: card.Rank4, Suit: card.Heart},
+				{Rank: card.Rank4, Suit: card.Club},
+			},
+			opponentHand: []card.Card{
+				{Rank: card.Rank3, Suit: card.Diamond},
+				{Rank: card.Rank3, Suit: card.Club},
+				{Rank: card.Rank3, Suit: card.Heart},
+			},
+			expected: []card.Card{
+				{Rank: card.Rank4, Suit: card.Spade},
+				{Rank: card.Rank4, Suit: card.Heart},
+				{Rank: card.Rank4, Suit: card.Club},
+			},
+		},
+		{
+			name: "TrioWithSingle: Beat 333+5 with 444+6",
+			playerHand: []card.Card{
+				{Rank: card.Rank4, Suit: card.Spade},
+				{Rank: card.Rank4, Suit: card.Heart},
+				{Rank: card.Rank4, Suit: card.Club},
+				{Rank: card.Rank6, Suit: card.Diamond},
+			},
+			opponentHand: []card.Card{
+				{Rank: card.Rank3, Suit: card.Diamond},
+				{Rank: card.Rank3, Suit: card.Club},
+				{Rank: card.Rank3, Suit: card.Heart},
+				{Rank: card.Rank5, Suit: card.Spade},
+			},
+			expected: []card.Card{
+				{Rank: card.Rank4, Suit: card.Spade},
+				{Rank: card.Rank4, Suit: card.Heart},
+				{Rank: card.Rank4, Suit: card.Club},
+				{Rank: card.Rank6, Suit: card.Diamond},
+			},
+		},
+		{
+			name: "TrioWithPair: Beat 333+55 with 444+66",
+			playerHand: []card.Card{
+				{Rank: card.Rank4, Suit: card.Spade},
+				{Rank: card.Rank4, Suit: card.Heart},
+				{Rank: card.Rank4, Suit: card.Club},
+				{Rank: card.Rank6, Suit: card.Diamond},
+				{Rank: card.Rank6, Suit: card.Spade},
+			},
+			opponentHand: []card.Card{
+				{Rank: card.Rank3, Suit: card.Diamond},
+				{Rank: card.Rank3, Suit: card.Club},
+				{Rank: card.Rank3, Suit: card.Heart},
+				{Rank: card.Rank5, Suit: card.Spade},
+				{Rank: card.Rank5, Suit: card.Heart},
+			},
+			expected: []card.Card{
+				{Rank: card.Rank4, Suit: card.Spade},
+				{Rank: card.Rank4, Suit: card.Heart},
+				{Rank: card.Rank4, Suit: card.Club},
+				{Rank: card.Rank6, Suit: card.Diamond},
+				{Rank: card.Rank6, Suit: card.Spade},
+			},
+		},
+		{
+			name: "TrioWithPair: Cannot beat without pair kicker",
+			playerHand: []card.Card{
+				{Rank: card.Rank4, Suit: card.Spade},
+				{Rank: card.Rank4, Suit: card.Heart},
+				{Rank: card.Rank4, Suit: card.Club},
+				{Rank: card.Rank6, Suit: card.Diamond}, // single, not pair
+			},
+			opponentHand: []card.Card{
+				{Rank: card.Rank3, Suit: card.Diamond},
+				{Rank: card.Rank3, Suit: card.Club},
+				{Rank: card.Rank3, Suit: card.Heart},
+				{Rank: card.Rank5, Suit: card.Spade},
+				{Rank: card.Rank5, Suit: card.Heart},
+			},
+			expected: nil, // no pair kicker available
 		},
 		{
 			name: "Pair: Beat with Bomb (fallback)",
@@ -140,13 +222,6 @@ func TestFindSmallestBeatingCards(t *testing.T) {
 
 			result := FindSmallestBeatingCards(tt.playerHand, parsedOpponent)
 
-			// We only compare Rank and Suit sets for equality as order might differ or specific card instance (suit color) might pick first available
-			// But for simplicity in this test data, we made suits distinct or we check length and ranks at least.
-			// Let's assert strict equality first - FindSmallest... usually picks first available in sorted order.
-			// Assume playerHand is sorted? The helper.go implementation doesn't seem to sort, it iterates `analysis`.
-			// `analyzeCards` iterates input order.
-			// Ideally we should sort result before comparing.
-
 			if tt.expected == nil {
 				assert.Nil(t, result)
 			} else {
@@ -157,6 +232,39 @@ func TestFindSmallestBeatingCards(t *testing.T) {
 					assert.Equal(t, tt.expected[i].Rank, result[i].Rank)
 				}
 			}
+		})
+	}
+}
+
+func TestHandType_String(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		handType HandType
+		expected string
+	}{
+		{Invalid, "无效"},
+		{Single, "单张"},
+		{Pair, "对子"},
+		{Trio, "三张"},
+		{TrioWithSingle, "三带一"},
+		{TrioWithPair, "三带二"},
+		{Straight, "顺子"},
+		{PairStraight, "连对"},
+		{Plane, "飞机"},
+		{PlaneWithSingles, "飞机带单"},
+		{PlaneWithPairs, "飞机带对"},
+		{Bomb, "炸弹"},
+		{Rocket, "王炸"},
+		{FourWithTwo, "四带二"},
+		{FourWithTwoPairs, "四带两对"},
+		{HandType(99), "无效"}, // Unknown type returns default
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.expected, tt.handType.String())
 		})
 	}
 }
