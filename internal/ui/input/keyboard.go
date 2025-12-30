@@ -16,46 +16,60 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/ui/view"
 )
 
+// sendChatMessage sends a chat message and returns error command if failed
+func sendChatMessage(m model.Model, content, scope string) tea.Cmd {
+	chatMsg := encoding.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
+		Content: content,
+		Scope:   scope,
+	})
+	if err := m.Client().SendMessage(chatMsg); err != nil {
+		m.SetNotification(model.NotifyError, fmt.Sprintf("⚠️ 发送消息失败: %v", err), true)
+		return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+			return model.ClearSystemNotificationMsg{}
+		})
+	}
+	return nil
+}
+
 // HandleKeyPress handles keyboard input and returns whether it was handled.
 func HandleKeyPress(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
 	// Lobby chat handling
 	if m.Phase() == model.PhaseLobby {
 		chatInput := m.Lobby().ChatInput()
-		if chatInput.Focused() {
-			switch msg.Type {
-			case tea.KeyEnter:
-				content := chatInput.Value()
-				if content != "" {
-					chatMsg := encoding.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
-						Content: content,
-						Scope:   "lobby",
-					})
-					if err := m.Client().SendMessage(chatMsg); err != nil {
-						m.SetNotification(model.NotifyError, fmt.Sprintf("⚠️ 发送消息失败: %v", err), true)
-						return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-							return model.ClearSystemNotificationMsg{}
-						})
-					}
-					chatInput.SetValue("")
-				}
+
+		// "/" key focuses chat input
+		if !chatInput.Focused() {
+			if msg.String() == "/" {
+				chatInput.Focus()
 				return true, nil
-			case tea.KeyEsc:
-				chatInput.Blur()
-				return true, nil
-			default:
-				var cmd tea.Cmd
-				*chatInput, cmd = chatInput.Update(msg)
-				return true, cmd
 			}
-		} else if msg.String() == "/" {
-			chatInput.Focus()
+			goto handleOtherKeys
+		}
+
+		// Chat input is focused - handle input
+		switch msg.Type {
+		case tea.KeyEnter:
+			if content := chatInput.Value(); content != "" {
+				if cmd := sendChatMessage(m, content, "lobby"); cmd != nil {
+					return true, cmd
+				}
+				chatInput.SetValue("")
+			}
 			return true, nil
+		case tea.KeyEsc:
+			chatInput.Blur()
+			return true, nil
+		default:
+			var cmd tea.Cmd
+			*chatInput, cmd = chatInput.Update(msg)
+			return true, cmd
 		}
 	}
 
+handleOtherKeys:
+
 	// In-game quick message handling
-	isInGame := m.Phase() == model.PhaseBidding || m.Phase() == model.PhasePlaying
-	if isInGame {
+	if m.Phase() == model.PhaseBidding || m.Phase() == model.PhasePlaying {
 		if m.Game().ShowQuickMsgMenu() {
 			switch msg.Type {
 			case tea.KeyEsc:
@@ -69,16 +83,8 @@ func HandleKeyPress(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
 				if msg.String() >= "1" && msg.String() <= "8" {
 					idx := int(msg.Runes[0] - '1')
 					if idx < len(view.QuickMessages) {
-						content := view.QuickMessages[idx]
-						chatMsg := encoding.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
-							Content: content,
-							Scope:   "room",
-						})
-						if err := m.Client().SendMessage(chatMsg); err != nil {
-							m.SetNotification(model.NotifyError, fmt.Sprintf("⚠️ 发送消息失败: %v", err), true)
-							return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-								return model.ClearSystemNotificationMsg{}
-							})
+						if cmd := sendChatMessage(m, view.QuickMessages[idx], "room"); cmd != nil {
+							return true, cmd
 						}
 						m.Game().SetShowQuickMsgMenu(false)
 						return true, nil
