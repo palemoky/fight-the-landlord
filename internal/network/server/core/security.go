@@ -403,13 +403,13 @@ func (cl *ChatRateLimiter) AllowChat(clientID string) (allowed bool, reason stri
 	// 检查秒级限制
 	if rate.secondCount > cl.maxPerSecond {
 		rate.cooldownUntil = now.Add(cl.cooldown)
-		return false, "不要着急，休息，休息一会~"
+		return false, "派大星正在接管键盘..."
 	}
 
 	// 检查分钟限制
 	if rate.minuteCount > cl.maxPerMinute {
 		rate.cooldownUntil = now.Add(cl.cooldown)
-		return false, "派大星正在接管键盘..."
+		return false, "不要着急，休息，休息一会~"
 	}
 
 	return true, ""

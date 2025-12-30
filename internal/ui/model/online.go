@@ -56,6 +56,15 @@ type OnlineModel struct {
 	timer  timer.Model
 	width  int
 	height int
+
+	// View renderer (injected to break circular import)
+	viewRenderer func(Model, GamePhase) string
+
+	// Key handler (injected to break circular import)
+	keyHandler func(Model, tea.KeyMsg) (bool, tea.Cmd)
+
+	// Server message handler (injected to break circular import)
+	serverMessageHandler func(Model, *protocol.Message) tea.Cmd
 }
 
 // NewOnlineModel creates a new OnlineModel.
@@ -192,6 +201,11 @@ func (m *OnlineModel) EnterLobby() {
 	m.input.Reset()
 	m.input.Placeholder = "输入选项 (1-6) 或房间号"
 	m.input.Focus()
+
+	// 清理游戏状态
+	m.game.ClearChatHistory()
+	m.game.SetShowQuickMsgMenu(false)
+	m.game.SetShowingHelp(false)
 }
 
 func (m *OnlineModel) IsMaintenanceMode() bool          { return m.maintenanceMode }
@@ -293,10 +307,52 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ClearErrorMsg:
 		m.error = ""
 
+	case ClearSystemNotificationMsg:
+		// Clear temporary notifications (error, rate limit)
+		m.ClearNotification(NotifyError)
+		m.ClearNotification(NotifyRateLimit)
+
+	case ClearInputErrorMsg:
+		// Restore input placeholder after displaying error
+		switch m.phase {
+		case PhaseBidding:
+			if m.game.BidTurn() == m.playerID {
+				m.input.Placeholder = "叫地主? (Y/N)"
+			}
+		case PhasePlaying:
+			if m.game.State().CurrentTurn == m.playerID {
+				switch {
+				case m.game.MustPlay():
+					m.input.Placeholder = "你必须出牌 (如 33344)"
+				case m.game.CanBeat():
+					m.input.Placeholder = "出牌或 PASS"
+				default:
+					m.input.Placeholder = "没有能大过上家的牌，输入 PASS"
+				}
+			}
+		}
+
 	case ServerMessage:
-		// Handler will be called from ui.go
+		// Handle server message via injected handler
+		if m.serverMessageHandler != nil {
+			if cmd := m.serverMessageHandler(m, msg.Msg); cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
 		if m.client.IsConnected() {
 			cmds = append(cmds, m.listenForMessages())
+		}
+
+	case tea.KeyMsg:
+		// Handle keyboard input via injected handler
+		if m.keyHandler != nil {
+			handled, keyCmd := m.keyHandler(m, msg)
+			if keyCmd != nil {
+				cmds = append(cmds, keyCmd)
+			}
+			if handled {
+				return m, tea.Batch(cmds...)
+			}
 		}
 
 	case timer.TickMsg, timer.TimeoutMsg:
@@ -333,10 +389,30 @@ func (m *OnlineModel) View() string {
 	case PhaseMatching:
 		content = m.matchingView()
 	default:
-		content = "View not implemented in model package"
+		// Use injected viewRenderer for phases that require view package
+		if m.viewRenderer != nil {
+			content = m.viewRenderer(m, m.phase)
+		} else {
+			content = "View renderer not initialized"
+		}
 	}
 
 	return common.DocStyle.Render(content)
+}
+
+// SetViewRenderer sets the view rendering function.
+func (m *OnlineModel) SetViewRenderer(fn func(Model, GamePhase) string) {
+	m.viewRenderer = fn
+}
+
+// SetKeyHandler sets the keyboard event handler function.
+func (m *OnlineModel) SetKeyHandler(fn func(Model, tea.KeyMsg) (bool, tea.Cmd)) {
+	m.keyHandler = fn
+}
+
+// SetServerMessageHandler sets the server message handler function.
+func (m *OnlineModel) SetServerMessageHandler(fn func(Model, *protocol.Message) tea.Cmd) {
+	m.serverMessageHandler = fn
 }
 
 func (m *OnlineModel) connectingView() string {

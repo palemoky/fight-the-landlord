@@ -24,9 +24,6 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 		return ErrNotYourTurn
 	}
 
-	// 取消超时计时器
-	gs.stopTimer()
-
 	// 转换牌
 	cards := convert.InfosToCards(cardInfos)
 
@@ -46,6 +43,9 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 	if !isNewRound && !rule.CanBeat(handToPlay, gs.lastPlayedHand) {
 		return ErrCannotBeat
 	}
+
+	// 所有验证通过后才取消计时器
+	gs.stopTimer()
 
 	// 出牌成功，更新状态
 	gs.lastPlayedHand = handToPlay
@@ -167,7 +167,14 @@ func (gs *GameSession) GetPlayerCardsCount(playerID string) int {
 func (gs *GameSession) notifyPlayTurn() {
 	player := gs.players[gs.currentPlayer]
 	mustPlay := gs.lastPlayerIdx == gs.currentPlayer || gs.lastPlayedHand.IsEmpty()
-	canBeat := true // 简化处理
+
+	// 计算是否能打过上家
+	canBeat := mustPlay // 如果必须出牌，则肯定能出（新一轮）
+	if !mustPlay {
+		// 检查是否有能打过上家的牌
+		beatingCards := rule.FindSmallestBeatingCards(player.Hand, gs.lastPlayedHand)
+		canBeat = beatingCards != nil
+	}
 
 	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgPlayTurn, protocol.PlayTurnPayload{
 		PlayerID: player.ID,

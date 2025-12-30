@@ -84,6 +84,11 @@ func (gs *GameSession) stopTimer() {
 	}
 }
 
+// StopAllTimers stops all timers (for cleanup when all players disconnect)
+func (gs *GameSession) StopAllTimers() {
+	gs.stopTimer()
+}
+
 // --- 离线处理 ---
 
 // PlayerOffline 玩家离线

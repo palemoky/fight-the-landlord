@@ -107,6 +107,7 @@ func (m *GameModel) AddChatMessage(msg string) {
 		m.chatHistory = m.chatHistory[len(m.chatHistory)-50:]
 	}
 }
+func (m *GameModel) ClearChatHistory()             { m.chatHistory = nil }
 func (m *GameModel) ShowQuickMsgMenu() bool        { return m.showQuickMsgMenu }
 func (m *GameModel) SetShowQuickMsgMenu(show bool) { m.showQuickMsgMenu = show }
 
