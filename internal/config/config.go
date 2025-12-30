@@ -1,12 +1,21 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
+)
+
+// Game rules configuration
+const (
+	// BottomCardsPublic controls whether bottom cards are visible to all players
+	// true: All players see bottom cards, all counters deduct them
+	// false: Only landlord sees bottom cards, only landlord's counter deducts them
+	BottomCardsPublic = true
 )
 
 // Config 服务端配置
@@ -33,9 +42,12 @@ type RedisConfig struct {
 
 // GameConfig 游戏配置
 type GameConfig struct {
-	TurnTimeout int `yaml:"turn_timeout"` // 出牌超时（秒）
-	BidTimeout  int `yaml:"bid_timeout"`  // 叫地主超时（秒）
-	RoomTimeout int `yaml:"room_timeout"` // 房间等待超时（分钟）
+	TurnTimeout           int `yaml:"turn_timeout"`            // 出牌超时（秒）
+	BidTimeout            int `yaml:"bid_timeout"`             // 叫地主超时（秒）
+	RoomTimeout           int `yaml:"room_timeout"`            // 房间等待超时（分钟）
+	ShutdownTimeout       int `yaml:"shutdown_timeout"`        // 优雅关闭超时（分钟）
+	ShutdownCheckInterval int `yaml:"shutdown_check_interval"` // 优雅关闭检测间隔（秒）
+	RoomCleanupDelay      int `yaml:"room_cleanup_delay"`      // 游戏结束后房间清理延迟（秒）
 }
 
 // SecurityConfig 安全配置
@@ -43,6 +55,7 @@ type SecurityConfig struct {
 	AllowedOrigins []string           `yaml:"allowed_origins"` // 允许的来源
 	RateLimit      RateLimitConfig    `yaml:"rate_limit"`      // 连接速率限制
 	MessageLimit   MessageLimitConfig `yaml:"message_limit"`   // 消息速率限制
+	ChatLimit      ChatLimitConfig    `yaml:"chat_limit"`      // 聊天消息速率限制
 }
 
 // RateLimitConfig 连接速率限制配置
@@ -55,6 +68,13 @@ type RateLimitConfig struct {
 // MessageLimitConfig 消息速率限制配置
 type MessageLimitConfig struct {
 	MaxPerSecond int `yaml:"max_per_second"` // 每秒最大消息数
+}
+
+// ChatLimitConfig 聊天消息速率限制配置
+type ChatLimitConfig struct {
+	MaxPerSecond int `yaml:"max_per_second"` // 每秒最大聊天消息数
+	MaxPerMinute int `yaml:"max_per_minute"` // 每分钟最大聊天消息数
+	Cooldown     int `yaml:"cooldown"`       // 冷却时间（秒）
 }
 
 // TurnTimeoutDuration 返回出牌超时时长
@@ -72,9 +92,29 @@ func (c *GameConfig) RoomTimeoutDuration() time.Duration {
 	return time.Duration(c.RoomTimeout) * time.Minute
 }
 
+// ShutdownTimeoutDuration 返回优雅关闭超时时长
+func (c *GameConfig) ShutdownTimeoutDuration() time.Duration {
+	return time.Duration(c.ShutdownTimeout) * time.Minute
+}
+
+// ShutdownCheckIntervalDuration 返回优雅关闭检测间隔
+func (c *GameConfig) ShutdownCheckIntervalDuration() time.Duration {
+	return time.Duration(c.ShutdownCheckInterval) * time.Second
+}
+
+// RoomCleanupDelayDuration 返回房间清理延迟时长
+func (c *GameConfig) RoomCleanupDelayDuration() time.Duration {
+	return time.Duration(c.RoomCleanupDelay) * time.Second
+}
+
 // BanDurationTime 返回封禁时长
 func (c *RateLimitConfig) BanDurationTime() time.Duration {
 	return time.Duration(c.BanDuration) * time.Second
+}
+
+// CooldownDuration 返回聊天冷却时长
+func (c *ChatLimitConfig) CooldownDuration() time.Duration {
+	return time.Duration(c.Cooldown) * time.Second
 }
 
 // Load 加载配置文件
@@ -139,6 +179,26 @@ func loadFromEnv(cfg *Config) {
 			cfg.Game.BidTimeout = t
 		}
 	}
+	if v := os.Getenv("GAME_ROOM_TIMEOUT"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.RoomTimeout = t
+		}
+	}
+	if v := os.Getenv("GAME_SHUTDOWN_TIMEOUT"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.ShutdownTimeout = t
+		}
+	}
+	if v := os.Getenv("GAME_SHUTDOWN_CHECK_INTERVAL"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.ShutdownCheckInterval = t
+		}
+	}
+	if v := os.Getenv("GAME_ROOM_CLEANUP_DELAY"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil {
+			cfg.Game.RoomCleanupDelay = t
+		}
+	}
 
 	// Security
 	if v := os.Getenv("SECURITY_ALLOWED_ORIGINS"); v != "" {
@@ -179,6 +239,15 @@ func setDefaults(cfg *Config) {
 	if cfg.Game.RoomTimeout == 0 {
 		cfg.Game.RoomTimeout = 10
 	}
+	if cfg.Game.ShutdownTimeout == 0 {
+		cfg.Game.ShutdownTimeout = 30
+	}
+	if cfg.Game.ShutdownCheckInterval == 0 {
+		cfg.Game.ShutdownCheckInterval = 15
+	}
+	if cfg.Game.RoomCleanupDelay == 0 {
+		cfg.Game.RoomCleanupDelay = 30
+	}
 	// 安全配置默认值
 	if len(cfg.Security.AllowedOrigins) == 0 {
 		cfg.Security.AllowedOrigins = []string{"*"}
@@ -195,11 +264,30 @@ func setDefaults(cfg *Config) {
 	if cfg.Security.MessageLimit.MaxPerSecond == 0 {
 		cfg.Security.MessageLimit.MaxPerSecond = 20
 	}
+	// 聊天限流默认值
+	if cfg.Security.ChatLimit.MaxPerSecond == 0 {
+		cfg.Security.ChatLimit.MaxPerSecond = 1
+	}
+	if cfg.Security.ChatLimit.MaxPerMinute == 0 {
+		cfg.Security.ChatLimit.MaxPerMinute = 30
+	}
+	if cfg.Security.ChatLimit.Cooldown == 0 {
+		cfg.Security.ChatLimit.Cooldown = 5
+	}
 }
 
 // Default 返回默认配置
+// 优先加载 configs/config.yaml，如果失败则使用最小默认值
 func Default() *Config {
-	cfg := &Config{
+	// 尝试加载默认配置文件
+	cfg, err := Load("configs/config.yaml")
+	if err == nil {
+		return cfg
+	}
+
+	// 如果加载失败，使用最小默认值（确保服务器能启动）
+	log.Printf("无法加载默认配置文件，使用最小默认值: %v", err)
+	return &Config{
 		Server: ServerConfig{
 			Host:           "0.0.0.0",
 			Port:           1780,
@@ -209,9 +297,12 @@ func Default() *Config {
 			Addr: "localhost:6379",
 		},
 		Game: GameConfig{
-			TurnTimeout: 30,
-			BidTimeout:  15,
-			RoomTimeout: 10,
+			TurnTimeout:           30,
+			BidTimeout:            15,
+			RoomTimeout:           10,
+			ShutdownTimeout:       30,
+			ShutdownCheckInterval: 15,
+			RoomCleanupDelay:      30,
 		},
 		Security: SecurityConfig{
 			AllowedOrigins: []string{"*"},
@@ -223,7 +314,11 @@ func Default() *Config {
 			MessageLimit: MessageLimitConfig{
 				MaxPerSecond: 20,
 			},
+			ChatLimit: ChatLimitConfig{
+				MaxPerSecond: 1,
+				MaxPerMinute: 30,
+				Cooldown:     5,
+			},
 		},
 	}
-	return cfg
 }

@@ -66,12 +66,12 @@ func LogInfo(format string, args ...interface{}) {
 }
 
 // LogError logs an error message
-func LogError(format string, args ...interface{}) {
+func LogError(format string, args ...any) {
 	log.Printf("[ERROR] "+format, args...)
 }
 
 // LogPanic logs a panic with stack trace
-func LogPanic(r interface{}) {
+func LogPanic(r any) {
 	log.Printf("[PANIC] %v\n%s", r, debug.Stack())
 }
 

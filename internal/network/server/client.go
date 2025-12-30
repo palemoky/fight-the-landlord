@@ -9,6 +9,8 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/utils"
 )
 
 const (
@@ -44,7 +46,7 @@ type Client struct {
 func NewClient(s *Server, conn *websocket.Conn) *Client {
 	return &Client{
 		ID:     uuid.New().String(),
-		Name:   GenerateNickname(),
+		Name:   utils.GenerateNickname(),
 		server: s,
 		conn:   conn,
 		send:   make(chan []byte, 256),
@@ -78,7 +80,7 @@ func (c *Client) ReadPump() {
 		allowed, warning := c.server.messageLimiter.AllowMessage(c.ID)
 		if !allowed {
 			log.Printf("⚠️ 客户端 %s (IP: %s) 消息过于频繁", c.Name, c.IP)
-			c.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "消息发送过于频繁"))
+			c.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "消息发送过于频繁"))
 			// 如果警告次数过多，断开连接
 			if c.server.messageLimiter.GetWarningCount(c.ID) > 5 {
 				log.Printf("🚫 客户端 %s 因多次超速被断开连接", c.Name)
@@ -87,20 +89,20 @@ func (c *Client) ReadPump() {
 			continue
 		}
 		if warning {
-			c.SendMessage(protocol.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "请求过于频繁，请放慢速度"))
+			c.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "请求过于频繁，请放慢速度"))
 		}
 
 		// 解析消息
-		msg, err := protocol.Decode(message)
+		msg, err := encoding.Decode(message)
 		if err != nil {
 			log.Printf("消息解析错误: %v", err)
-			c.SendMessage(protocol.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+			c.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 			continue
 		}
 
 		// 交给处理器处理，处理完后归还到池
 		c.server.handler.Handle(c, msg)
-		protocol.PutMessage(msg)
+		encoding.PutMessage(msg)
 	}
 }
 
@@ -150,7 +152,7 @@ func (c *Client) SendMessage(msg *protocol.Message) {
 	}
 	c.mu.RUnlock()
 
-	data, err := msg.Encode()
+	data, err := encoding.Encode(msg)
 	if err != nil {
 		log.Printf("消息编码错误: %v", err)
 		return
@@ -206,3 +208,7 @@ func (c *Client) GetRoom() string {
 	defer c.mu.RUnlock()
 	return c.RoomID
 }
+
+// Interface implementations for types.ClientInterface
+func (c *Client) GetID() string   { return c.ID }
+func (c *Client) GetName() string { return c.Name }

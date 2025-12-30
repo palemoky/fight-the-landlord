@@ -8,7 +8,6 @@ server:
   max_connections: 10000
 
 redis:
-  # Redis 地址
   addr: "localhost:6379"
   password: ""
   db: 0
@@ -20,6 +19,12 @@ game:
   bid_timeout: 15
   # 房间等待超时时间（分钟），超时自动解散
   room_timeout: 10
+  # 优雅关闭超时时间（分钟），等待游戏结束的最长时间
+  shutdown_timeout: 30 # 54张牌*30s出牌时间
+  # 优雅关闭检测间隔（秒），检查游戏是否结束的频率
+  shutdown_check_interval: 15 # 检查频率根据房间延迟清理调整
+  # 游戏结束后房间清理延迟（秒），让玩家能返回游戏大厅看到维护通知
+  room_cleanup_delay: 30
 
 security:
   # 允许的来源（设置为 ["*"] 允许所有）
@@ -33,7 +38,32 @@ security:
     max_per_minute: 60
     # 超限后封禁时长（秒）
     ban_duration: 60
-  # 消息速率限制（per client）
+  # 系统消息速率限制（per client）
   message_limit:
     # 每秒最大消息数
     max_per_second: 20
+
+  # 聊天消息速率限制（per client）
+  chat_limit:
+    # 每秒最大聊天消息数
+    max_per_second: 1
+    # 每分钟最大聊天消息数
+    max_per_minute: 30
+    # 触发限流后的冷却时间（秒）
+    cooldown: 5
+
+# 通知配置（可选）
+notification:
+  # 小米音箱通知配置
+  # 用于服务器关闭时发送语音通知
+  # 参考: https://github.com/palemoky/xiaomi-speaker
+  # 如果不需要，保持 url 为空即可
+  xiaomi_speaker:
+    # 小米音箱 API 地址（为空则不发送通知）
+    url: ""
+    # API 密钥
+    api_secret: ""
+    # Cloudflare 客户端 ID（可选）
+    cf_client_id: ""
+    # Cloudflare 客户端密钥（可选）
+    cf_client_secret: ""

@@ -47,6 +47,16 @@ message OnlineCountPayload {
   int32 count = 1;
 }
 
+// MaintenanceStatusPayload 维护状态响应
+message MaintenanceStatusPayload {
+  bool maintenance = 1;
+}
+
+// MaintenancePayload 维护模式通知
+message MaintenancePayload {
+  bool maintenance = 1;
+}
+
 // ErrorPayload 错误响应
 message ErrorPayload {
   int32 code = 1;
