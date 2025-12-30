@@ -68,6 +68,8 @@ func TestRedisStore_SaveLoadDeleteRoom(t *testing.T) {
 }
 
 func TestRedisStore_MatchQueue(t *testing.T) {
+	t.Parallel()
+
 	store, mr := newTestRedisStore(t)
 	defer mr.Close()
 	ctx := context.Background()
@@ -99,6 +101,8 @@ func TestRedisStore_MatchQueue(t *testing.T) {
 }
 
 func TestRedisStore_Session(t *testing.T) {
+	t.Parallel()
+
 	store, mr := newTestRedisStore(t)
 	defer mr.Close()
 	ctx := context.Background()
