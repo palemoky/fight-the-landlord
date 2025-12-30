@@ -11,6 +11,8 @@ import (
 )
 
 func TestRoomManager_GetRoomList(t *testing.T) {
+	t.Parallel()
+
 	// Initialize RoomManager with nil server (ok for this test)
 	rm := NewRoomManager(nil)
 
@@ -42,6 +44,8 @@ func TestRoomManager_GetRoomList(t *testing.T) {
 }
 
 func TestRoom_CheckAllReady(t *testing.T) {
+	t.Parallel()
+
 	room := &Room{
 		Players: make(map[string]*RoomPlayer),
 	}
@@ -61,6 +65,8 @@ func TestRoom_CheckAllReady(t *testing.T) {
 }
 
 func TestRoom_GetPlayerInfo(t *testing.T) {
+	t.Parallel()
+
 	room := &Room{
 		Players: make(map[string]*RoomPlayer),
 	}

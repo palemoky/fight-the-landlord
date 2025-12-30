@@ -8,6 +8,8 @@ import (
 )
 
 func TestRateLimiter_Allow(t *testing.T) {
+	t.Parallel()
+
 	// 5 reqs/sec, 10 reqs/min, 1s ban
 	rl := NewRateLimiter(5, 10, 1*time.Second)
 	ip := "127.0.0.1"
@@ -23,6 +25,8 @@ func TestRateLimiter_Allow(t *testing.T) {
 }
 
 func TestIPFilter(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		ip      string
@@ -83,12 +87,14 @@ func TestIPFilter(t *testing.T) {
 }
 
 func TestMessageRateLimiter(t *testing.T) {
+	t.Parallel()
+
 	// 5 msgs/sec
 	ml := NewMessageRateLimiter(5)
 	clientID := "client1"
 
 	// Allowed
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		allowed, warning := ml.AllowMessage(clientID)
 		assert.True(t, allowed)
 		// Warning threshold is usually max/2 = 2. So after 2nd (count 3, 4, 5) it might warn.

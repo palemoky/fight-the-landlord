@@ -12,6 +12,8 @@ import (
 
 // TestRankFromChar uses a table-driven test to verify the character-to-rank mapping.
 func TestRankFromChar(t *testing.T) {
+	t.Parallel()
+
 	// 1. Define the structure for our test cases.
 	type testCase struct {
 		name         string // A description of the test case.
@@ -69,6 +71,8 @@ func TestRankFromChar(t *testing.T) {
 
 // TestNewDeck 验证 NewDeck 是否能正确创建一副完整的、无重复的54张牌
 func TestNewDeck(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	// 创建一副新牌
@@ -105,6 +109,8 @@ func TestNewDeck(t *testing.T) {
 
 // TestDeck_Shuffle 验证洗牌功能
 func TestDeck_Shuffle(t *testing.T) {
+	t.Parallel()
+
 	require := require.New(t) // require 在失败时会停止测试，适合前置条件
 	assert := assert.New(t)
 
@@ -132,6 +138,8 @@ func TestDeck_Shuffle(t *testing.T) {
 
 // TestStringers 使用表驱动测试来验证所有 String() 方法的输出
 func TestStringers(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Suit Stringer", func(t *testing.T) {
 		suitTests := []struct {
 			suit Suit
@@ -180,6 +188,8 @@ func testRuleCards(ranks ...Rank) []Card {
 
 // TestFindCardsInHand uses a table to verify card finding logic.
 func TestFindCardsInHand(t *testing.T) {
+	t.Parallel()
+
 	// Create a diverse hand for testing multiple scenarios
 	fullHand := []Card{
 		{Rank: Rank3, Suit: Spade},
@@ -318,6 +328,8 @@ func TestFindCardsInHand(t *testing.T) {
 
 // TestRemoveCards uses a table to verify card removal logic.
 func TestRemoveCards(t *testing.T) {
+	t.Parallel()
+
 	// Create specific card instances to test exact object removal
 	threeOfSpades := Card{Rank: Rank3, Suit: Spade}
 	threeOfHearts := Card{Rank: Rank3, Suit: Heart}

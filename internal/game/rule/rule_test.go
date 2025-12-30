@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/card"
 )
 
 // testRuleCards is a helper to quickly create card slices for testing.
@@ -20,6 +20,8 @@ func testRuleCards(ranks ...card.Rank) []card.Card {
 }
 
 func TestIsContinuous(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		ranks    []card.Rank
@@ -43,6 +45,8 @@ func TestIsContinuous(t *testing.T) {
 }
 
 func TestAnalyzeCards(t *testing.T) {
+	t.Parallel()
+
 	// A complex hand to test all categories
 	hand := testRuleCards(
 		card.Rank3,             // one
@@ -62,6 +66,8 @@ func TestAnalyzeCards(t *testing.T) {
 }
 
 func TestParseHand(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name         string
 		cards        []card.Card
@@ -123,6 +129,8 @@ func TestParseHand(t *testing.T) {
 }
 
 func TestCanBeat(t *testing.T) {
+	t.Parallel()
+
 	// Helper to quickly create a parsed hand for testing
 	ph := func(ht HandType, kr card.Rank, l int) ParsedHand {
 		return ParsedHand{Type: ht, KeyRank: kr, Length: l}
@@ -164,6 +172,8 @@ func TestCanBeat(t *testing.T) {
 
 // TestCanBeatWithHand verifies the logic for checking if a player has any valid move.
 func TestCanBeatWithHand(t *testing.T) {
+	t.Parallel()
+
 	// Helper to quickly create a parsed hand for the opponent
 	ph := func(ht HandType, kr card.Rank, l int) ParsedHand {
 		return ParsedHand{Type: ht, KeyRank: kr, Length: l}

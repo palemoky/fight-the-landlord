@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "configs/config.yaml", "配置文件路径")
+	configPath := flag.String("config", "config.yaml", "配置文件路径")
 	flag.Parse()
 
 	// 加载配置

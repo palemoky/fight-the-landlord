@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
@@ -122,10 +122,8 @@ func (gs *GameSession) recordGameResults(winner *GamePlayer) {
 	for _, p := range gs.players {
 		isWinner := false
 		if landlordWins {
-			// 地主胜利
 			isWinner = p.IsLandlord
 		} else {
-			// 农民胜利
 			isWinner = !p.IsLandlord
 		}
 

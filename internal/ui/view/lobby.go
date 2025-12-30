@@ -111,8 +111,17 @@ func LobbyView(m model.Model) string {
 	sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, mainContent))
 	sb.WriteString("\n\n")
 
-	m.Input().Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
-	inputView := lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, m.Input().View())
+	// Only show blinking cursor on lobby input when chat is not focused
+	var inputView string
+	if lobby.ChatInput().Focused() {
+		m.Input().Blur()
+		inputView = lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center,
+			lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("> ↑↓ 选择 | 回车确认 | 或输入房间号"))
+	} else {
+		m.Input().Focus()
+		m.Input().Placeholder = "↑↓ 选择 | 回车确认 | 或输入房间号"
+		inputView = lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, m.Input().View())
+	}
 	sb.WriteString(inputView)
 
 	creditStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)

@@ -18,6 +18,27 @@ const (
 	BottomCardsPublic = true
 )
 
+// 默认配置值
+const (
+	defaultHost                  = "0.0.0.0"
+	defaultPort                  = 1780
+	defaultMaxConnections        = 10000
+	defaultRedisAddr             = "localhost:6379"
+	defaultTurnTimeout           = 30
+	defaultBidTimeout            = 15
+	defaultRoomTimeout           = 10
+	defaultShutdownTimeout       = 30
+	defaultShutdownCheckInterval = 15
+	defaultRoomCleanupDelay      = 30
+	defaultRateLimitPerSecond    = 10
+	defaultRateLimitPerMinute    = 60
+	defaultBanDuration           = 60
+	defaultMessageLimitPerSecond = 20
+	defaultChatLimitPerSecond    = 1
+	defaultChatLimitPerMinute    = 30
+	defaultChatCooldown          = 5
+)
+
 // Config 服务端配置
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
@@ -77,42 +98,35 @@ type ChatLimitConfig struct {
 	Cooldown     int `yaml:"cooldown"`       // 冷却时间（秒）
 }
 
-// TurnTimeoutDuration 返回出牌超时时长
+// Duration 方法
 func (c *GameConfig) TurnTimeoutDuration() time.Duration {
 	return time.Duration(c.TurnTimeout) * time.Second
 }
 
-// BidTimeoutDuration 返回叫地主超时时长
 func (c *GameConfig) BidTimeoutDuration() time.Duration {
 	return time.Duration(c.BidTimeout) * time.Second
 }
 
-// RoomTimeoutDuration 返回房间等待超时时长
 func (c *GameConfig) RoomTimeoutDuration() time.Duration {
 	return time.Duration(c.RoomTimeout) * time.Minute
 }
 
-// ShutdownTimeoutDuration 返回优雅关闭超时时长
 func (c *GameConfig) ShutdownTimeoutDuration() time.Duration {
 	return time.Duration(c.ShutdownTimeout) * time.Minute
 }
 
-// ShutdownCheckIntervalDuration 返回优雅关闭检测间隔
 func (c *GameConfig) ShutdownCheckIntervalDuration() time.Duration {
 	return time.Duration(c.ShutdownCheckInterval) * time.Second
 }
 
-// RoomCleanupDelayDuration 返回房间清理延迟时长
 func (c *GameConfig) RoomCleanupDelayDuration() time.Duration {
 	return time.Duration(c.RoomCleanupDelay) * time.Second
 }
 
-// BanDurationTime 返回封禁时长
 func (c *RateLimitConfig) BanDurationTime() time.Duration {
 	return time.Duration(c.BanDuration) * time.Second
 }
 
-// CooldownDuration 返回聊天冷却时长
 func (c *ChatLimitConfig) CooldownDuration() time.Duration {
 	return time.Duration(c.Cooldown) * time.Second
 }
@@ -129,196 +143,120 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
-	// 设置默认值
 	setDefaults(&cfg)
-
-	// 从环境变量覆盖
 	loadFromEnv(&cfg)
 
 	return &cfg, nil
 }
 
+// --- 环境变量辅助函数 ---
+
+func getEnvStr(key string, target *string) {
+	if v := os.Getenv(key); v != "" {
+		*target = v
+	}
+}
+
+func getEnvInt(key string, target *int) {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			*target = n
+		}
+	}
+}
+
+func getEnvStrSlice(key string, target *[]string) {
+	if v := os.Getenv(key); v != "" {
+		*target = strings.Split(v, ",")
+	}
+}
+
 // loadFromEnv 从环境变量加载配置（覆盖文件配置）
 func loadFromEnv(cfg *Config) {
 	// Server
-	if v := os.Getenv("SERVER_HOST"); v != "" {
-		cfg.Server.Host = v
-	}
-	if v := os.Getenv("SERVER_PORT"); v != "" {
-		if port, err := strconv.Atoi(v); err == nil {
-			cfg.Server.Port = port
-		}
-	}
-	if v := os.Getenv("SERVER_MAX_CONNECTIONS"); v != "" {
-		if maxConn, err := strconv.Atoi(v); err == nil {
-			cfg.Server.MaxConnections = maxConn
-		}
-	}
+	getEnvStr("SERVER_HOST", &cfg.Server.Host)
+	getEnvInt("SERVER_PORT", &cfg.Server.Port)
+	getEnvInt("SERVER_MAX_CONNECTIONS", &cfg.Server.MaxConnections)
 
 	// Redis
-	if v := os.Getenv("REDIS_ADDR"); v != "" {
-		cfg.Redis.Addr = v
-	}
-	if v := os.Getenv("REDIS_PASSWORD"); v != "" {
-		cfg.Redis.Password = v
-	}
-	if v := os.Getenv("REDIS_DB"); v != "" {
-		if db, err := strconv.Atoi(v); err == nil {
-			cfg.Redis.DB = db
-		}
-	}
+	getEnvStr("REDIS_ADDR", &cfg.Redis.Addr)
+	getEnvStr("REDIS_PASSWORD", &cfg.Redis.Password)
+	getEnvInt("REDIS_DB", &cfg.Redis.DB)
 
 	// Game
-	if v := os.Getenv("GAME_TURN_TIMEOUT"); v != "" {
-		if t, err := strconv.Atoi(v); err == nil {
-			cfg.Game.TurnTimeout = t
-		}
-	}
-	if v := os.Getenv("GAME_BID_TIMEOUT"); v != "" {
-		if t, err := strconv.Atoi(v); err == nil {
-			cfg.Game.BidTimeout = t
-		}
-	}
-	if v := os.Getenv("GAME_ROOM_TIMEOUT"); v != "" {
-		if t, err := strconv.Atoi(v); err == nil {
-			cfg.Game.RoomTimeout = t
-		}
-	}
-	if v := os.Getenv("GAME_SHUTDOWN_TIMEOUT"); v != "" {
-		if t, err := strconv.Atoi(v); err == nil {
-			cfg.Game.ShutdownTimeout = t
-		}
-	}
-	if v := os.Getenv("GAME_SHUTDOWN_CHECK_INTERVAL"); v != "" {
-		if t, err := strconv.Atoi(v); err == nil {
-			cfg.Game.ShutdownCheckInterval = t
-		}
-	}
-	if v := os.Getenv("GAME_ROOM_CLEANUP_DELAY"); v != "" {
-		if t, err := strconv.Atoi(v); err == nil {
-			cfg.Game.RoomCleanupDelay = t
-		}
-	}
+	getEnvInt("GAME_TURN_TIMEOUT", &cfg.Game.TurnTimeout)
+	getEnvInt("GAME_BID_TIMEOUT", &cfg.Game.BidTimeout)
+	getEnvInt("GAME_ROOM_TIMEOUT", &cfg.Game.RoomTimeout)
+	getEnvInt("GAME_SHUTDOWN_TIMEOUT", &cfg.Game.ShutdownTimeout)
+	getEnvInt("GAME_SHUTDOWN_CHECK_INTERVAL", &cfg.Game.ShutdownCheckInterval)
+	getEnvInt("GAME_ROOM_CLEANUP_DELAY", &cfg.Game.RoomCleanupDelay)
 
 	// Security
-	if v := os.Getenv("SECURITY_ALLOWED_ORIGINS"); v != "" {
-		cfg.Security.AllowedOrigins = strings.Split(v, ",")
+	getEnvStrSlice("SECURITY_ALLOWED_ORIGINS", &cfg.Security.AllowedOrigins)
+	getEnvInt("SECURITY_RATE_LIMIT_PER_SECOND", &cfg.Security.RateLimit.MaxPerSecond)
+	getEnvInt("SECURITY_MESSAGE_LIMIT_PER_SECOND", &cfg.Security.MessageLimit.MaxPerSecond)
+}
+
+// --- 默认值辅助函数 ---
+
+func setDefaultStr(target *string, defaultVal string) {
+	if *target == "" {
+		*target = defaultVal
 	}
-	if v := os.Getenv("SECURITY_RATE_LIMIT_PER_SECOND"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			cfg.Security.RateLimit.MaxPerSecond = n
-		}
+}
+
+func setDefaultInt(target *int, defaultVal int) {
+	if *target == 0 {
+		*target = defaultVal
 	}
-	if v := os.Getenv("SECURITY_MESSAGE_LIMIT_PER_SECOND"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			cfg.Security.MessageLimit.MaxPerSecond = n
-		}
+}
+
+func setDefaultStrSlice(target *[]string, defaultVal []string) {
+	if len(*target) == 0 {
+		*target = defaultVal
 	}
 }
 
 // setDefaults 设置默认值
 func setDefaults(cfg *Config) {
-	if cfg.Server.Host == "" {
-		cfg.Server.Host = "0.0.0.0"
-	}
-	if cfg.Server.Port == 0 {
-		cfg.Server.Port = 1780
-	}
-	if cfg.Server.MaxConnections == 0 {
-		cfg.Server.MaxConnections = 10000 // 默认最大 1 万连接
-	}
-	if cfg.Redis.Addr == "" {
-		cfg.Redis.Addr = "localhost:6379"
-	}
-	if cfg.Game.TurnTimeout == 0 {
-		cfg.Game.TurnTimeout = 30
-	}
-	if cfg.Game.BidTimeout == 0 {
-		cfg.Game.BidTimeout = 15
-	}
-	if cfg.Game.RoomTimeout == 0 {
-		cfg.Game.RoomTimeout = 10
-	}
-	if cfg.Game.ShutdownTimeout == 0 {
-		cfg.Game.ShutdownTimeout = 30
-	}
-	if cfg.Game.ShutdownCheckInterval == 0 {
-		cfg.Game.ShutdownCheckInterval = 15
-	}
-	if cfg.Game.RoomCleanupDelay == 0 {
-		cfg.Game.RoomCleanupDelay = 30
-	}
-	// 安全配置默认值
-	if len(cfg.Security.AllowedOrigins) == 0 {
-		cfg.Security.AllowedOrigins = []string{"*"}
-	}
-	if cfg.Security.RateLimit.MaxPerSecond == 0 {
-		cfg.Security.RateLimit.MaxPerSecond = 10
-	}
-	if cfg.Security.RateLimit.MaxPerMinute == 0 {
-		cfg.Security.RateLimit.MaxPerMinute = 60
-	}
-	if cfg.Security.RateLimit.BanDuration == 0 {
-		cfg.Security.RateLimit.BanDuration = 60
-	}
-	if cfg.Security.MessageLimit.MaxPerSecond == 0 {
-		cfg.Security.MessageLimit.MaxPerSecond = 20
-	}
-	// 聊天限流默认值
-	if cfg.Security.ChatLimit.MaxPerSecond == 0 {
-		cfg.Security.ChatLimit.MaxPerSecond = 1
-	}
-	if cfg.Security.ChatLimit.MaxPerMinute == 0 {
-		cfg.Security.ChatLimit.MaxPerMinute = 30
-	}
-	if cfg.Security.ChatLimit.Cooldown == 0 {
-		cfg.Security.ChatLimit.Cooldown = 5
-	}
+	// Server
+	setDefaultStr(&cfg.Server.Host, defaultHost)
+	setDefaultInt(&cfg.Server.Port, defaultPort)
+	setDefaultInt(&cfg.Server.MaxConnections, defaultMaxConnections)
+
+	// Redis
+	setDefaultStr(&cfg.Redis.Addr, defaultRedisAddr)
+
+	// Game
+	setDefaultInt(&cfg.Game.TurnTimeout, defaultTurnTimeout)
+	setDefaultInt(&cfg.Game.BidTimeout, defaultBidTimeout)
+	setDefaultInt(&cfg.Game.RoomTimeout, defaultRoomTimeout)
+	setDefaultInt(&cfg.Game.ShutdownTimeout, defaultShutdownTimeout)
+	setDefaultInt(&cfg.Game.ShutdownCheckInterval, defaultShutdownCheckInterval)
+	setDefaultInt(&cfg.Game.RoomCleanupDelay, defaultRoomCleanupDelay)
+
+	// Security
+	setDefaultStrSlice(&cfg.Security.AllowedOrigins, []string{"*"})
+	setDefaultInt(&cfg.Security.RateLimit.MaxPerSecond, defaultRateLimitPerSecond)
+	setDefaultInt(&cfg.Security.RateLimit.MaxPerMinute, defaultRateLimitPerMinute)
+	setDefaultInt(&cfg.Security.RateLimit.BanDuration, defaultBanDuration)
+	setDefaultInt(&cfg.Security.MessageLimit.MaxPerSecond, defaultMessageLimitPerSecond)
+	setDefaultInt(&cfg.Security.ChatLimit.MaxPerSecond, defaultChatLimitPerSecond)
+	setDefaultInt(&cfg.Security.ChatLimit.MaxPerMinute, defaultChatLimitPerMinute)
+	setDefaultInt(&cfg.Security.ChatLimit.Cooldown, defaultChatCooldown)
 }
 
 // Default 返回默认配置
-// 优先加载 configs/config.yaml，如果失败则使用最小默认值
 func Default() *Config {
 	// 尝试加载默认配置文件
-	cfg, err := Load("configs/config.yaml")
-	if err == nil {
+	if cfg, err := Load("config.yaml"); err == nil {
 		return cfg
+	} else {
+		log.Printf("无法加载默认配置文件，使用最小默认值: %v", err)
 	}
 
-	// 如果加载失败，使用最小默认值（确保服务器能启动）
-	log.Printf("无法加载默认配置文件，使用最小默认值: %v", err)
-	return &Config{
-		Server: ServerConfig{
-			Host:           "0.0.0.0",
-			Port:           1780,
-			MaxConnections: 10000,
-		},
-		Redis: RedisConfig{
-			Addr: "localhost:6379",
-		},
-		Game: GameConfig{
-			TurnTimeout:           30,
-			BidTimeout:            15,
-			RoomTimeout:           10,
-			ShutdownTimeout:       30,
-			ShutdownCheckInterval: 15,
-			RoomCleanupDelay:      30,
-		},
-		Security: SecurityConfig{
-			AllowedOrigins: []string{"*"},
-			RateLimit: RateLimitConfig{
-				MaxPerSecond: 10,
-				MaxPerMinute: 60,
-				BanDuration:  60,
-			},
-			MessageLimit: MessageLimitConfig{
-				MaxPerSecond: 20,
-			},
-			ChatLimit: ChatLimitConfig{
-				MaxPerSecond: 1,
-				MaxPerMinute: 30,
-				Cooldown:     5,
-			},
-		},
-	}
+	// 使用 setDefaults 设置的默认值
+	cfg := &Config{}
+	setDefaults(cfg)
+	return cfg
 }

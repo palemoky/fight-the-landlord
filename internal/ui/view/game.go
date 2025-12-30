@@ -76,8 +76,5 @@ func RulesView(width, height int) string {
 	sb += lipgloss.PlaceHorizontal(width, lipgloss.Center, rules)
 	sb += "\n\n"
 
-	hint := "按 ESC 返回大厅"
-	sb += lipgloss.PlaceHorizontal(width, lipgloss.Center, hint)
-
 	return sb
 }

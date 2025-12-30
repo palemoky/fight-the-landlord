@@ -71,34 +71,41 @@ func (h *Handler) handleReconnect(client types.ClientInterface, msg *protocol.Me
 	}
 
 	// 如果在房间中，恢复房间信息
-	if session.RoomCode != "" {
-		roomInterface := h.server.GetRoomManager().GetRoom(session.RoomCode)
-		if roomInterface != nil {
-			room, ok := roomInterface.(*game.Room)
-			if ok && room != nil {
-				// 使用RoomManager的ReconnectPlayer方法来处理重连
-				// 这个方法会正确更新房间中的客户端引用
-				oldClient := h.server.GetClientByID(session.PlayerID)
-				if oldClient != nil {
-					roomMgr, ok := h.server.GetRoomManager().(*game.RoomManager)
-					if ok {
-						if err := roomMgr.ReconnectPlayer(oldClient, client); err != nil {
-							log.Printf("重连到房间失败: %v", err)
-						} else {
-							client.SetRoom(session.RoomCode)
-							reconnectPayload.RoomCode = session.RoomCode
+	if session.RoomCode == "" {
+		goto sendResponse
+	}
 
-							// 如果游戏正在进行，恢复游戏状态
-							gameSession := room.GetGameSession()
-							if gameSession != nil {
-								reconnectPayload.GameState = gameSession.BuildGameStateDTO(session.PlayerID, h.server.GetSessionManager())
-							}
-						}
-					}
-				}
-			}
+	if roomInterface := h.server.GetRoomManager().GetRoom(session.RoomCode); roomInterface != nil {
+		room, ok := roomInterface.(*game.Room)
+		if !ok || room == nil {
+			goto sendResponse
+		}
+
+		oldClient := h.server.GetClientByID(session.PlayerID)
+		if oldClient == nil {
+			goto sendResponse
+		}
+
+		roomMgr, ok := h.server.GetRoomManager().(*game.RoomManager)
+		if !ok {
+			goto sendResponse
+		}
+
+		if err := roomMgr.ReconnectPlayer(oldClient, client); err != nil {
+			log.Printf("重连到房间失败: %v", err)
+			goto sendResponse
+		}
+
+		client.SetRoom(session.RoomCode)
+		reconnectPayload.RoomCode = session.RoomCode
+
+		// 如果游戏正在进行，恢复游戏状态
+		if gameSession := room.GetGameSession(); gameSession != nil {
+			reconnectPayload.GameState = gameSession.BuildGameStateDTO(session.PlayerID, h.server.GetSessionManager())
 		}
 	}
+
+sendResponse:
 
 	// 发送重连成功消息
 	client.SendMessage(encoding.MustNewMessage(protocol.MsgReconnected, reconnectPayload))

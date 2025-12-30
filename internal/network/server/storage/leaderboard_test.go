@@ -24,6 +24,8 @@ func newTestLeaderboardManager(t *testing.T) (*LeaderboardManager, *miniredis.Mi
 }
 
 func TestLeaderboard_RecordGameResult_NewPlayer(t *testing.T) {
+	t.Parallel()
+
 	lm, mr := newTestLeaderboardManager(t)
 	defer mr.Close()
 	ctx := context.Background()
@@ -47,6 +49,8 @@ func TestLeaderboard_RecordGameResult_NewPlayer(t *testing.T) {
 }
 
 func TestLeaderboard_RecordGameResult_Update(t *testing.T) {
+	t.Parallel()
+
 	lm, mr := newTestLeaderboardManager(t)
 	defer mr.Close()
 	ctx := context.Background()
@@ -71,6 +75,8 @@ func TestLeaderboard_RecordGameResult_Update(t *testing.T) {
 }
 
 func TestLeaderboard_StreakBonus(t *testing.T) {
+	t.Parallel()
+
 	lm, mr := newTestLeaderboardManager(t)
 	defer mr.Close()
 	ctx := context.Background()
@@ -100,6 +106,8 @@ func TestLeaderboard_StreakBonus(t *testing.T) {
 }
 
 func TestLeaderboard_GetLeaderboard(t *testing.T) {
+	t.Parallel()
+
 	lm, mr := newTestLeaderboardManager(t)
 	defer mr.Close()
 	ctx := context.Background()
@@ -123,6 +131,8 @@ func TestLeaderboard_GetLeaderboard(t *testing.T) {
 }
 
 func TestLeaderboard_GetPlayerRank(t *testing.T) {
+	t.Parallel()
+
 	lm, mr := newTestLeaderboardManager(t)
 	defer mr.Close()
 	ctx := context.Background()

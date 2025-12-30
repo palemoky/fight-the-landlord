@@ -6,10 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/palemoky/fight-the-landlord/internal/card"
+	"github.com/palemoky/fight-the-landlord/internal/game/card"
 )
 
 func TestNewCardCounter(t *testing.T) {
+	t.Parallel()
+
 	cc := NewCardCounter()
 
 	require.NotNil(t, cc, "NewCardCounter should not return nil")
@@ -37,6 +39,8 @@ func TestNewCardCounter(t *testing.T) {
 }
 
 func TestCardCounter_Reset(t *testing.T) {
+	t.Parallel()
+
 	cc := NewCardCounter()
 
 	// Deduct some cards
@@ -60,6 +64,8 @@ func TestCardCounter_Reset(t *testing.T) {
 }
 
 func TestCardCounter_DeductCards(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name          string
 		cardsToDeduct []card.Card
@@ -122,6 +128,8 @@ func TestCardCounter_DeductCards(t *testing.T) {
 }
 
 func TestCardCounter_DeductCards_OverDeduct(t *testing.T) {
+	t.Parallel()
+
 	cc := NewCardCounter()
 
 	// Try to deduct more cards than available
@@ -137,6 +145,8 @@ func TestCardCounter_DeductCards_OverDeduct(t *testing.T) {
 }
 
 func TestCardCounter_DeductCards_EmptySlice(t *testing.T) {
+	t.Parallel()
+
 	cc := NewCardCounter()
 	initialRemaining := cc.GetRemaining()
 
@@ -152,6 +162,8 @@ func TestCardCounter_DeductCards_EmptySlice(t *testing.T) {
 }
 
 func TestCardCounter_GetRemaining(t *testing.T) {
+	t.Parallel()
+
 	cc := NewCardCounter()
 	remaining := cc.GetRemaining()
 

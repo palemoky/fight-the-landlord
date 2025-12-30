@@ -1,6 +1,6 @@
 package client
 
-import "github.com/palemoky/fight-the-landlord/internal/card"
+import "github.com/palemoky/fight-the-landlord/internal/game/card"
 
 // CardCounter tracks remaining cards not in player's hand
 type CardCounter struct {

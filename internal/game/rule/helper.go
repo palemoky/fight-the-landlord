@@ -1,6 +1,6 @@
 package rule
 
-import "github.com/palemoky/fight-the-landlord/internal/card"
+import "github.com/palemoky/fight-the-landlord/internal/game/card"
 
 // FindSmallestBeatingCards 找到能打过 opponentHand 的最小牌组
 // 如果找不到，返回 nil
@@ -50,75 +50,44 @@ func FindSmallestBeatingCards(playerHand []card.Card, opponentHand ParsedHand) [
 	return nil
 }
 
-// findSmallestBeatingSingle 找到能打过的最小单牌
-func findSmallestBeatingSingle(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand) []card.Card {
-	for _, r := range analysis.ones {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
-		}
-	}
-	for _, r := range analysis.pairs {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
-		}
-	}
-	for _, r := range analysis.trios {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
-		}
-	}
-	for _, r := range analysis.fours {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 1)
+// findFirstBeating 从多个点数列表中找第一个能打过的牌
+func findFirstBeating(playerHand []card.Card, rankLists [][]card.Rank, keyRank card.Rank, count int) []card.Card {
+	for _, ranks := range rankLists {
+		for _, r := range ranks {
+			if r > keyRank {
+				return findCardsWithRank(playerHand, r, count)
+			}
 		}
 	}
 	return nil
+}
+
+// findSmallestBeatingSingle 找到能打过的最小单牌
+func findSmallestBeatingSingle(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand) []card.Card {
+	return findFirstBeating(playerHand,
+		[][]card.Rank{analysis.ones, analysis.pairs, analysis.trios, analysis.fours},
+		opponentHand.KeyRank, 1)
 }
 
 // findSmallestBeatingPair 找到能打过的最小对子
 func findSmallestBeatingPair(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand) []card.Card {
-	for _, r := range analysis.pairs {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 2)
-		}
-	}
-	for _, r := range analysis.trios {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 2)
-		}
-	}
-	for _, r := range analysis.fours {
-		if r > opponentHand.KeyRank {
-			return findCardsWithRank(playerHand, r, 2)
-		}
-	}
-	return nil
+	return findFirstBeating(playerHand,
+		[][]card.Rank{analysis.pairs, analysis.trios, analysis.fours},
+		opponentHand.KeyRank, 2)
 }
 
 // findSmallestBeatingTrio 找到能打过的最小三张（带或不带）
 func findSmallestBeatingTrio(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand, kickerType int) []card.Card {
-	for _, r := range analysis.trios {
-		if r > opponentHand.KeyRank {
-			result := findCardsWithRank(playerHand, r, 3)
-			if kickerType == 0 {
-				return result
-			}
-			// 需要带牌
-			kickers := findSmallestKickers(playerHand, analysis, r, kickerType)
-			if kickers != nil {
-				return append(result, kickers...)
-			}
-		}
-	}
-	for _, r := range analysis.fours {
-		if r > opponentHand.KeyRank {
-			result := findCardsWithRank(playerHand, r, 3)
-			if kickerType == 0 {
-				return result
-			}
-			kickers := findSmallestKickers(playerHand, analysis, r, kickerType)
-			if kickers != nil {
-				return append(result, kickers...)
+	for _, ranks := range [][]card.Rank{analysis.trios, analysis.fours} {
+		for _, r := range ranks {
+			if r > opponentHand.KeyRank {
+				result := findCardsWithRank(playerHand, r, 3)
+				if kickerType == 0 {
+					return result
+				}
+				if kickers := findSmallestKickers(playerHand, analysis, r, kickerType); kickers != nil {
+					return append(result, kickers...)
+				}
 			}
 		}
 	}
@@ -136,40 +105,36 @@ func findSmallestBomb(playerHand []card.Card, analysis HandAnalysis, opponentHan
 }
 
 // findSmallestKickers 找到最小的带牌
+// kickerType: 1=带单张, 2=带对子
 func findSmallestKickers(playerHand []card.Card, analysis HandAnalysis, excludeRank card.Rank, kickerType int) []card.Card {
 	var kickers []card.Card
-	needed := 1
-	if kickerType == 2 {
-		needed = 2
+	neededCards := kickerType // 1张单牌或2张(1对)
+
+	// collectFromRanks 从给定的点数列表中收集 kicker 牌
+	collectFromRanks := func(ranks []card.Rank, countPerRank int) bool {
+		for _, r := range ranks {
+			if r != excludeRank {
+				kickers = append(kickers, findCardsWithRank(playerHand, r, countPerRank)...)
+				if len(kickers) >= neededCards {
+					kickers = kickers[:neededCards]
+					return true
+				}
+			}
+		}
+		return false
 	}
 
 	if kickerType == 1 {
-		// 带单张
-		for _, r := range analysis.ones {
-			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 1)...)
-				if len(kickers) >= needed {
-					return kickers[:needed]
-				}
-			}
-		}
-		for _, r := range analysis.pairs {
-			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 1)...)
-				if len(kickers) >= needed {
-					return kickers[:needed]
-				}
-			}
+		// 带单张：优先从单牌、对子中取
+		if collectFromRanks(analysis.ones, 1) || collectFromRanks(analysis.pairs, 1) {
+			return kickers
 		}
 	} else {
-		// 带对子
-		for _, r := range analysis.pairs {
-			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 2)...)
-				if len(kickers) >= needed*2 {
-					return kickers[:needed*2]
-				}
-			}
+		// 带对子：从对子、三张、四张中取
+		if collectFromRanks(analysis.pairs, 2) ||
+			collectFromRanks(analysis.trios, 2) ||
+			collectFromRanks(analysis.fours, 2) {
+			return kickers
 		}
 	}
 	return nil

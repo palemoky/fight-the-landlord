@@ -281,15 +281,39 @@ func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 
 	room.mu.Lock()
 
-	// 通知其他在线玩家
+	// 检查所有玩家是否都离线
+	allOffline := true
 	for id, player := range room.Players {
-		if id != client.GetID() && player.Client != nil {
+		isCurrentOffline := id == client.GetID()
+		playerOnline := player.Client != nil && !isCurrentOffline
+		if playerOnline {
+			allOffline = false
+			// 通知其他在线玩家
 			player.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
 				PlayerID:   client.GetID(),
 				PlayerName: client.GetName(),
 				Timeout:    20, // 20秒离线等待
 			}))
 		}
+	}
+
+	// 如果所有玩家都离线，清理房间
+	if allOffline {
+		log.Printf("🧹 房间 %s 所有玩家已断开连接，清理房间", roomCode)
+		room.State = types.RoomStateEnded
+		game := room.game
+		room.mu.Unlock()
+
+		// 停止游戏计时器
+		if game != nil {
+			game.StopAllTimers()
+		}
+
+		// 删除房间
+		rm.mu.Lock()
+		delete(rm.rooms, roomCode)
+		rm.mu.Unlock()
+		return
 	}
 
 	// 如果游戏进行中，通知 GameSession 暂停该玩家的计时器
@@ -427,9 +451,10 @@ func (rm *RoomManager) GetActiveGamesCount() int {
 	count := 0
 	for _, room := range rm.rooms {
 		room.mu.RLock()
-		// 统计正在游戏中的房间（叫地主、出牌、游戏结束等待清理）
+		// 只统计正在游戏中的房间（叫地主、出牌）
+		// RoomStateEnded 不计入，因为游戏已结束只是等待清理
 		switch room.State {
-		case types.RoomStateBidding, types.RoomStatePlaying, types.RoomStateEnded:
+		case types.RoomStateBidding, types.RoomStatePlaying:
 			count++
 		}
 		room.mu.RUnlock()

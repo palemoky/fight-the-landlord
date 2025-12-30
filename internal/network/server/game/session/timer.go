@@ -4,9 +4,9 @@ import (
 	"log"
 	"time"
 
+	"github.com/palemoky/fight-the-landlord/internal/game/rule"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
-	"github.com/palemoky/fight-the-landlord/internal/rule"
 )
 
 const (
@@ -82,6 +82,11 @@ func (gs *GameSession) stopTimer() {
 		gs.offlineWaitTimer.Stop()
 		gs.offlineWaitTimer = nil
 	}
+}
+
+// StopAllTimers stops all timers (for cleanup when all players disconnect)
+func (gs *GameSession) StopAllTimers() {
+	gs.stopTimer()
 }
 
 // --- 离线处理 ---
