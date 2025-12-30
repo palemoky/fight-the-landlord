@@ -147,37 +147,22 @@ func ParseHand(cards []card.Card) (ParsedHand, error) {
 
 	analysis := analyzeCards(cards)
 
-	// 王炸
-	if hand, ok := isRocket(analysis, cards); ok {
-		return hand, nil
+	// 按优先级检查各种牌型
+	checks := []func(HandAnalysis, []card.Card) (ParsedHand, bool){
+		isRocket,          // 王炸
+		isBomb,            // 炸弹
+		isFourWithKickers, // 四带二
+		isTrioWithKickers, // 三带X
+		isPlane,           // 飞机
+		isStraight,        // 顺子
+		isPairStraight,    // 连对
+		isSimpleType,      // 简单牌型（单、对、三）
 	}
-	// 炸弹
-	if hand, ok := isBomb(analysis, cards); ok {
-		return hand, nil
-	}
-	// 四带二
-	if hand, ok := isFourWithKickers(analysis, cards); ok {
-		return hand, nil
-	}
-	// 三带X
-	if hand, ok := isTrioWithKickers(analysis, cards); ok {
-		return hand, nil
-	}
-	// 飞机
-	if hand, ok := isPlane(analysis, cards); ok {
-		return hand, nil
-	}
-	// 顺子
-	if hand, ok := isStraight(analysis, cards); ok {
-		return hand, nil
-	}
-	// 连对
-	if hand, ok := isPairStraight(analysis, cards); ok {
-		return hand, nil
-	}
-	// 简单牌型
-	if hand, ok := isSimpleType(analysis, cards); ok {
-		return hand, nil
+
+	for _, check := range checks {
+		if hand, ok := check(analysis, cards); ok {
+			return hand, nil
+		}
 	}
 
 	return ParsedHand{}, fmt.Errorf("不支持的牌型: %v", cards)
