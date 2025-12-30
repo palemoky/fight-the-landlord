@@ -6,8 +6,8 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
-	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
@@ -47,7 +47,7 @@ func (h *Handler) handleReconnect(client types.ClientInterface, msg *protocol.Me
 	}
 
 	// 类型断言session
-	session, ok := sessionInterface.(*core.PlayerSession)
+	session, ok := sessionInterface.(*session.PlayerSession)
 	if !ok {
 		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "会话类型错误"))
 		return

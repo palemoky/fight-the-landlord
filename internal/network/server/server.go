@@ -19,6 +19,7 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/handlers"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/storage"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
@@ -44,7 +45,7 @@ type Server struct {
 	leaderboard    *storage.LeaderboardManager
 	roomManager    *game.RoomManager
 	matcher        *game.Matcher
-	sessionManager *core.SessionManager
+	sessionManager *session.SessionManager
 	clients        map[string]*Client
 	clientsMu      sync.RWMutex
 	handler        *handlers.Handler
@@ -87,7 +88,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		redisStore:     storage.NewRedisStore(rdb),
 		leaderboard:    storage.NewLeaderboardManager(rdb),
 		clients:        make(map[string]*Client),
-		sessionManager: core.NewSessionManager(),
+		sessionManager: session.NewSessionManager(),
 		// 初始化安全组件
 		rateLimiter: core.NewRateLimiter(
 			cfg.Security.RateLimit.MaxPerSecond,

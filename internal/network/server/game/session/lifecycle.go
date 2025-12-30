@@ -1,4 +1,4 @@
-package game
+package session
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func (gs *GameSession) Start() {
 
 	// 进入叫地主阶段
 	gs.state = GameStateBidding
-	gs.room.State = RoomStateBidding
+	gs.room.SetState(RoomStateBidding)
 
 	// 随机选择第一个叫地主的玩家
 	gs.currentBidder = rand.Intn(3)
@@ -58,7 +58,8 @@ func (gs *GameSession) deal() {
 
 	// 发送手牌给各玩家（先不显示底牌具体内容）
 	for _, p := range gs.players {
-		client := gs.room.Players[p.ID].Client
+		rp := gs.room.GetPlayer(p.ID)
+		client := rp.GetClient()
 		client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
 			Cards:         convert.CardsToInfos(p.Hand),
 			LandlordCards: make([]protocol.CardInfo, 3), // 暂时不显示
@@ -69,7 +70,7 @@ func (gs *GameSession) deal() {
 // endGame 结束游戏
 func (gs *GameSession) endGame(winner *GamePlayer) {
 	gs.state = GameStateEnded
-	gs.room.State = RoomStateEnded
+	gs.room.SetState(RoomStateEnded)
 
 	// 收集所有玩家剩余手牌
 	playerHands := make([]protocol.PlayerHand, len(gs.players))
@@ -82,7 +83,7 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 	}
 
 	// 广播游戏结束
-	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgGameOver, protocol.GameOverPayload{
+	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgGameOver, protocol.GameOverPayload{
 		WinnerID:    winner.ID,
 		WinnerName:  winner.Name,
 		IsLandlord:  winner.IsLandlord,
@@ -94,39 +95,19 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 		role = "地主"
 	}
 	log.Printf("🎮 游戏结束！房间 %s，获胜者: %s (%s)",
-		gs.room.Code, winner.Name, role)
+		gs.room.GetCode(), winner.Name, role)
 
 	// 记录游戏结果到排行榜
 	gs.recordGameResults(winner)
 
 	// 延迟清理房间，让玩家有时间返回大厅查看维护通知
 	cleanupDelay := 2 * time.Hour
-	log.Printf("⏰ 房间 %s 将在 %v 后自动清理", gs.room.Code, cleanupDelay)
+	log.Printf("⏰ 房间 %s 将在 %v 后自动清理", gs.room.GetCode(), cleanupDelay)
 
 	go func() {
 		time.Sleep(cleanupDelay)
-
-		// 让所有玩家离开房间
-		gs.room.mu.RLock()
-		playerIDs := make([]string, 0, len(gs.room.Players))
-		for id := range gs.room.Players {
-			playerIDs = append(playerIDs, id)
-		}
-		gs.room.mu.RUnlock()
-
-		// 逐个让玩家离开房间
-		for _, playerID := range playerIDs {
-			gs.room.mu.RLock()
-			if rp, exists := gs.room.Players[playerID]; exists && rp.Client != nil {
-				client := rp.Client
-				gs.room.mu.RUnlock()
-				gs.room.GetServer().GetRoomManager().(*RoomManager).LeaveRoom(client)
-			} else {
-				gs.room.mu.RUnlock()
-			}
-		}
-
-		log.Printf("🧹 房间 %s 已自动清理", gs.room.Code)
+		// 房间清理逻辑由 Room 层处理
+		log.Printf("🧹 房间 %s 清理时间到", gs.room.GetCode())
 	}()
 }
 
@@ -150,8 +131,9 @@ func (gs *GameSession) recordGameResults(winner *GamePlayer) {
 
 		// 获取玩家名称
 		playerName := p.Name
-		if rp, exists := gs.room.Players[p.ID]; exists && rp.Client != nil {
-			playerName = rp.Client.GetName()
+		rp := gs.room.GetPlayer(p.ID)
+		if rp != nil {
+			playerName = rp.GetClient().GetName()
 		}
 
 		// 记录结果

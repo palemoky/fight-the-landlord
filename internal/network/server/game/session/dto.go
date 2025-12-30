@@ -1,4 +1,4 @@
-package game
+package session
 
 import (
 	"github.com/palemoky/fight-the-landlord/internal/card"

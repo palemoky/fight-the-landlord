@@ -1,4 +1,4 @@
-package core
+package session
 
 import (
 	"crypto/rand"

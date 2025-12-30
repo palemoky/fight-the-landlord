@@ -82,10 +82,38 @@ func (e *RoomError) Error() string {
 	return e.Message
 }
 
-// RoomInterface 房间接口
+// RoomState 房间状态
+type RoomState int
+
+const (
+	RoomStateWaiting RoomState = iota
+	RoomStateReady
+	RoomStateBidding
+	RoomStatePlaying
+	RoomStateEnded
+)
+
+// RoomInterface 房间接口 - GameSession 依赖的 Room 方法
 type RoomInterface interface {
+	// 广播消息
 	Broadcast(msg *protocol.Message)
+
+	// 玩家访问
+	GetPlayer(id string) RoomPlayerInterface
+	GetPlayerOrder() []string
+	SetPlayerLandlord(id string)
+
+	// 房间信息
+	GetCode() string
+	SetState(RoomState)
+
+	// 服务访问
 	GetServer() ServerContext
+}
+
+// RoomPlayerInterface 房间玩家接口
+type RoomPlayerInterface interface {
+	GetClient() ClientInterface
 }
 
 // ChatLimiterInterface 聊天限流器接口

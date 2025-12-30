@@ -9,6 +9,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
@@ -17,17 +18,6 @@ const (
 	roomCodeLength = 6
 	// 房间号字符集
 	roomCodeChars = "0123456789"
-)
-
-// RoomState 房间状态
-type RoomState int
-
-const (
-	RoomStateWaiting RoomState = iota // 等待玩家
-	RoomStateReady                    // 准备就绪
-	RoomStateBidding                  // 叫地主中
-	RoomStatePlaying                  // 游戏中
-	RoomStateEnded                    // 游戏结束
 )
 
 // RoomPlayer 房间中的玩家
@@ -41,12 +31,12 @@ type RoomPlayer struct {
 // Room 游戏房间
 type Room struct {
 	Code        string                 // 房间号
-	State       RoomState              // 房间状态
+	State       types.RoomState        // 房间状态
 	Players     map[string]*RoomPlayer // 玩家列表
 	PlayerOrder []string               // 玩家顺序（按座位）
 	CreatedAt   time.Time              // 创建时间
 
-	game   *GameSession // 游戏会话
+	game   *session.GameSession // 游戏会话
 	server types.ServerContext
 	mu     sync.RWMutex
 }
@@ -81,7 +71,7 @@ func (rm *RoomManager) CreateRoom(client types.ClientInterface) (interface{}, er
 
 	room := &Room{
 		Code:        code,
-		State:       RoomStateWaiting,
+		State:       types.RoomStateWaiting,
 		Players:     make(map[string]*RoomPlayer),
 		PlayerOrder: make([]string, 0, 3),
 		CreatedAt:   time.Now(),
@@ -125,7 +115,7 @@ func (rm *RoomManager) JoinRoom(client types.ClientInterface, code string) (inte
 		return nil, ErrRoomFull
 	}
 
-	if room.State != RoomStateWaiting {
+	if room.State != types.RoomStateWaiting {
 		return nil, ErrGameStarted
 	}
 
@@ -263,7 +253,7 @@ func (rm *RoomManager) GetRoomList() []interface{} {
 	for code, room := range rm.rooms {
 		room.mu.RLock()
 		// 只返回等待中且未满的房间
-		if room.State == RoomStateWaiting && len(room.Players) < 3 {
+		if room.State == types.RoomStateWaiting && len(room.Players) < 3 {
 			rooms = append(rooms, protocol.RoomListItem{
 				RoomCode:    code,
 				PlayerCount: len(room.Players),
@@ -413,7 +403,7 @@ func (rm *RoomManager) cleanup() {
 	for code, room := range rm.rooms {
 		room.mu.RLock()
 		// 只清理等待状态且超时的房间
-		if room.State == RoomStateWaiting && now.Sub(room.CreatedAt) > timeout {
+		if room.State == types.RoomStateWaiting && now.Sub(room.CreatedAt) > timeout {
 			room.mu.RUnlock()
 			// 通知所有玩家房间已关闭
 			room.broadcast(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "房间超时已关闭"))
@@ -439,7 +429,7 @@ func (rm *RoomManager) GetActiveGamesCount() int {
 		room.mu.RLock()
 		// 统计正在游戏中的房间（叫地主、出牌、游戏结束等待清理）
 		switch room.State {
-		case RoomStateBidding, RoomStatePlaying, RoomStateEnded:
+		case types.RoomStateBidding, types.RoomStatePlaying, types.RoomStateEnded:
 			count++
 		}
 		room.mu.RUnlock()
@@ -450,6 +440,33 @@ func (rm *RoomManager) GetActiveGamesCount() int {
 // Interface implementations for types.RoomInterface
 func (r *Room) GetServer() types.ServerContext { return r.server }
 
+// GetPlayer implements session.RoomInterface
+func (r *Room) GetPlayer(id string) session.RoomPlayerInterface {
+	return r.Players[id]
+}
+
+// GetPlayerOrder implements session.RoomInterface
+func (r *Room) GetPlayerOrder() []string {
+	return r.PlayerOrder
+}
+
+// SetPlayerLandlord implements session.RoomInterface
+func (r *Room) SetPlayerLandlord(id string) {
+	if player, exists := r.Players[id]; exists {
+		player.IsLandlord = true
+	}
+}
+
+// GetCode implements session.RoomInterface
+func (r *Room) GetCode() string {
+	return r.Code
+}
+
+// SetState implements types.RoomInterface
+func (r *Room) SetState(state types.RoomState) {
+	r.State = state
+}
+
 // SerializeForRedis 为Redis序列化准备数据（提供只读访问）
 func (r *Room) SerializeForRedis(serialize func()) {
 	r.mu.RLock()
@@ -458,13 +475,18 @@ func (r *Room) SerializeForRedis(serialize func()) {
 }
 
 // GetGameForSerialization 获取game用于序列化（只读）
-func (r *Room) GetGameForSerialization() *GameSession {
+func (r *Room) GetGameForSerialization() *session.GameSession {
 	return r.game
 }
 
 // SetGameSession 设置游戏会话（主要用于测试或状态恢复）
-func (r *Room) SetGameSession(gs *GameSession) {
+func (r *Room) SetGameSession(gs *session.GameSession) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.game = gs
+}
+
+// RoomPlayer implements session.RoomPlayerInterface
+func (rp *RoomPlayer) GetClient() types.ClientInterface {
+	return rp.Client
 }

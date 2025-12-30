@@ -9,8 +9,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 )
 
 func newTestRedisStore(t *testing.T) (*RedisStore, *miniredis.Miniredis) {
@@ -103,7 +103,7 @@ func TestRedisStore_Session(t *testing.T) {
 	defer mr.Close()
 	ctx := context.Background()
 
-	session := &core.PlayerSession{
+	session := &session.PlayerSession{
 		PlayerID:       "p1",
 		PlayerName:     "Player1",
 		ReconnectToken: "token123",

@@ -9,6 +9,7 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 )
 
 // Helper to create a room with a running game session and mock clients
@@ -40,7 +41,7 @@ func setupGameRoom(t *testing.T) (*game.Room, []*MockClient) {
 	}
 
 	// Create and start session
-	gs := game.NewGameSession(room)
+	gs := session.NewGameSession(room)
 	room.SetGameSession(gs)
 	gs.Start()
 
@@ -74,7 +75,7 @@ func TestHandler_HandleBid_Success(t *testing.T) {
 		h.handleBid(c, msg)
 
 		// If success, gs state changes to Playing
-		if gs.GetStateForSerialization() == game.GameStatePlaying {
+		if gs.GetStateForSerialization() == session.GameStatePlaying {
 			success = true
 			break
 		} else if len(c.Calls) > callsBefore {
@@ -122,7 +123,7 @@ func TestHandler_HandlePlayCards_Success(t *testing.T) {
 		payloadBytes, _ := convert.EncodePayload(protocol.MsgBid, payload)
 		h.handleBid(c, &protocol.Message{Type: protocol.MsgBid, Payload: payloadBytes})
 
-		if gs.GetStateForSerialization() == game.GameStatePlaying {
+		if gs.GetStateForSerialization() == session.GameStatePlaying {
 			currentTurnID = c.GetID()
 			break
 		}

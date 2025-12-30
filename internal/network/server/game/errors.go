@@ -8,7 +8,7 @@ import (
 // RoomError type alias
 type RoomError = types.RoomError
 
-// Error variables
+// Room-specific error variables
 var (
 	ErrRoomNotFound = &RoomError{Code: protocol.ErrCodeRoomNotFound, Message: "房间不存在"}
 	ErrRoomFull     = &RoomError{Code: protocol.ErrCodeRoomFull, Message: "房间已满"}

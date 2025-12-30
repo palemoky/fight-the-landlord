@@ -5,6 +5,8 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
 // --- Room 方法 ---
@@ -74,11 +76,11 @@ func (r *Room) startGame() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if r.State != RoomStateWaiting || len(r.Players) < 3 {
+	if r.State != types.RoomStateWaiting || len(r.Players) < 3 {
 		return
 	}
 
-	r.State = RoomStateReady
+	r.State = types.RoomStateReady
 
 	// 广播游戏开始
 	r.broadcast(encoding.MustNewMessage(protocol.MsgGameStart, protocol.GameStartPayload{
@@ -86,7 +88,7 @@ func (r *Room) startGame() {
 	}))
 
 	// 创建游戏会话
-	r.game = NewGameSession(r)
+	r.game = session.NewGameSession(r)
 
 	// 开始游戏流程
 	r.game.Start()
@@ -96,7 +98,7 @@ func (r *Room) startGame() {
 }
 
 // GetGameSession 获取游戏会话
-func (r *Room) GetGameSession() *GameSession {
+func (r *Room) GetGameSession() *session.GameSession {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.game

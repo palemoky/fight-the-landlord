@@ -8,8 +8,8 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 )
 
 const (
@@ -191,7 +191,7 @@ func (rs *RedisStore) PopFromMatchQueue(ctx context.Context, count int) ([]strin
 // --- 会话存储 ---
 
 // SaveSession 保存会话到 Redis
-func (rs *RedisStore) SaveSession(ctx context.Context, session *core.PlayerSession) error {
+func (rs *RedisStore) SaveSession(ctx context.Context, session *session.PlayerSession) error {
 	data := map[string]any{
 		"player_id":   session.PlayerID,
 		"player_name": session.PlayerName,
@@ -209,7 +209,7 @@ func (rs *RedisStore) SaveSession(ctx context.Context, session *core.PlayerSessi
 }
 
 // LoadSession 从 Redis 加载会话
-func (rs *RedisStore) LoadSession(ctx context.Context, playerID string) (*core.PlayerSession, error) {
+func (rs *RedisStore) LoadSession(ctx context.Context, playerID string) (*session.PlayerSession, error) {
 	key := sessionKeyPrefix + playerID
 	data, err := rs.client.HGetAll(ctx, key).Result()
 	if err != nil {
@@ -219,7 +219,7 @@ func (rs *RedisStore) LoadSession(ctx context.Context, playerID string) (*core.P
 		return nil, nil
 	}
 
-	session := &core.PlayerSession{
+	session := &session.PlayerSession{
 		PlayerID:       data["player_id"],
 		PlayerName:     data["player_name"],
 		ReconnectToken: data["token"],
@@ -238,8 +238,8 @@ func (rs *RedisStore) DeleteSession(ctx context.Context, playerID string) error 
 
 // --- 辅助方法 ---
 
-// serializegame.GameSession 序列化游戏会话（简化版）
-func (rs *RedisStore) serializeGameSession(gs *game.GameSession) *GameSessionData {
+// serializeGameSession 序列化游戏会话（简化版）
+func (rs *RedisStore) serializeGameSession(gs *session.GameSession) *GameSessionData {
 	var data *GameSessionData
 
 	gs.SerializeForRedis(func() {

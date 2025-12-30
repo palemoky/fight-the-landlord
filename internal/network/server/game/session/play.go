@@ -1,4 +1,4 @@
-package game
+package session
 
 import (
 	"sort"
@@ -63,7 +63,7 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 	})
 
 	// 广播出牌信息
-	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgCardPlayed, protocol.CardPlayedPayload{
+	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgCardPlayed, protocol.CardPlayedPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 		Cards:      convert.CardsToInfos(sortedCards), // 使用排序后的牌
@@ -110,7 +110,7 @@ func (gs *GameSession) HandlePass(playerID string) error {
 	gs.consecutivePasses++
 
 	// 广播不出
-	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgPlayerPass, protocol.PlayerPassPayload{
+	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgPlayerPass, protocol.PlayerPassPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 	}))

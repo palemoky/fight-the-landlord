@@ -1,4 +1,4 @@
-package game
+package session
 
 import (
 	"math/rand"
@@ -29,7 +29,7 @@ func (gs *GameSession) HandleBid(playerID string, bid bool) error {
 	gs.bidCount++
 
 	// 广播叫地主结果
-	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgBidResult, protocol.BidResultPayload{
+	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgBidResult, protocol.BidResultPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 		Bid:        bid,
@@ -71,17 +71,18 @@ func (gs *GameSession) setLandlord(idx int) {
 	})
 
 	// 更新房间玩家状态
-	gs.room.Players[landlord.ID].IsLandlord = true
+	gs.room.SetPlayerLandlord(landlord.ID)
 
 	// 广播地主信息
-	gs.room.broadcast(encoding.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
+	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
 		PlayerID:      landlord.ID,
 		PlayerName:    landlord.Name,
 		LandlordCards: convert.CardsToInfos(gs.bottomCards),
 	}))
 
 	// 给地主发送更新后的手牌
-	client := gs.room.Players[landlord.ID].Client
+	rp := gs.room.GetPlayer(landlord.ID)
+	client := rp.GetClient()
 	client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
 		Cards:         convert.CardsToInfos(landlord.Hand),
 		LandlordCards: convert.CardsToInfos(gs.bottomCards),
@@ -89,7 +90,7 @@ func (gs *GameSession) setLandlord(idx int) {
 
 	// 开始游戏，地主先出牌
 	gs.state = GameStatePlaying
-	gs.room.State = RoomStatePlaying
+	gs.room.SetState(RoomStatePlaying)
 	gs.currentPlayer = idx
 	gs.lastPlayerIdx = idx
 

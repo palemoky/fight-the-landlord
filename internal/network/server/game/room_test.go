@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
 func TestRoomManager_GetRoomList(t *testing.T) {
@@ -16,7 +17,7 @@ func TestRoomManager_GetRoomList(t *testing.T) {
 	// Manually add a suitable room
 	room := &Room{
 		Code:        "123456",
-		State:       RoomStateWaiting,
+		State:       types.RoomStateWaiting,
 		Players:     make(map[string]*RoomPlayer),
 		PlayerOrder: []string{},
 		CreatedAt:   time.Now(),
