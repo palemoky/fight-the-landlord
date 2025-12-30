@@ -122,10 +122,8 @@ func (gs *GameSession) recordGameResults(winner *GamePlayer) {
 	for _, p := range gs.players {
 		isWinner := false
 		if landlordWins {
-			// 地主胜利
 			isWinner = p.IsLandlord
 		} else {
-			// 农民胜利
 			isWinner = !p.IsLandlord
 		}
 
