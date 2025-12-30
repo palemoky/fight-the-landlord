@@ -11,6 +11,8 @@ import (
 )
 
 func TestNewGameState(t *testing.T) {
+	t.Parallel()
+
 	gs := NewGameState()
 
 	require.NotNil(t, gs, "NewGameState should not return nil")
@@ -25,6 +27,8 @@ func TestNewGameState(t *testing.T) {
 }
 
 func TestGameState_SortHand(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		input    []card.Card
@@ -101,6 +105,8 @@ func TestGameState_SortHand(t *testing.T) {
 }
 
 func TestGameState_Reset(t *testing.T) {
+	t.Parallel()
+
 	gs := NewGameState()
 
 	// Set up some state
@@ -148,6 +154,8 @@ func TestGameState_Reset(t *testing.T) {
 }
 
 func TestGameState_MultipleResets(t *testing.T) {
+	t.Parallel()
+
 	gs := NewGameState()
 
 	// Reset multiple times
@@ -162,6 +170,8 @@ func TestGameState_MultipleResets(t *testing.T) {
 }
 
 func TestGameState_SortHand_NilHand(t *testing.T) {
+	t.Parallel()
+
 	gs := NewGameState()
 	gs.Hand = nil
 
@@ -175,6 +185,8 @@ func TestGameState_SortHand_NilHand(t *testing.T) {
 }
 
 func TestGameState_Integration(t *testing.T) {
+	t.Parallel()
+
 	// Test a realistic game flow
 	gs := NewGameState()
 
