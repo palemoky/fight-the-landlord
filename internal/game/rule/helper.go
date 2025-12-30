@@ -141,51 +141,31 @@ func findSmallestKickers(playerHand []card.Card, analysis HandAnalysis, excludeR
 	var kickers []card.Card
 	neededCards := kickerType // 1张单牌或2张(1对)
 
-	if kickerType == 1 {
-		// 带单张
-		for _, r := range analysis.ones {
+	// collectFromRanks 从给定的点数列表中收集 kicker 牌
+	collectFromRanks := func(ranks []card.Rank, countPerRank int) bool {
+		for _, r := range ranks {
 			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 1)...)
+				kickers = append(kickers, findCardsWithRank(playerHand, r, countPerRank)...)
 				if len(kickers) >= neededCards {
-					return kickers[:neededCards]
+					kickers = kickers[:neededCards]
+					return true
 				}
 			}
 		}
-		for _, r := range analysis.pairs {
-			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 1)...)
-				if len(kickers) >= neededCards {
-					return kickers[:neededCards]
-				}
-			}
+		return false
+	}
+
+	if kickerType == 1 {
+		// 带单张：优先从单牌、对子中取
+		if collectFromRanks(analysis.ones, 1) || collectFromRanks(analysis.pairs, 1) {
+			return kickers
 		}
 	} else {
-		// 带对子 - 需要从 pairs, trios, fours 中查找
-		for _, r := range analysis.pairs {
-			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 2)...)
-				if len(kickers) >= neededCards {
-					return kickers[:neededCards]
-				}
-			}
-		}
-		// 从三张中拆出对子
-		for _, r := range analysis.trios {
-			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 2)...)
-				if len(kickers) >= neededCards {
-					return kickers[:neededCards]
-				}
-			}
-		}
-		// 从四张中拆出对子
-		for _, r := range analysis.fours {
-			if r != excludeRank {
-				kickers = append(kickers, findCardsWithRank(playerHand, r, 2)...)
-				if len(kickers) >= neededCards {
-					return kickers[:neededCards]
-				}
-			}
+		// 带对子：从对子、三张、四张中取
+		if collectFromRanks(analysis.pairs, 2) ||
+			collectFromRanks(analysis.trios, 2) ||
+			collectFromRanks(analysis.fours, 2) {
+			return kickers
 		}
 	}
 	return nil
