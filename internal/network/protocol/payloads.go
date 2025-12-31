@@ -54,15 +54,15 @@ type ReconnectedPayload struct {
 
 // GameStateDTO 游戏状态数据传输对象（用于重连恢复）
 type GameStateDTO struct {
-	Phase         string       `json:"phase"`          // bidding/playing
-	Players       []PlayerInfo `json:"players"`        // 所有玩家信息
-	Hand          []CardInfo   `json:"hand"`           // 自己的手牌
-	LandlordCards []CardInfo   `json:"landlord_cards"` // 底牌
-	CurrentTurn   string       `json:"current_turn"`   // 当前回合玩家 ID
-	LastPlayed    []CardInfo   `json:"last_played"`    // 上家出的牌
-	LastPlayerID  string       `json:"last_player_id"` // 上家 ID
-	MustPlay      bool         `json:"must_play"`      // 是否必须出牌
-	CanBeat       bool         `json:"can_beat"`       // 是否能打过
+	Phase        string       `json:"phase"`          // bidding/playing
+	Players      []PlayerInfo `json:"players"`        // 所有玩家信息
+	Hand         []CardInfo   `json:"hand"`           // 自己的手牌
+	BottomCards  []CardInfo   `json:"bottom_cards"`   // 底牌
+	CurrentTurn  string       `json:"current_turn"`   // 当前回合玩家 ID
+	LastPlayed   []CardInfo   `json:"last_played"`    // 上家出的牌
+	LastPlayerID string       `json:"last_player_id"` // 上家 ID
+	MustPlay     bool         `json:"must_play"`      // 是否必须出牌
+	CanBeat      bool         `json:"can_beat"`       // 是否能打过
 }
 
 // PongPayload 心跳响应
@@ -126,8 +126,8 @@ type GameStartPayload struct {
 
 // DealCardsPayload 发牌通知
 type DealCardsPayload struct {
-	Cards         []CardInfo `json:"cards"`          // 玩家自己的手牌
-	LandlordCards []CardInfo `json:"landlord_cards"` // 底牌（地主确定后才显示具体内容）
+	Cards       []CardInfo `json:"cards"`        // 玩家自己的手牌
+	BottomCards []CardInfo `json:"bottom_cards"` // 底牌（地主确定后才显示具体内容）
 }
 
 // BidTurnPayload 轮到叫地主通知
@@ -145,9 +145,9 @@ type BidResultPayload struct {
 
 // LandlordPayload 地主确定通知
 type LandlordPayload struct {
-	PlayerID      string     `json:"player_id"`
-	PlayerName    string     `json:"player_name"`
-	LandlordCards []CardInfo `json:"landlord_cards"` // 底牌
+	PlayerID    string     `json:"player_id"`
+	PlayerName  string     `json:"player_name"`
+	BottomCards []CardInfo `json:"bottom_cards"` // 底牌
 }
 
 // PlayTurnPayload 轮到出牌通知

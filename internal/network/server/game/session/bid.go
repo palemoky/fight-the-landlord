@@ -75,17 +75,17 @@ func (gs *GameSession) setLandlord(idx int) {
 
 	// 广播地主信息
 	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
-		PlayerID:      landlord.ID,
-		PlayerName:    landlord.Name,
-		LandlordCards: convert.CardsToInfos(gs.bottomCards),
+		PlayerID:    landlord.ID,
+		PlayerName:  landlord.Name,
+		BottomCards: convert.CardsToInfos(gs.bottomCards),
 	}))
 
 	// 给地主发送更新后的手牌
 	rp := gs.room.GetPlayer(landlord.ID)
 	client := rp.GetClient()
 	client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
-		Cards:         convert.CardsToInfos(landlord.Hand),
-		LandlordCards: convert.CardsToInfos(gs.bottomCards),
+		Cards:       convert.CardsToInfos(landlord.Hand),
+		BottomCards: convert.CardsToInfos(gs.bottomCards),
 	}))
 
 	// 开始游戏，地主先出牌

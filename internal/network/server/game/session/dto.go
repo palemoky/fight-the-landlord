@@ -52,15 +52,15 @@ func (gs *GameSession) BuildGameStateDTO(playerID string, sessionManager types.S
 		lastPlayerID = gs.players[gs.lastPlayerIdx].ID
 	}
 	return &protocol.GameStateDTO{
-		Phase:         phase,
-		Players:       players,
-		Hand:          convert.CardsToInfos(hand),
-		LandlordCards: convert.CardsToInfos(gs.bottomCards),
-		CurrentTurn:   currentTurnID,
-		LastPlayed:    convert.CardsToInfos(lastPlayed),
-		LastPlayerID:  lastPlayerID,
-		MustPlay:      gs.lastPlayerIdx == gs.currentPlayer || gs.lastPlayedHand.IsEmpty(),
-		CanBeat:       true,
+		Phase:        phase,
+		Players:      players,
+		Hand:         convert.CardsToInfos(hand),
+		BottomCards:  convert.CardsToInfos(gs.bottomCards),
+		CurrentTurn:  currentTurnID,
+		LastPlayed:   convert.CardsToInfos(lastPlayed),
+		LastPlayerID: lastPlayerID,
+		MustPlay:     gs.lastPlayerIdx == gs.currentPlayer || gs.lastPlayedHand.IsEmpty(),
+		CanBeat:      true,
 	}
 }
 

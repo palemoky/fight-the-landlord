@@ -47,7 +47,7 @@ type GameSessionData struct {
 	CurrentPlayer int     `json:"current_player"`
 	LandlordIdx   int     `json:"landlord_idx"`
 	PlayerHands   [][]int `json:"player_hands"` // 简化为点数列表
-	LandlordCards []int   `json:"landlord_cards"`
+	BottomCards   []int   `json:"bottom_cards"`
 }
 
 // RedisStore Redis 存储
@@ -262,9 +262,9 @@ func (rs *RedisStore) serializeGameSession(gs *session.GameSession) *GameSession
 
 		// 保存底牌
 		bottomCards := gs.GetBottomCardsForSerialization()
-		data.LandlordCards = make([]int, len(bottomCards))
+		data.BottomCards = make([]int, len(bottomCards))
 		for i, c := range bottomCards {
-			data.LandlordCards[i] = int(c.Rank)
+			data.BottomCards[i] = int(c.Rank)
 		}
 	})
 

@@ -150,8 +150,8 @@ func EncodePayload(msgType protocol.MessageType, payload any) ([]byte, error) {
 	case protocol.MsgDealCards:
 		p := payload.(protocol.DealCardsPayload)
 		pbPayload = &pb.DealCardsPayload{
-			Cards:         cardsToProto(p.Cards),
-			LandlordCards: cardsToProto(p.LandlordCards),
+			Cards:       cardsToProto(p.Cards),
+			BottomCards: cardsToProto(p.BottomCards),
 		}
 	case protocol.MsgBidTurn:
 		p := payload.(protocol.BidTurnPayload)
@@ -169,9 +169,9 @@ func EncodePayload(msgType protocol.MessageType, payload any) ([]byte, error) {
 	case protocol.MsgLandlord:
 		p := payload.(protocol.LandlordPayload)
 		pbPayload = &pb.LandlordPayload{
-			PlayerId:      p.PlayerID,
-			PlayerName:    p.PlayerName,
-			LandlordCards: cardsToProto(p.LandlordCards),
+			PlayerId:    p.PlayerID,
+			PlayerName:  p.PlayerName,
+			BottomCards: cardsToProto(p.BottomCards),
 		}
 	case protocol.MsgPlayTurn:
 		p := payload.(protocol.PlayTurnPayload)
@@ -456,8 +456,8 @@ func DecodePayload(msgType protocol.MessageType, data []byte, target any) error 
 			return err
 		}
 		*target.(*protocol.DealCardsPayload) = protocol.DealCardsPayload{
-			Cards:         protoToCards(pbMsg.Cards),
-			LandlordCards: protoToCards(pbMsg.LandlordCards),
+			Cards:       protoToCards(pbMsg.Cards),
+			BottomCards: protoToCards(pbMsg.BottomCards),
 		}
 	case protocol.MsgBidTurn:
 		var pbMsg pb.BidTurnPayload
@@ -484,9 +484,9 @@ func DecodePayload(msgType protocol.MessageType, data []byte, target any) error 
 			return err
 		}
 		*target.(*protocol.LandlordPayload) = protocol.LandlordPayload{
-			PlayerID:      pbMsg.PlayerId,
-			PlayerName:    pbMsg.PlayerName,
-			LandlordCards: protoToCards(pbMsg.LandlordCards),
+			PlayerID:    pbMsg.PlayerId,
+			PlayerName:  pbMsg.PlayerName,
+			BottomCards: protoToCards(pbMsg.BottomCards),
 		}
 	case protocol.MsgPlayTurn:
 		var pbMsg pb.PlayTurnPayload

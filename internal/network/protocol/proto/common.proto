@@ -36,7 +36,7 @@ message GameStateDTO {
   string phase = 1;                      // bidding/playing
   repeated PlayerInfo players = 2;       // 所有玩家信息
   repeated CardInfo hand = 3;            // 自己的手牌
-  repeated CardInfo landlord_cards = 4;  // 底牌
+  repeated CardInfo bottom_cards = 4;  // 底牌
   string current_turn = 5;               // 当前回合玩家 ID
   repeated CardInfo last_played = 6;     // 上家出的牌
   string last_player_id = 7;             // 上家 ID
