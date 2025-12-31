@@ -244,7 +244,7 @@ func TestPayloadRoundTrip_GameMessages(t *testing.T) {
 				{Suit: 0, Rank: 3, Color: 0},
 				{Suit: 1, Rank: 14, Color: 1},
 			},
-			LandlordCards: []protocol.CardInfo{
+			BottomCards: []protocol.CardInfo{
 				{Suit: 2, Rank: 5, Color: 0},
 			},
 		}
@@ -257,7 +257,7 @@ func TestPayloadRoundTrip_GameMessages(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Len(t, result.Cards, 2)
-		assert.Len(t, result.LandlordCards, 1)
+		assert.Len(t, result.BottomCards, 1)
 	})
 
 	t.Run("BidTurn", func(t *testing.T) {
@@ -300,9 +300,9 @@ func TestPayloadRoundTrip_GameMessages(t *testing.T) {
 	t.Run("Landlord", func(t *testing.T) {
 		t.Parallel()
 		original := protocol.LandlordPayload{
-			PlayerID:      "p1",
-			PlayerName:    "Player1",
-			LandlordCards: []protocol.CardInfo{{Suit: 0, Rank: 3, Color: 0}},
+			PlayerID:    "p1",
+			PlayerName:  "Player1",
+			BottomCards: []protocol.CardInfo{{Suit: 0, Rank: 3, Color: 0}},
 		}
 
 		data, err := EncodePayload(protocol.MsgLandlord, original)
@@ -313,7 +313,7 @@ func TestPayloadRoundTrip_GameMessages(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, original.PlayerID, result.PlayerID)
-		assert.Len(t, result.LandlordCards, 1)
+		assert.Len(t, result.BottomCards, 1)
 	})
 
 	t.Run("PlayTurn", func(t *testing.T) {
@@ -566,10 +566,10 @@ func TestPayloadRoundTrip_ReconnectionMessages(t *testing.T) {
 				Players: []protocol.PlayerInfo{
 					{ID: "p1", Name: "Player1", Seat: 0, IsLandlord: true},
 				},
-				Hand:          []protocol.CardInfo{{Suit: 0, Rank: 3}},
-				LandlordCards: []protocol.CardInfo{{Suit: 1, Rank: 5}},
-				CurrentTurn:   "p1",
-				MustPlay:      true,
+				Hand:        []protocol.CardInfo{{Suit: 0, Rank: 3}},
+				BottomCards: []protocol.CardInfo{{Suit: 1, Rank: 5}},
+				CurrentTurn: "p1",
+				MustPlay:    true,
 			},
 		}
 

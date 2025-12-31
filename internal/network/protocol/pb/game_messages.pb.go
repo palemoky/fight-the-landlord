@@ -335,7 +335,7 @@ func (x *GameStartPayload) GetPlayers() []*PlayerInfo {
 type DealCardsPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Cards         []*CardInfo            `protobuf:"bytes,1,rep,name=cards,proto3" json:"cards,omitempty"`
-	LandlordCards []*CardInfo            `protobuf:"bytes,2,rep,name=landlord_cards,json=landlordCards,proto3" json:"landlord_cards,omitempty"`
+	BottomCards   []*CardInfo            `protobuf:"bytes,2,rep,name=bottom_cards,json=bottomCards,proto3" json:"bottom_cards,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -377,9 +377,9 @@ func (x *DealCardsPayload) GetCards() []*CardInfo {
 	return nil
 }
 
-func (x *DealCardsPayload) GetLandlordCards() []*CardInfo {
+func (x *DealCardsPayload) GetBottomCards() []*CardInfo {
 	if x != nil {
-		return x.LandlordCards
+		return x.BottomCards
 	}
 	return nil
 }
@@ -503,7 +503,7 @@ type LandlordPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	PlayerName    string                 `protobuf:"bytes,2,opt,name=player_name,json=playerName,proto3" json:"player_name,omitempty"`
-	LandlordCards []*CardInfo            `protobuf:"bytes,3,rep,name=landlord_cards,json=landlordCards,proto3" json:"landlord_cards,omitempty"`
+	BottomCards   []*CardInfo            `protobuf:"bytes,3,rep,name=bottom_cards,json=bottomCards,proto3" json:"bottom_cards,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -552,9 +552,9 @@ func (x *LandlordPayload) GetPlayerName() string {
 	return ""
 }
 
-func (x *LandlordPayload) GetLandlordCards() []*CardInfo {
+func (x *LandlordPayload) GetBottomCards() []*CardInfo {
 	if x != nil {
-		return x.LandlordCards
+		return x.BottomCards
 	}
 	return nil
 }
@@ -849,10 +849,10 @@ const file_internal_network_protocol_proto_game_messages_proto_rawDesc = "" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x14\n" +
 	"\x05ready\x18\x02 \x01(\bR\x05ready\"B\n" +
 	"\x10GameStartPayload\x12.\n" +
-	"\aplayers\x18\x01 \x03(\v2\x14.protocol.PlayerInfoR\aplayers\"w\n" +
+	"\aplayers\x18\x01 \x03(\v2\x14.protocol.PlayerInfoR\aplayers\"s\n" +
 	"\x10DealCardsPayload\x12(\n" +
-	"\x05cards\x18\x01 \x03(\v2\x12.protocol.CardInfoR\x05cards\x129\n" +
-	"\x0elandlord_cards\x18\x02 \x03(\v2\x12.protocol.CardInfoR\rlandlordCards\"G\n" +
+	"\x05cards\x18\x01 \x03(\v2\x12.protocol.CardInfoR\x05cards\x125\n" +
+	"\fbottom_cards\x18\x02 \x03(\v2\x12.protocol.CardInfoR\vbottomCards\"G\n" +
 	"\x0eBidTurnPayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x18\n" +
 	"\atimeout\x18\x02 \x01(\x05R\atimeout\"b\n" +
@@ -860,12 +860,12 @@ const file_internal_network_protocol_proto_game_messages_proto_rawDesc = "" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
 	"playerName\x12\x10\n" +
-	"\x03bid\x18\x03 \x01(\bR\x03bid\"\x8a\x01\n" +
+	"\x03bid\x18\x03 \x01(\bR\x03bid\"\x86\x01\n" +
 	"\x0fLandlordPayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
-	"playerName\x129\n" +
-	"\x0elandlord_cards\x18\x03 \x03(\v2\x12.protocol.CardInfoR\rlandlordCards\"\x80\x01\n" +
+	"playerName\x125\n" +
+	"\fbottom_cards\x18\x03 \x03(\v2\x12.protocol.CardInfoR\vbottomCards\"\x80\x01\n" +
 	"\x0fPlayTurnPayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x18\n" +
 	"\atimeout\x18\x02 \x01(\x05R\atimeout\x12\x1b\n" +
@@ -930,8 +930,8 @@ var file_internal_network_protocol_proto_game_messages_proto_depIdxs = []int32{
 	14, // 3: protocol.PlayerJoinedPayload.player:type_name -> protocol.PlayerInfo
 	14, // 4: protocol.GameStartPayload.players:type_name -> protocol.PlayerInfo
 	15, // 5: protocol.DealCardsPayload.cards:type_name -> protocol.CardInfo
-	15, // 6: protocol.DealCardsPayload.landlord_cards:type_name -> protocol.CardInfo
-	15, // 7: protocol.LandlordPayload.landlord_cards:type_name -> protocol.CardInfo
+	15, // 6: protocol.DealCardsPayload.bottom_cards:type_name -> protocol.CardInfo
+	15, // 7: protocol.LandlordPayload.bottom_cards:type_name -> protocol.CardInfo
 	15, // 8: protocol.CardPlayedPayload.cards:type_name -> protocol.CardInfo
 	16, // 9: protocol.GameOverPayload.player_hands:type_name -> protocol.PlayerHand
 	10, // [10:10] is the sub-list for method output_type

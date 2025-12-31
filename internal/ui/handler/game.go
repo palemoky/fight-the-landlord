@@ -26,8 +26,8 @@ func handleMsgDealCards(m model.Model, msg *protocol.Message) tea.Cmd {
 	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.Game().State().Hand = convert.InfosToCards(payload.Cards)
 	m.Game().State().SortHand()
-	if len(payload.LandlordCards) > 0 && payload.LandlordCards[0].Rank > 0 {
-		m.Game().State().BottomCards = convert.InfosToCards(payload.LandlordCards)
+	if len(payload.BottomCards) > 0 && payload.BottomCards[0].Rank > 0 {
+		m.Game().State().BottomCards = convert.InfosToCards(payload.BottomCards)
 	}
 
 	for i := range m.Game().State().Players {
@@ -69,7 +69,7 @@ func handleMsgBidTurn(m model.Model, msg *protocol.Message) tea.Cmd {
 func handleMsgLandlord(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.LandlordPayload
 	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
-	m.Game().State().BottomCards = convert.InfosToCards(payload.LandlordCards)
+	m.Game().State().BottomCards = convert.InfosToCards(payload.BottomCards)
 	for i, p := range m.Game().State().Players {
 		m.Game().State().Players[i].IsLandlord = (p.ID == payload.PlayerID)
 		if p.ID == payload.PlayerID {
@@ -154,14 +154,8 @@ func handleMsgGameOver(m model.Model, msg *protocol.Message) tea.Cmd {
 	m.Game().State().WinnerIsLandlord = payload.IsLandlord
 	m.Input().Placeholder = "按回车返回大厅"
 
-	isWinner := false
-	if m.Game().State().IsLandlord && m.Game().State().WinnerIsLandlord {
-		isWinner = true
-	} else if !m.Game().State().IsLandlord && !m.Game().State().WinnerIsLandlord {
-		isWinner = true
-	}
-
-	if isWinner {
+	// 判断是否获胜：玩家身份和赢家身份一致即为胜利
+	if m.Game().State().IsLandlord == m.Game().State().WinnerIsLandlord {
 		m.PlaySound("win")
 	} else {
 		m.PlaySound("lose")

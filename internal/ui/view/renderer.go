@@ -174,15 +174,15 @@ func GameOverView(m model.Model) string {
 // --- Helper rendering functions ---
 
 func renderTopSection(state *gameClient.GameState, cardCounterEnabled bool) string {
-	landlordCardsView := renderLandlordCards(state.BottomCards)
+	bottomCardsView := renderBottomCards(state.BottomCards)
 	if cardCounterEnabled && state.CardCounter != nil {
 		cardCounter := renderCardCounter(state.CardCounter)
-		return lipgloss.JoinHorizontal(lipgloss.Top, cardCounter, "  ", landlordCardsView)
+		return lipgloss.JoinHorizontal(lipgloss.Top, cardCounter, "  ", bottomCardsView)
 	}
-	return landlordCardsView
+	return bottomCardsView
 }
 
-func renderLandlordCards(bottomCards []card.Card) string {
+func renderBottomCards(bottomCards []card.Card) string {
 	if len(bottomCards) == 0 {
 		return common.BoxStyle.Render("底牌: (待揭晓)")
 	}

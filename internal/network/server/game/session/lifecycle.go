@@ -39,8 +39,8 @@ func (gs *GameSession) Start() {
 func (gs *GameSession) deal() {
 	// 每人发 17 张
 	for range 17 {
-		for j := range 3 {
-			gs.players[j].Hand = append(gs.players[j].Hand, gs.deck[0])
+		for i := range 3 {
+			gs.players[i].Hand = append(gs.players[i].Hand, gs.deck[0])
 			gs.deck = gs.deck[1:]
 		}
 	}
@@ -60,8 +60,8 @@ func (gs *GameSession) deal() {
 		rp := gs.room.GetPlayer(p.ID)
 		client := rp.GetClient()
 		client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
-			Cards:         convert.CardsToInfos(p.Hand),
-			LandlordCards: make([]protocol.CardInfo, 3), // 暂时不显示
+			Cards:       convert.CardsToInfos(p.Hand),
+			BottomCards: make([]protocol.CardInfo, 3), // 暂时不显示
 		}))
 	}
 }

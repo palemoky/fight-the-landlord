@@ -239,15 +239,15 @@ func (x *PlayerHand) GetCards() []*CardInfo {
 // GameStateDTO 游戏状态数据传输对象（用于重连恢复）
 type GameStateDTO struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Phase         string                 `protobuf:"bytes,1,opt,name=phase,proto3" json:"phase,omitempty"`                                      // bidding/playing
-	Players       []*PlayerInfo          `protobuf:"bytes,2,rep,name=players,proto3" json:"players,omitempty"`                                  // 所有玩家信息
-	Hand          []*CardInfo            `protobuf:"bytes,3,rep,name=hand,proto3" json:"hand,omitempty"`                                        // 自己的手牌
-	LandlordCards []*CardInfo            `protobuf:"bytes,4,rep,name=landlord_cards,json=landlordCards,proto3" json:"landlord_cards,omitempty"` // 底牌
-	CurrentTurn   string                 `protobuf:"bytes,5,opt,name=current_turn,json=currentTurn,proto3" json:"current_turn,omitempty"`       // 当前回合玩家 ID
-	LastPlayed    []*CardInfo            `protobuf:"bytes,6,rep,name=last_played,json=lastPlayed,proto3" json:"last_played,omitempty"`          // 上家出的牌
-	LastPlayerId  string                 `protobuf:"bytes,7,opt,name=last_player_id,json=lastPlayerId,proto3" json:"last_player_id,omitempty"`  // 上家 ID
-	MustPlay      bool                   `protobuf:"varint,8,opt,name=must_play,json=mustPlay,proto3" json:"must_play,omitempty"`               // 是否必须出牌
-	CanBeat       bool                   `protobuf:"varint,9,opt,name=can_beat,json=canBeat,proto3" json:"can_beat,omitempty"`                  // 是否能打过
+	Phase         string                 `protobuf:"bytes,1,opt,name=phase,proto3" json:"phase,omitempty"`                                     // bidding/playing
+	Players       []*PlayerInfo          `protobuf:"bytes,2,rep,name=players,proto3" json:"players,omitempty"`                                 // 所有玩家信息
+	Hand          []*CardInfo            `protobuf:"bytes,3,rep,name=hand,proto3" json:"hand,omitempty"`                                       // 自己的手牌
+	BottomCards   []*CardInfo            `protobuf:"bytes,4,rep,name=bottom_cards,json=bottomCards,proto3" json:"bottom_cards,omitempty"`      // 底牌
+	CurrentTurn   string                 `protobuf:"bytes,5,opt,name=current_turn,json=currentTurn,proto3" json:"current_turn,omitempty"`      // 当前回合玩家 ID
+	LastPlayed    []*CardInfo            `protobuf:"bytes,6,rep,name=last_played,json=lastPlayed,proto3" json:"last_played,omitempty"`         // 上家出的牌
+	LastPlayerId  string                 `protobuf:"bytes,7,opt,name=last_player_id,json=lastPlayerId,proto3" json:"last_player_id,omitempty"` // 上家 ID
+	MustPlay      bool                   `protobuf:"varint,8,opt,name=must_play,json=mustPlay,proto3" json:"must_play,omitempty"`              // 是否必须出牌
+	CanBeat       bool                   `protobuf:"varint,9,opt,name=can_beat,json=canBeat,proto3" json:"can_beat,omitempty"`                 // 是否能打过
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -303,9 +303,9 @@ func (x *GameStateDTO) GetHand() []*CardInfo {
 	return nil
 }
 
-func (x *GameStateDTO) GetLandlordCards() []*CardInfo {
+func (x *GameStateDTO) GetBottomCards() []*CardInfo {
 	if x != nil {
-		return x.LandlordCards
+		return x.BottomCards
 	}
 	return nil
 }
@@ -516,12 +516,12 @@ const file_internal_network_protocol_proto_common_proto_rawDesc = "" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
 	"playerName\x12(\n" +
-	"\x05cards\x18\x03 \x03(\v2\x12.protocol.CardInfoR\x05cards\"\xed\x02\n" +
+	"\x05cards\x18\x03 \x03(\v2\x12.protocol.CardInfoR\x05cards\"\xe9\x02\n" +
 	"\fGameStateDTO\x12\x14\n" +
 	"\x05phase\x18\x01 \x01(\tR\x05phase\x12.\n" +
 	"\aplayers\x18\x02 \x03(\v2\x14.protocol.PlayerInfoR\aplayers\x12&\n" +
-	"\x04hand\x18\x03 \x03(\v2\x12.protocol.CardInfoR\x04hand\x129\n" +
-	"\x0elandlord_cards\x18\x04 \x03(\v2\x12.protocol.CardInfoR\rlandlordCards\x12!\n" +
+	"\x04hand\x18\x03 \x03(\v2\x12.protocol.CardInfoR\x04hand\x125\n" +
+	"\fbottom_cards\x18\x04 \x03(\v2\x12.protocol.CardInfoR\vbottomCards\x12!\n" +
 	"\fcurrent_turn\x18\x05 \x01(\tR\vcurrentTurn\x123\n" +
 	"\vlast_played\x18\x06 \x03(\v2\x12.protocol.CardInfoR\n" +
 	"lastPlayed\x12$\n" +
@@ -567,7 +567,7 @@ var file_internal_network_protocol_proto_common_proto_depIdxs = []int32{
 	0, // 0: protocol.PlayerHand.cards:type_name -> protocol.CardInfo
 	1, // 1: protocol.GameStateDTO.players:type_name -> protocol.PlayerInfo
 	0, // 2: protocol.GameStateDTO.hand:type_name -> protocol.CardInfo
-	0, // 3: protocol.GameStateDTO.landlord_cards:type_name -> protocol.CardInfo
+	0, // 3: protocol.GameStateDTO.bottom_cards:type_name -> protocol.CardInfo
 	0, // 4: protocol.GameStateDTO.last_played:type_name -> protocol.CardInfo
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type

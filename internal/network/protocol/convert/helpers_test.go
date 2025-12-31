@@ -264,7 +264,7 @@ func TestGameStateDTORoundTrip(t *testing.T) {
 			{Suit: 0, Rank: 3, Color: 0},
 			{Suit: 1, Rank: 14, Color: 1},
 		},
-		LandlordCards: []protocol.CardInfo{
+		BottomCards: []protocol.CardInfo{
 			{Suit: 2, Rank: 5, Color: 0},
 		},
 		CurrentTurn:  "p1",
@@ -284,7 +284,7 @@ func TestGameStateDTORoundTrip(t *testing.T) {
 	assert.Equal(t, gs.CanBeat, result.CanBeat)
 	assert.Len(t, result.Players, len(gs.Players))
 	assert.Len(t, result.Hand, len(gs.Hand))
-	assert.Len(t, result.LandlordCards, len(gs.LandlordCards))
+	assert.Len(t, result.BottomCards, len(gs.BottomCards))
 	assert.Len(t, result.LastPlayed, len(gs.LastPlayed))
 }
 

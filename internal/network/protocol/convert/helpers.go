@@ -85,29 +85,29 @@ func protoToPlayerInfos(pbs []*pb.PlayerInfo) []protocol.PlayerInfo {
 
 func gameStateDTOToProto(gs *protocol.GameStateDTO) *pb.GameStateDTO {
 	return &pb.GameStateDTO{
-		Phase:         gs.Phase,
-		Players:       playerInfosToProto(gs.Players),
-		Hand:          cardsToProto(gs.Hand),
-		LandlordCards: cardsToProto(gs.LandlordCards),
-		CurrentTurn:   gs.CurrentTurn,
-		LastPlayed:    cardsToProto(gs.LastPlayed),
-		LastPlayerId:  gs.LastPlayerID,
-		MustPlay:      gs.MustPlay,
-		CanBeat:       gs.CanBeat,
+		Phase:        gs.Phase,
+		Players:      playerInfosToProto(gs.Players),
+		Hand:         cardsToProto(gs.Hand),
+		BottomCards:  cardsToProto(gs.BottomCards),
+		CurrentTurn:  gs.CurrentTurn,
+		LastPlayed:   cardsToProto(gs.LastPlayed),
+		LastPlayerId: gs.LastPlayerID,
+		MustPlay:     gs.MustPlay,
+		CanBeat:      gs.CanBeat,
 	}
 }
 
 func protoToGameStateDTO(pb *pb.GameStateDTO) *protocol.GameStateDTO {
 	return &protocol.GameStateDTO{
-		Phase:         pb.Phase,
-		Players:       protoToPlayerInfos(pb.Players),
-		Hand:          protoToCards(pb.Hand),
-		LandlordCards: protoToCards(pb.LandlordCards),
-		CurrentTurn:   pb.CurrentTurn,
-		LastPlayed:    protoToCards(pb.LastPlayed),
-		LastPlayerID:  pb.LastPlayerId,
-		MustPlay:      pb.MustPlay,
-		CanBeat:       pb.CanBeat,
+		Phase:        pb.Phase,
+		Players:      protoToPlayerInfos(pb.Players),
+		Hand:         protoToCards(pb.Hand),
+		BottomCards:  protoToCards(pb.BottomCards),
+		CurrentTurn:  pb.CurrentTurn,
+		LastPlayed:   protoToCards(pb.LastPlayed),
+		LastPlayerID: pb.LastPlayerId,
+		MustPlay:     pb.MustPlay,
+		CanBeat:      pb.CanBeat,
 	}
 }
 

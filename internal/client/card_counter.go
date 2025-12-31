@@ -19,10 +19,9 @@ func NewCardCounter() *CardCounter {
 // Reset initializes counter with a full deck (54 cards)
 func (cc *CardCounter) Reset() {
 	// 3-A and 2 each have 4 cards
-	for rank := card.Rank3; rank <= card.RankA; rank++ {
+	for rank := card.Rank3; rank <= card.Rank2; rank++ {
 		cc.remaining[rank] = 4
 	}
-	cc.remaining[card.Rank2] = 4
 
 	// Jokers have 1 each
 	cc.remaining[card.RankBlackJoker] = 1
