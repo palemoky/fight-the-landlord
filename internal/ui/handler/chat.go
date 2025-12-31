@@ -28,9 +28,19 @@ func handleMsgChat(m model.Model, msg *protocol.Message) tea.Cmd {
 		chatLine = fmt.Sprintf("[%s] 系统: %s", timeStr, payload.Content)
 	}
 
-	m.Lobby().AddChatMessage(chatLine)
-	if m.Game().State().RoomCode != "" {
+	// Route message to appropriate chat based on scope
+	switch payload.Scope {
+	case "lobby":
+		m.Lobby().AddChatMessage(chatLine)
+	case "room":
 		m.Game().AddChatMessage(chatLine)
+	default:
+		// Fallback: add to current context
+		if m.Game().State().RoomCode != "" {
+			m.Game().AddChatMessage(chatLine)
+		} else {
+			m.Lobby().AddChatMessage(chatLine)
+		}
 	}
 
 	return nil

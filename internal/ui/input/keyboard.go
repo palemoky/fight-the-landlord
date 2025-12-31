@@ -75,19 +75,58 @@ handleOtherKeys:
 			case tea.KeyEsc:
 				m.Game().SetShowQuickMsgMenu(false)
 				return true, nil
-			case tea.KeyRunes:
-				if msg.String() == "t" || msg.String() == "T" {
-					m.Game().SetShowQuickMsgMenu(false)
-					return true, nil
+			case tea.KeyUp:
+				// Scroll up in menu
+				scroll := m.Game().QuickMsgScroll()
+				if scroll > 0 {
+					m.Game().SetQuickMsgScroll(scroll - 1)
 				}
-				if msg.String() >= "1" && msg.String() <= "8" {
-					idx := int(msg.Runes[0] - '1')
-					if idx < len(view.QuickMessages) {
+				return true, nil
+			case tea.KeyDown:
+				// Scroll down in menu
+				scroll := m.Game().QuickMsgScroll()
+				maxScroll := max(len(view.QuickMessages)-10, 0)
+				if scroll < maxScroll {
+					m.Game().SetQuickMsgScroll(scroll + 1)
+				}
+				return true, nil
+			case tea.KeyEnter:
+				// Confirm selection based on input buffer
+				input := m.Game().QuickMsgInput()
+				if input != "" {
+					idx := 0
+					for _, c := range input {
+						idx = idx*10 + int(c-'0')
+					}
+					idx-- // Convert to 0-indexed
+					if idx >= 0 && idx < len(view.QuickMessages) {
 						if cmd := sendChatMessage(m, view.QuickMessages[idx], "room"); cmd != nil {
 							return true, cmd
 						}
 						m.Game().SetShowQuickMsgMenu(false)
 						return true, nil
+					}
+				}
+				m.Game().ClearQuickMsgInput()
+				return true, nil
+			case tea.KeyBackspace:
+				// Remove last digit from input
+				input := m.Game().QuickMsgInput()
+				if len(input) > 0 {
+					m.Game().SetQuickMsgInput(input[:len(input)-1])
+				}
+				return true, nil
+			case tea.KeyRunes:
+				if msg.String() == "t" || msg.String() == "T" {
+					m.Game().SetShowQuickMsgMenu(false)
+					return true, nil
+				}
+				// Accumulate digits for message selection
+				if len(msg.Runes) == 1 && msg.Runes[0] >= '0' && msg.Runes[0] <= '9' {
+					input := m.Game().QuickMsgInput()
+					// Limit to 2 digits
+					if len(input) < 2 {
+						m.Game().AppendQuickMsgInput(msg.Runes[0])
 					}
 				}
 			}

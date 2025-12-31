@@ -124,7 +124,7 @@ func GameView(m model.Model) string {
 
 	// Overlays
 	if game.ShowQuickMsgMenu() {
-		menuContent := renderQuickMsgMenu()
+		menuContent := renderQuickMsgMenu(game.QuickMsgScroll(), game.QuickMsgInput())
 		return lipgloss.Place(width, height,
 			lipgloss.Center, lipgloss.Center,
 			menuContent,
@@ -380,12 +380,39 @@ func renderTimer(duration time.Duration, startTime time.Time) string {
 	return fmt.Sprintf("%02d:%02d", secs/60, secs%60)
 }
 
-func renderQuickMsgMenu() string {
+func renderQuickMsgMenu(scroll int, inputBuf string) string {
 	var sb strings.Builder
-	sb.WriteString("【快捷消息】\n")
-	for i, msg := range QuickMessages {
-		fmt.Fprintf(&sb, "%d. %s\n", i+1, msg)
+	total := len(QuickMessages)
+	sb.WriteString(fmt.Sprintf("【快捷消息】 共 %d 条\n", total))
+	sb.WriteString(strings.Repeat("─", 35) + "\n")
+
+	// Show 10 messages at a time with scroll
+	visibleCount := min(10, total)
+	start := scroll
+	end := min(start+visibleCount, total)
+
+	// Scroll indicator at top
+	if scroll > 0 {
+		sb.WriteString("    ↑ 更多消息...\n")
 	}
-	sb.WriteString("\n按 T 或 ESC 关闭")
+
+	for i := start; i < end; i++ {
+		fmt.Fprintf(&sb, "%2d. %s\n", i+1, QuickMessages[i])
+	}
+
+	// Scroll indicator at bottom
+	if end < total {
+		sb.WriteString("    ↓ 更多消息...\n")
+	}
+
+	sb.WriteString(strings.Repeat("─", 35) + "\n")
+
+	// Show input prompt
+	if inputBuf != "" {
+		fmt.Fprintf(&sb, "输入: %s_ (按回车确认)\n", inputBuf)
+	} else {
+		sb.WriteString("输入数字选择, ↑↓滚动, T/ESC关闭\n")
+	}
+
 	return common.BoxStyle.Render(sb.String())
 }

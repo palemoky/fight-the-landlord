@@ -46,6 +46,8 @@ type GameModel struct {
 	chatHistory      []string
 	chatInput        textinput.Model
 	showQuickMsgMenu bool
+	quickMsgInput    string // Buffer for typing 1-2 digit number
+	quickMsgScroll   int    // Scroll position for quick message menu
 }
 
 // NewGameModel creates a new GameModel.
@@ -107,9 +109,21 @@ func (m *GameModel) AddChatMessage(msg string) {
 		m.chatHistory = m.chatHistory[len(m.chatHistory)-50:]
 	}
 }
-func (m *GameModel) ClearChatHistory()             { m.chatHistory = nil }
-func (m *GameModel) ShowQuickMsgMenu() bool        { return m.showQuickMsgMenu }
-func (m *GameModel) SetShowQuickMsgMenu(show bool) { m.showQuickMsgMenu = show }
+func (m *GameModel) ClearChatHistory()      { m.chatHistory = nil }
+func (m *GameModel) ShowQuickMsgMenu() bool { return m.showQuickMsgMenu }
+func (m *GameModel) SetShowQuickMsgMenu(show bool) {
+	m.showQuickMsgMenu = show
+	if !show {
+		m.quickMsgInput = "" // Clear input when closing menu
+		m.quickMsgScroll = 0
+	}
+}
+func (m *GameModel) QuickMsgInput() string      { return m.quickMsgInput }
+func (m *GameModel) SetQuickMsgInput(s string)  { m.quickMsgInput = s }
+func (m *GameModel) AppendQuickMsgInput(c rune) { m.quickMsgInput += string(c) }
+func (m *GameModel) ClearQuickMsgInput()        { m.quickMsgInput = "" }
+func (m *GameModel) QuickMsgScroll() int        { return m.quickMsgScroll }
+func (m *GameModel) SetQuickMsgScroll(pos int)  { m.quickMsgScroll = pos }
 
 func (m *GameModel) Width() int  { return m.width }
 func (m *GameModel) Height() int { return m.height }
