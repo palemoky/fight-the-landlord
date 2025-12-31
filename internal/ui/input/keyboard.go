@@ -35,114 +35,133 @@ func sendChatMessage(m model.Model, content, scope string) tea.Cmd {
 	return nil
 }
 
-// HandleKeyPress handles keyboard input and returns whether it was handled.
-func HandleKeyPress(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
-	// Lobby chat handling
-	if m.Phase() == model.PhaseLobby {
-		chatInput := m.Lobby().ChatInput()
+// handleLobbyChatInput handles chat input in the lobby
+// Returns (handled, cmd) where handled indicates if the key was processed
+func handleLobbyChatInput(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
+	if m.Phase() != model.PhaseLobby {
+		return false, nil
+	}
 
-		// "/" key focuses chat input
-		if !chatInput.Focused() {
-			if msg.String() == "/" {
-				chatInput.Focus()
-				return true, nil
-			}
-			goto handleOtherKeys
+	chatInput := m.Lobby().ChatInput()
+
+	// "/" key focuses chat input
+	if !chatInput.Focused() {
+		if msg.String() == "/" {
+			chatInput.Focus()
+			return true, nil
 		}
+		return false, nil
+	}
 
-		// Chat input is focused - handle input
-		switch msg.Type {
-		case tea.KeyEnter:
-			if content := chatInput.Value(); content != "" {
-				if cmd := sendChatMessage(m, content, "lobby"); cmd != nil {
+	// Chat input is focused - handle input
+	switch msg.Type {
+	case tea.KeyEnter:
+		if content := chatInput.Value(); content != "" {
+			if cmd := sendChatMessage(m, content, "lobby"); cmd != nil {
+				return true, cmd
+			}
+			chatInput.SetValue("")
+		}
+		return true, nil
+	case tea.KeyEsc:
+		chatInput.Blur()
+		return true, nil
+	default:
+		var cmd tea.Cmd
+		*chatInput, cmd = chatInput.Update(msg)
+		return true, cmd
+	}
+}
+
+// handleQuickMessageMenu handles the quick message menu in-game
+func handleQuickMessageMenu(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
+	if m.Phase() != model.PhaseBidding && m.Phase() != model.PhasePlaying {
+		return false, nil
+	}
+
+	// Toggle quick message menu with 'T' key
+	if msg.String() == "t" || msg.String() == "T" {
+		if !m.Game().ShowQuickMsgMenu() {
+			m.Game().SetShowQuickMsgMenu(true)
+			return true, nil
+		}
+	}
+
+	// Handle menu interactions
+	if !m.Game().ShowQuickMsgMenu() {
+		return false, nil
+	}
+
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.Game().SetShowQuickMsgMenu(false)
+		return true, nil
+	case tea.KeyUp:
+		scroll := m.Game().QuickMsgScroll()
+		if scroll > 0 {
+			m.Game().SetQuickMsgScroll(scroll - 1)
+		}
+		return true, nil
+	case tea.KeyDown:
+		scroll := m.Game().QuickMsgScroll()
+		maxScroll := max(len(view.QuickMessages)-10, 0)
+		if scroll < maxScroll {
+			m.Game().SetQuickMsgScroll(scroll + 1)
+		}
+		return true, nil
+	case tea.KeyEnter:
+		input := m.Game().QuickMsgInput()
+		if input != "" {
+			idx := 0
+			for _, c := range input {
+				idx = idx*10 + int(c-'0')
+			}
+			idx-- // Convert to 0-indexed
+			if idx >= 0 && idx < len(view.QuickMessages) {
+				if cmd := sendChatMessage(m, view.QuickMessages[idx], "room"); cmd != nil {
 					return true, cmd
 				}
-				chatInput.SetValue("")
-			}
-			return true, nil
-		case tea.KeyEsc:
-			chatInput.Blur()
-			return true, nil
-		default:
-			var cmd tea.Cmd
-			*chatInput, cmd = chatInput.Update(msg)
-			return true, cmd
-		}
-	}
-
-handleOtherKeys:
-
-	// In-game quick message handling
-	if m.Phase() == model.PhaseBidding || m.Phase() == model.PhasePlaying {
-		if m.Game().ShowQuickMsgMenu() {
-			switch msg.Type {
-			case tea.KeyEsc:
 				m.Game().SetShowQuickMsgMenu(false)
 				return true, nil
-			case tea.KeyUp:
-				// Scroll up in menu
-				scroll := m.Game().QuickMsgScroll()
-				if scroll > 0 {
-					m.Game().SetQuickMsgScroll(scroll - 1)
-				}
-				return true, nil
-			case tea.KeyDown:
-				// Scroll down in menu
-				scroll := m.Game().QuickMsgScroll()
-				maxScroll := max(len(view.QuickMessages)-10, 0)
-				if scroll < maxScroll {
-					m.Game().SetQuickMsgScroll(scroll + 1)
-				}
-				return true, nil
-			case tea.KeyEnter:
-				// Confirm selection based on input buffer
-				input := m.Game().QuickMsgInput()
-				if input != "" {
-					idx := 0
-					for _, c := range input {
-						idx = idx*10 + int(c-'0')
-					}
-					idx-- // Convert to 0-indexed
-					if idx >= 0 && idx < len(view.QuickMessages) {
-						if cmd := sendChatMessage(m, view.QuickMessages[idx], "room"); cmd != nil {
-							return true, cmd
-						}
-						m.Game().SetShowQuickMsgMenu(false)
-						return true, nil
-					}
-				}
-				m.Game().ClearQuickMsgInput()
-				return true, nil
-			case tea.KeyBackspace:
-				// Remove last digit from input
-				input := m.Game().QuickMsgInput()
-				if len(input) > 0 {
-					m.Game().SetQuickMsgInput(input[:len(input)-1])
-				}
-				return true, nil
-			case tea.KeyRunes:
-				if msg.String() == "t" || msg.String() == "T" {
-					m.Game().SetShowQuickMsgMenu(false)
-					return true, nil
-				}
-				// Accumulate digits for message selection
-				if len(msg.Runes) == 1 && msg.Runes[0] >= '0' && msg.Runes[0] <= '9' {
-					input := m.Game().QuickMsgInput()
-					// Limit to 2 digits
-					if len(input) < 2 {
-						m.Game().AppendQuickMsgInput(msg.Runes[0])
-					}
-				}
 			}
+		}
+		m.Game().ClearQuickMsgInput()
+		return true, nil
+	case tea.KeyBackspace:
+		input := m.Game().QuickMsgInput()
+		if len(input) > 0 {
+			m.Game().SetQuickMsgInput(input[:len(input)-1])
+		}
+		return true, nil
+	case tea.KeyRunes:
+		if msg.String() == "t" || msg.String() == "T" {
+			m.Game().SetShowQuickMsgMenu(false)
 			return true, nil
 		}
-
-		if msg.String() == "t" || msg.String() == "T" {
-			m.Game().SetShowQuickMsgMenu(!m.Game().ShowQuickMsgMenu())
-			return true, nil
+		// Accumulate digits for message selection
+		if len(msg.Runes) == 1 && msg.Runes[0] >= '0' && msg.Runes[0] <= '9' {
+			input := m.Game().QuickMsgInput()
+			if len(input) < 2 {
+				m.Game().AppendQuickMsgInput(msg.Runes[0])
+			}
 		}
 	}
+	return true, nil
+}
 
+// HandleKeyPress handles keyboard input and returns whether it was handled.
+func HandleKeyPress(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
+	// Try lobby chat handling first
+	if handled, cmd := handleLobbyChatInput(m, msg); handled {
+		return true, cmd
+	}
+
+	// Try quick message menu handling
+	if handled, cmd := handleQuickMessageMenu(m, msg); handled {
+		return true, cmd
+	}
+
+	// General key handling
 	switch msg.Type {
 	case tea.KeyCtrlC, tea.KeyEsc:
 		return handleEscKey(m)
