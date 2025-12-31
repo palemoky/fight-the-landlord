@@ -23,7 +23,7 @@ game:
   shutdown_timeout: 30 # 54张牌*30s出牌时间
   # 优雅关闭检测间隔（秒），检查游戏是否结束的频率
   shutdown_check_interval: 15 # 检查频率根据房间延迟清理调整
-  # 游戏结束后房间清理延迟（秒），让玩家能返回游戏大厅看到维护通知
+  # 游戏结束后关闭服务器延迟（秒），让玩家能返回游戏大厅看到维护通知
   room_cleanup_delay: 30
 
 security:

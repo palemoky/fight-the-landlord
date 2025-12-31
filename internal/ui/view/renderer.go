@@ -409,7 +409,7 @@ func renderQuickMsgMenu(scroll int, inputBuf string) string {
 
 	// Show input prompt
 	if inputBuf != "" {
-		fmt.Fprintf(&sb, "输入: %s_ (按回车确认)\n", inputBuf)
+		fmt.Fprintf(&sb, "输入: %s (按回车确认)\n", inputBuf)
 	} else {
 		sb.WriteString("输入数字选择, ↑↓滚动, T/ESC关闭\n")
 	}
