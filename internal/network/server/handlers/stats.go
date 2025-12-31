@@ -139,7 +139,7 @@ func (h *Handler) handleGetOnlineCount(client types.ClientInterface) {
 func (h *Handler) handleGetMaintenanceStatus(client types.ClientInterface) {
 	maintenance := h.server.IsMaintenanceMode()
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgMaintenanceStatus, protocol.MaintenanceStatusPayload{
+	client.SendMessage(encoding.MustNewMessage(protocol.MsgMaintenancePull, protocol.MaintenanceStatusPayload{
 		Maintenance: maintenance,
 	}))
 }

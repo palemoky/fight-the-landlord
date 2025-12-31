@@ -16,6 +16,12 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/ui/view"
 )
 
+func clearSystemNotification() tea.Cmd {
+	return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+		return model.ClearSystemNotificationMsg{}
+	})
+}
+
 // sendChatMessage sends a chat message and returns error command if failed
 func sendChatMessage(m model.Model, content, scope string) tea.Cmd {
 	chatMsg := encoding.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
@@ -24,9 +30,7 @@ func sendChatMessage(m model.Model, content, scope string) tea.Cmd {
 	})
 	if err := m.Client().SendMessage(chatMsg); err != nil {
 		m.SetNotification(model.NotifyError, fmt.Sprintf("⚠️ 发送消息失败: %v", err), true)
-		return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-			return model.ClearSystemNotificationMsg{}
-		})
+		return clearSystemNotification()
 	}
 	return nil
 }
@@ -173,9 +177,7 @@ func handleEscKey(m model.Model) (bool, tea.Cmd) {
 		return true, nil
 	case model.PhaseBidding, model.PhasePlaying:
 		m.SetNotification(model.NotifyError, "⚠️ 游戏进行中，无法退出！", true)
-		return true, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-			return model.ClearSystemNotificationMsg{}
-		})
+		return true, clearSystemNotification()
 	}
 
 	m.Client().Close()
@@ -226,72 +228,75 @@ func handleEnter(m model.Model) tea.Cmd {
 	return nil
 }
 
+// checkServerAvailability 检查服务器是否可用于游戏操作
+// 返回 true 和错误命令如果服务器不可用，返回 false 和 nil 如果可用
+func checkServerAvailability(m model.Model) (blocked bool, cmd tea.Cmd) {
+	if blocked, cmd := checkMaintenanceMode(m); blocked {
+		return blocked, cmd
+	}
+	if m.Client().IsReconnecting() {
+		m.SetNotification(model.NotifyError, "⚠️ 正在重连中，请稍后再试", true)
+		return true, clearSystemNotification()
+	}
+	if !m.Client().IsConnected() {
+		m.SetNotification(model.NotifyError, "⚠️ 未连接到服务器", true)
+		return true, clearSystemNotification()
+	}
+	return false, nil
+}
+
+// checkMaintenanceMode 检查服务器是否处于维护模式
+// 返回 true 和错误命令如果在维护模式，返回 false 和 nil 如果正常
+func checkMaintenanceMode(m model.Model) (blocked bool, cmd tea.Cmd) {
+	if m.IsMaintenanceMode() {
+		m.SetNotification(model.NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
+		return true, clearSystemNotification()
+	}
+	return false, nil
+}
+
 func handleLobbyEnter(m model.Model, input string) tea.Cmd {
 	if input == "" {
 		input = fmt.Sprintf("%d", m.Lobby().SelectedIndex()+1)
 	}
 
 	switch input {
-	case "1":
-		if m.IsMaintenanceMode() {
-			m.SetNotification(model.NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
-			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-				return model.ClearSystemNotificationMsg{}
-			})
-		}
-		if m.Client().IsReconnecting() {
-			m.SetNotification(model.NotifyError, "⚠️ 正在重连中，请稍后再试", true)
-			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-				return model.ClearSystemNotificationMsg{}
-			})
-		}
-		if !m.Client().IsConnected() {
-			m.SetNotification(model.NotifyError, "⚠️ 未连接到服务器", true)
-			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-				return model.ClearSystemNotificationMsg{}
-			})
+	case "1": // 快速匹配
+		if blocked, cmd := checkServerAvailability(m); blocked {
+			return cmd
 		}
 		m.SetPhase(model.PhaseMatching)
 		m.SetMatchingStartTime(time.Now())
 		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgQuickMatch, nil))
 
-	case "2":
-		if m.IsMaintenanceMode() {
-			m.SetNotification(model.NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
-			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-				return model.ClearSystemNotificationMsg{}
-			})
+	case "2": // 创建房间
+		if blocked, cmd := checkMaintenanceMode(m); blocked {
+			return cmd
 		}
 		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgCreateRoom, nil))
 
-	case "3":
-		if m.IsMaintenanceMode() {
-			m.SetNotification(model.NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
-			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-				return model.ClearSystemNotificationMsg{}
-			})
+	case "3": // 房间列表
+		if blocked, cmd := checkMaintenanceMode(m); blocked {
+			return cmd
 		}
 		m.SetPhase(model.PhaseRoomList)
 		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetRoomList, nil))
 		m.Input().Placeholder = "输入房间号或按 ESC 返回"
 
-	case "4":
+	case "4": // 排行榜
 		m.SetPhase(model.PhaseLeaderboard)
 		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetLeaderboard, nil))
 
-	case "5":
+	case "5": // 统计信息
 		m.SetPhase(model.PhaseStats)
 		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetStats, nil))
 
-	case "6":
+	case "6": // 游戏规则
 		m.SetPhase(model.PhaseRules)
 
-	default:
-		if m.IsMaintenanceMode() {
-			m.SetNotification(model.NotifyError, "⚠️ 服务器维护中，暂停接受新连接", true)
-			return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-				return model.ClearSystemNotificationMsg{}
-			})
+	default: // 加入房间
+		if blocked, cmd := checkMaintenanceMode(m); blocked {
+			return cmd
 		}
 		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
 			RoomCode: input,
@@ -304,9 +309,7 @@ func handleLobbyEnter(m model.Model, input string) tea.Cmd {
 func handleRoomListEnter(m model.Model, input string) tea.Cmd {
 	if m.IsMaintenanceMode() {
 		m.SetNotification(model.NotifyError, "⚠️ 服务器维护中，暂停加入房间", true)
-		return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-			return model.ClearSystemNotificationMsg{}
-		})
+		return clearSystemNotification()
 	}
 	rooms := m.Lobby().AvailableRooms()
 	if input == "" {

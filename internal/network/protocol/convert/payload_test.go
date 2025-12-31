@@ -631,11 +631,11 @@ func TestPayloadRoundTrip_MaintenanceMessages(t *testing.T) {
 		t.Parallel()
 		original := protocol.MaintenancePayload{Maintenance: true}
 
-		data, err := EncodePayload(protocol.MsgMaintenance, original)
+		data, err := EncodePayload(protocol.MsgMaintenancePush, original)
 		require.NoError(t, err)
 
 		var result protocol.MaintenancePayload
-		err = DecodePayload(protocol.MsgMaintenance, data, &result)
+		err = DecodePayload(protocol.MsgMaintenancePush, data, &result)
 		require.NoError(t, err)
 
 		assert.True(t, result.Maintenance)
@@ -645,11 +645,11 @@ func TestPayloadRoundTrip_MaintenanceMessages(t *testing.T) {
 		t.Parallel()
 		original := protocol.MaintenanceStatusPayload{Maintenance: false}
 
-		data, err := EncodePayload(protocol.MsgMaintenanceStatus, original)
+		data, err := EncodePayload(protocol.MsgMaintenancePull, original)
 		require.NoError(t, err)
 
 		var result protocol.MaintenanceStatusPayload
-		err = DecodePayload(protocol.MsgMaintenanceStatus, data, &result)
+		err = DecodePayload(protocol.MsgMaintenancePull, data, &result)
 		require.NoError(t, err)
 
 		assert.False(t, result.Maintenance)

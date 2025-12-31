@@ -102,12 +102,12 @@ func EncodePayload(msgType protocol.MessageType, payload any) ([]byte, error) {
 		pbPayload = &pb.OnlineCountPayload{
 			Count: int32(p.Count),
 		}
-	case protocol.MsgMaintenanceStatus:
+	case protocol.MsgMaintenancePull:
 		p := payload.(protocol.MaintenanceStatusPayload)
 		pbPayload = &pb.MaintenanceStatusPayload{
 			Maintenance: p.Maintenance,
 		}
-	case protocol.MsgMaintenance:
+	case protocol.MsgMaintenancePush:
 		p := payload.(protocol.MaintenancePayload)
 		pbPayload = &pb.MaintenancePayload{
 			Maintenance: p.Maintenance,
@@ -338,7 +338,7 @@ func DecodePayload(msgType protocol.MessageType, data []byte, target any) error 
 		*target.(*protocol.OnlineCountPayload) = protocol.OnlineCountPayload{
 			Count: int(pbMsg.Count),
 		}
-	case protocol.MsgMaintenanceStatus:
+	case protocol.MsgMaintenancePull:
 		var pbMsg pb.MaintenanceStatusPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err
@@ -346,7 +346,7 @@ func DecodePayload(msgType protocol.MessageType, data []byte, target any) error 
 		*target.(*protocol.MaintenanceStatusPayload) = protocol.MaintenanceStatusPayload{
 			Maintenance: pbMsg.Maintenance,
 		}
-	case protocol.MsgMaintenance:
+	case protocol.MsgMaintenancePush:
 		var pbMsg pb.MaintenancePayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
 			return err

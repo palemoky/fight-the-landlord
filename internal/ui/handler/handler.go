@@ -70,10 +70,10 @@ func HandleServerMessage(m model.Model, msg *protocol.Message) tea.Cmd {
 	// Chat & Maintenance
 	case protocol.MsgChat:
 		return handleMsgChat(m, msg)
-	case protocol.MsgMaintenance:
-		return handleMsgMaintenance(m, msg)
-	case protocol.MsgMaintenanceStatus:
-		return handleMsgMaintenanceStatus(m, msg)
+	case protocol.MsgMaintenancePush:
+		return handleMsgMaintenancePush(m, msg)
+	case protocol.MsgMaintenancePull:
+		return handleMsgMaintenancePull(m, msg)
 	}
 
 	return nil

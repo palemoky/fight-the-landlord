@@ -46,28 +46,32 @@ func handleMsgChat(m model.Model, msg *protocol.Message) tea.Cmd {
 	return nil
 }
 
-func handleMsgMaintenance(m model.Model, msg *protocol.Message) tea.Cmd {
+// setMaintenanceNotification 设置维护模式通知
+func setMaintenanceNotification(m model.Model, maintenance bool) {
+	m.SetMaintenanceMode(maintenance)
+	if maintenance {
+		m.SetNotification(model.NotifyMaintenance, "⚠️ 服务器维护中，暂停接受新连接", false)
+	} else {
+		m.ClearNotification(model.NotifyMaintenance)
+	}
+}
+
+func handleMsgMaintenancePush(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenancePayload
 	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
-	m.SetMaintenanceMode(payload.Maintenance)
-	if payload.Maintenance {
-		m.SetNotification(model.NotifyMaintenance, "⚠️ 服务器维护中，暂停接受新连接", false)
-	} else {
-		m.ClearNotification(model.NotifyMaintenance)
-	}
-
+	setMaintenanceNotification(m, payload.Maintenance)
 	return nil
 }
 
-func handleMsgMaintenanceStatus(m model.Model, msg *protocol.Message) tea.Cmd {
+func handleMsgMaintenancePull(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenanceStatusPayload
 	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
-	m.SetMaintenanceMode(payload.Maintenance)
+	setMaintenanceNotification(m, payload.Maintenance)
 	return nil
 }
