@@ -75,8 +75,8 @@ const (
 	MsgRoomListResult    MessageType = "room_list_result"   // 房间列表结果
 
 	// 系统通知
-	MsgMaintenance       MessageType = "maintenance"        // 维护模式通知
-	MsgMaintenanceStatus MessageType = "maintenance_status" // 维护状态响应
+	MsgMaintenancePush MessageType = "maintenance_push" // 主动推送
+	MsgMaintenancePull MessageType = "maintenance_pull" // 被动拉取
 
 	// 错误
 	MsgError MessageType = "error" // 错误消息

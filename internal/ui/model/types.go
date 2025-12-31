@@ -199,6 +199,12 @@ type GameAccessor interface {
 	AddChatMessage(string)
 	ShowQuickMsgMenu() bool
 	SetShowQuickMsgMenu(bool)
+	QuickMsgInput() string
+	SetQuickMsgInput(string)
+	AppendQuickMsgInput(rune)
+	ClearQuickMsgInput()
+	QuickMsgScroll() int
+	SetQuickMsgScroll(int)
 
 	// Dimensions
 	Width() int

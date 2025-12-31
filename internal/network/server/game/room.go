@@ -421,7 +421,7 @@ func (rm *RoomManager) cleanup() {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
-	timeout := 2 * time.Hour
+	timeout := rm.server.GetGameConfig().RoomTimeoutDuration()
 	now := time.Now()
 
 	for code, room := range rm.rooms {

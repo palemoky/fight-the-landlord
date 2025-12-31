@@ -68,7 +68,7 @@ type GameConfig struct {
 	RoomTimeout           int `yaml:"room_timeout"`            // 房间等待超时（分钟）
 	ShutdownTimeout       int `yaml:"shutdown_timeout"`        // 优雅关闭超时（分钟）
 	ShutdownCheckInterval int `yaml:"shutdown_check_interval"` // 优雅关闭检测间隔（秒）
-	RoomCleanupDelay      int `yaml:"room_cleanup_delay"`      // 游戏结束后房间清理延迟（秒）
+	RoomCleanupDelay      int `yaml:"room_cleanup_delay"`      // 游戏结束后服务器关闭延迟（秒）
 }
 
 // SecurityConfig 安全配置

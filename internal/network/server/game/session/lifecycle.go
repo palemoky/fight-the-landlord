@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"sort"
-	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
@@ -39,8 +38,8 @@ func (gs *GameSession) Start() {
 // deal 发牌
 func (gs *GameSession) deal() {
 	// 每人发 17 张
-	for i := 0; i < 17; i++ {
-		for j := 0; j < 3; j++ {
+	for range 17 {
+		for j := range 3 {
 			gs.players[j].Hand = append(gs.players[j].Hand, gs.deck[0])
 			gs.deck = gs.deck[1:]
 		}
@@ -97,18 +96,16 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 	log.Printf("🎮 游戏结束！房间 %s，获胜者: %s (%s)",
 		gs.room.GetCode(), winner.Name, role)
 
+	// 游戏结束，解散房间
+	for _, p := range gs.players {
+		rp := gs.room.GetPlayer(p.ID)
+		if rp != nil {
+			rp.GetClient().SetRoom("")
+		}
+	}
+
 	// 记录游戏结果到排行榜
 	gs.recordGameResults(winner)
-
-	// 延迟清理房间，让玩家有时间返回大厅查看维护通知
-	cleanupDelay := 2 * time.Hour
-	log.Printf("⏰ 房间 %s 将在 %v 后自动清理", gs.room.GetCode(), cleanupDelay)
-
-	go func() {
-		time.Sleep(cleanupDelay)
-		// 房间清理逻辑由 Room 层处理
-		log.Printf("🧹 房间 %s 清理时间到", gs.room.GetCode())
-	}()
 }
 
 // recordGameResults 记录游戏结果到排行榜

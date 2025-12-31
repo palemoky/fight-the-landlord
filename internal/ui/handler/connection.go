@@ -63,11 +63,14 @@ func handleMsgError(m model.Model, msg *protocol.Message) tea.Cmd {
 		return nil
 	}
 
+	// 维护模式通知 - 持久显示
 	if payload.Code == protocol.ErrCodeServerMaintenance {
 		m.SetMaintenanceMode(true)
-		m.SetNotification(model.NotifyMaintenance, "⚠️ 服务器维护中，暂停接受新连接", false)
+		m.SetNotification(model.NotifyMaintenance, payload.Message, false)
+		return nil
 	}
 
+	// 游戏中的错误显示在输入框
 	if m.Phase() == model.PhaseBidding || m.Phase() == model.PhasePlaying {
 		m.Input().Placeholder = payload.Message
 		return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
@@ -75,6 +78,7 @@ func handleMsgError(m model.Model, msg *protocol.Message) tea.Cmd {
 		})
 	}
 
+	// 其他错误显示为临时通知
 	m.SetNotification(model.NotifyError, fmt.Sprintf("⚠️ %s", payload.Message), true)
 	return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
 		return model.ClearSystemNotificationMsg{}

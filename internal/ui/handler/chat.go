@@ -28,36 +28,50 @@ func handleMsgChat(m model.Model, msg *protocol.Message) tea.Cmd {
 		chatLine = fmt.Sprintf("[%s] 系统: %s", timeStr, payload.Content)
 	}
 
-	m.Lobby().AddChatMessage(chatLine)
-	if m.Game().State().RoomCode != "" {
+	// Route message to appropriate chat based on scope
+	switch payload.Scope {
+	case "lobby":
+		m.Lobby().AddChatMessage(chatLine)
+	case "room":
 		m.Game().AddChatMessage(chatLine)
+	default:
+		// Fallback: add to current context
+		if m.Game().State().RoomCode != "" {
+			m.Game().AddChatMessage(chatLine)
+		} else {
+			m.Lobby().AddChatMessage(chatLine)
+		}
 	}
 
 	return nil
 }
 
-func handleMsgMaintenance(m model.Model, msg *protocol.Message) tea.Cmd {
+// setMaintenanceNotification 设置维护模式通知
+func setMaintenanceNotification(m model.Model, maintenance bool) {
+	m.SetMaintenanceMode(maintenance)
+	if maintenance {
+		m.SetNotification(model.NotifyMaintenance, "⚠️ 服务器维护中，暂停接受新连接", false)
+	} else {
+		m.ClearNotification(model.NotifyMaintenance)
+	}
+}
+
+func handleMsgMaintenancePush(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenancePayload
 	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
-	m.SetMaintenanceMode(payload.Maintenance)
-	if payload.Maintenance {
-		m.SetNotification(model.NotifyMaintenance, "⚠️ 服务器维护中，暂停接受新连接", false)
-	} else {
-		m.ClearNotification(model.NotifyMaintenance)
-	}
-
+	setMaintenanceNotification(m, payload.Maintenance)
 	return nil
 }
 
-func handleMsgMaintenanceStatus(m model.Model, msg *protocol.Message) tea.Cmd {
+func handleMsgMaintenancePull(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenanceStatusPayload
 	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
-	m.SetMaintenanceMode(payload.Maintenance)
+	setMaintenanceNotification(m, payload.Maintenance)
 	return nil
 }
