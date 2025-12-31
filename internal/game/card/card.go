@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"time"
 )
 
 // Suit 定义花色
@@ -152,7 +151,6 @@ func NewDeck() Deck {
 }
 
 func (d Deck) Shuffle() {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
 	rand.Shuffle(len(d), func(i, j int) {
 		d[i], d[j] = d[j], d[i]
 	})

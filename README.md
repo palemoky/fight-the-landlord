@@ -17,7 +17,7 @@
 
 **本项目承诺**：
 
-- ✅ **真随机发牌**：使用 `crypto/rand` 加密级随机数，无任何控牌算法
+- ✅ **真随机发牌**：每局洗牌完全随机，无任何控牌算法
 - ✅ **公平匹配**：不考虑胜率、段位、游戏时长，纯随机或房间匹配
 - ✅ **开源透明**：所有代码公开，欢迎审计和贡献
 - ✅ **无内购无广告**：纯粹的游戏体验，技巧决定胜负
@@ -277,24 +277,23 @@ graph LR
 
 ### 真随机发牌
 
-本项目使用 Go 标准库的 `crypto/rand` 包进行发牌，这是一个加密级随机数生成器（CSPRNG），其随机性质量远高于普通的伪随机数生成器。
+本项目使用标准的 Fisher-Yates 洗牌算法，确保每局牌面完全随机。
 
 **发牌流程**：
 
 1. 创建 54 张牌的标准牌组
-2. 使用 Fisher-Yates 洗牌算法 + `crypto/rand` 进行洗牌
+2. 使用 Fisher-Yates 洗牌算法打乱顺序
 3. 按顺序发牌：每位玩家 17 张，剩余 3 张作为底牌
 4. **无任何基于玩家数据的牌面调整**
 
-**代码位置**：`internal/game/deck.go`
+**代码位置**：`internal/game/card/card.go`
 
 ```go
-// 使用加密级随机数生成器洗牌
-func shuffle(cards []Card) {
-    for i := len(cards) - 1; i > 0; i-- {
-        j := cryptoRandInt(i + 1)
-        cards[i], cards[j] = cards[j], cards[i]
-    }
+// 洗牌实现
+func (d Deck) Shuffle() {
+    rand.Shuffle(len(d), func(i, j int) {
+        d[i], d[j] = d[j], d[i]
+    })
 }
 ```
 
@@ -317,7 +316,7 @@ func shuffle(cards []Card) {
 
 所有核心逻辑代码完全开源，欢迎社区审计：
 
-- 发牌算法：`internal/game/deck.go`
+- 发牌算法：`internal/game/card/card.go`
 - 匹配逻辑：`internal/network/server/matcher.go`
 - 游戏规则：`internal/game/rules.go`
 
