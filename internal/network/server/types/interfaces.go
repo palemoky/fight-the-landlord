@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
 )
@@ -13,6 +14,7 @@ type ServerContext interface {
 	GetSessionManager() SessionManagerInterface
 	GetRoomManager() RoomManagerInterface
 	GetMatcher() MatcherInterface
+	GetGameConfig() GameConfigInterface
 	IsMaintenanceMode() bool
 	GetOnlineCount() int
 	Broadcast(msg *protocol.Message)
@@ -121,5 +123,8 @@ type ChatLimiterInterface interface {
 	AllowChat(playerID string) (bool, string)
 }
 
-// Config access
-type ConfigInterface any
+// GameConfigInterface 游戏配置接口
+type GameConfigInterface interface {
+	RoomCleanupDelayDuration() time.Duration
+	RoomTimeoutDuration() time.Duration
+}

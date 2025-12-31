@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 
@@ -129,6 +130,36 @@ func (m *MockServer) RegisterClient(id string, client types.ClientInterface) {
 
 func (m *MockServer) UnregisterClient(id string) {
 	m.Called(id)
+}
+
+func (m *MockServer) GetGameConfig() types.GameConfigInterface {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return &MockGameConfig{}
+	}
+	return args.Get(0).(types.GameConfigInterface)
+}
+
+// --- MockGameConfig ---
+
+type MockGameConfig struct {
+	mock.Mock
+}
+
+func (m *MockGameConfig) RoomCleanupDelayDuration() time.Duration {
+	args := m.Called()
+	if len(args) > 0 {
+		return args.Get(0).(time.Duration)
+	}
+	return 30 * time.Second
+}
+
+func (m *MockGameConfig) RoomTimeoutDuration() time.Duration {
+	args := m.Called()
+	if len(args) > 0 {
+		return args.Get(0).(time.Duration)
+	}
+	return 10 * time.Minute
 }
 
 // --- MockChatLimiter ---

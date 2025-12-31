@@ -316,7 +316,8 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 	for time.Now().Before(deadline) {
 		activeGames := s.roomManager.GetActiveGamesCount()
 		if activeGames == 0 {
-			log.Println("✅ 所有房间已结束")
+			log.Printf("✅ 所有房间已结束，将在%ds后关闭服务器！\n", s.config.Game.RoomCleanupDelay)
+
 			break
 		}
 		log.Printf("⏳ 等待 %d 个房间结束...", activeGames)
@@ -382,6 +383,8 @@ func (s *Server) sendShutdownNotification() {
 
 // Shutdown 关闭服务器
 func (s *Server) Shutdown() {
+	time.Sleep(s.config.Game.RoomCleanupDelayDuration())
+
 	// 关闭所有客户端连接
 	s.clientsMu.Lock()
 	for _, client := range s.clients {
@@ -401,6 +404,7 @@ func (s *Server) GetLeaderboard() types.LeaderboardInterface       { return s.le
 func (s *Server) GetSessionManager() types.SessionManagerInterface { return s.sessionManager }
 func (s *Server) GetRoomManager() types.RoomManagerInterface       { return s.roomManager }
 func (s *Server) GetMatcher() types.MatcherInterface               { return s.matcher }
+func (s *Server) GetGameConfig() types.GameConfigInterface         { return &s.config.Game }
 func (s *Server) GetChatLimiter() types.ChatLimiterInterface       { return s.chatLimiter }
 
 func (s *Server) GetClientByID(id string) types.ClientInterface {

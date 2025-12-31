@@ -12,5 +12,5 @@ cover.out
 
 # Binary files
 bin/*
-client
-server
+/client
+/server

@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"sort"
-	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
@@ -99,16 +98,6 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 
 	// 记录游戏结果到排行榜
 	gs.recordGameResults(winner)
-
-	// 延迟清理房间，让玩家有时间返回大厅查看维护通知
-	cleanupDelay := 2 * time.Hour
-	log.Printf("⏰ 房间 %s 将在 %v 后自动清理", gs.room.GetCode(), cleanupDelay)
-
-	go func() {
-		time.Sleep(cleanupDelay)
-		// 房间清理逻辑由 Room 层处理
-		log.Printf("🧹 房间 %s 清理时间到", gs.room.GetCode())
-	}()
 }
 
 // recordGameResults 记录游戏结果到排行榜
