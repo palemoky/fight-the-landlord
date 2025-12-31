@@ -291,6 +291,12 @@ func (s *Server) EnterMaintenanceMode() {
 	s.maintenanceMode = true
 	s.maintenanceMu.Unlock()
 
+	// 通知大厅用户服务器即将关闭
+	s.BroadcastToLobby(encoding.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
+		Code:    protocol.ErrCodeServerMaintenance,
+		Message: "👷🏻‍♂️ 维护模式：停止新的房间创建",
+	}))
+
 	log.Println("🔧 进入维护模式：停止新连接和房间创建")
 }
 
@@ -303,8 +309,6 @@ func (s *Server) IsMaintenanceMode() bool {
 
 // GracefulShutdown 优雅关闭服务器
 func (s *Server) GracefulShutdown(timeout time.Duration) {
-	log.Println("📢 开始优雅关闭...")
-
 	// 1. 进入维护模式
 	s.EnterMaintenanceMode()
 
@@ -316,7 +320,13 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 	for time.Now().Before(deadline) {
 		activeGames := s.roomManager.GetActiveGamesCount()
 		if activeGames == 0 {
-			log.Printf("✅ 所有房间已结束，将在%ds后关闭服务器！\n", s.config.Game.RoomCleanupDelay)
+			log.Printf("✅ 所有房间已结束，将在 %ds 后关闭服务器！\n", s.config.Game.RoomCleanupDelay)
+
+			// 通知大厅用户服务器即将关闭
+			s.BroadcastToLobby(encoding.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
+				Code:    protocol.ErrCodeServerMaintenance,
+				Message: fmt.Sprintf("🚧 服务器将在 %d 秒后停机维护！", s.config.Game.RoomCleanupDelay),
+			}))
 
 			break
 		}
