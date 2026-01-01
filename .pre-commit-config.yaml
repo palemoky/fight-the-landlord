@@ -8,8 +8,6 @@ repos:
     rev: v2.7.2
     hooks:
       - id: golangci-lint
-        name: Run golangci-lint
-        stages: [pre-commit]
         args:
           - --fix
           - --timeout=5m
@@ -19,68 +17,37 @@ repos:
   # Go tools
   - repo: local
     hooks:
-      # Format Go code with gofumpt (stricter than gofmt)
       - id: gofumpt
-        name: Format Go code (gofumpt)
+        name: Format Go code
         entry: gofumpt -w
         language: system
         types: [go]
-        stages: [pre-commit]
-        pass_filenames: true
         exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
-      # Format Go imports
       - id: goimports
-        name: Format Go imports (goimports)
+        name: Format Go imports
         entry: goimports -w -local github.com/palemoky/fight-the-landlord
         language: system
         types: [go]
-        stages: [pre-commit]
-        pass_filenames: true
         exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
-      # Run go mod tidy
       - id: go-mod-tidy
         name: Tidy Go modules
         entry: go mod tidy
         language: system
-        stages: [pre-commit]
         pass_filenames: false
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      # Remove trailing whitespace
       - id: trailing-whitespace
-        name: Remove trailing whitespace
-        stages: [pre-commit]
-
-      # Ensure files end with newline
       - id: end-of-file-fixer
-        name: Fix end of files
-        stages: [pre-commit]
-
-      # Check JSON syntax
       - id: check-json
-        name: Check JSON syntax
-        stages: [pre-commit]
-
-      # Check YAML syntax
       - id: check-yaml
-        name: Check YAML syntax
-        stages: [pre-commit]
         args: ["--unsafe"] # Allow custom tags
-
-      # Check for merge conflicts
       - id: check-merge-conflict
-        name: Check for merge conflicts
-        stages: [pre-commit]
-
-      # Check for large files
       - id: check-added-large-files
-        name: Check for large files
-        stages: [pre-commit]
         args: ["--maxkb=1000"]
 
   # Go unit tests (run on push)
@@ -88,7 +55,7 @@ repos:
     hooks:
       - id: go-test
         name: Run Go unit tests
-        entry: bash -c 'go test -race -tags "fts5" -p 4 ./internal/... -cover'
+        entry: bash -c 'go test -race -p 4 ./internal/... -cover'
         language: system
         stages: [pre-push]
         pass_filenames: false
