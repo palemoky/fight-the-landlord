@@ -3,6 +3,19 @@
 # Run manually: pre-commit run --all-files
 
 repos:
+  # General file checks (fast, run on commit)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-yaml
+        args: ["--unsafe"] # Allow custom tags
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+
   # Go linting with golangci-lint
   - repo: https://github.com/golangci/golangci-lint
     rev: v2.7.2
@@ -17,12 +30,11 @@ repos:
   # Go formatting and imports
   - repo: local
     hooks:
-      - id: gofumpt
-        name: Format Go code
-        entry: gofumpt -w
+      - id: go-mod-tidy
+        name: Tidy Go modules
+        entry: go mod tidy
         language: system
-        types: [go]
-        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
+        pass_filenames: false
 
       - id: goimports
         name: Format Go imports
@@ -31,11 +43,12 @@ repos:
         types: [go]
         exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
-      - id: go-mod-tidy
-        name: Tidy Go modules
-        entry: go mod tidy
+      - id: gofumpt
+        name: Format Go code
+        entry: gofumpt -w
         language: system
-        pass_filenames: false
+        types: [go]
+        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
       # Build verification (catch compilation errors early)
       - id: go-build
@@ -45,22 +58,7 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-  # General file checks (fast, run on commit)
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-json
-      - id: check-yaml
-        args: ["--unsafe"] # Allow custom tags
-      - id: check-merge-conflict
-      - id: check-added-large-files
-        args: ["--maxkb=1000"]
-
-  # Go unit tests with coverage (heavy, run on push)
-  - repo: local
-    hooks:
+      # Go unit tests with coverage (heavy, run on push)
       - id: go-test
         name: Run Go unit tests
         entry: bash -c 'go test -race -shuffle=on -coverprofile=coverage.out -covermode=atomic ./internal/...'
