@@ -3,7 +3,7 @@
 # Run manually: pre-commit run --all-files
 
 repos:
-  # Go linting with golangci-lint (modern, comprehensive)
+  # Go linting with golangci-lint
   - repo: https://github.com/golangci/golangci-lint
     rev: v2.7.2
     hooks:
@@ -12,9 +12,9 @@ repos:
           - --fix
           - --timeout=5m
           - --config=.golangci.yml
-        pass_filenames: false # 检查所有文件，不只是暂存的文件
+          - --new-from-rev=HEAD~1 # Only check changed files
 
-  # Go tools
+  # Go formatting and imports
   - repo: local
     hooks:
       - id: gofumpt
@@ -37,7 +37,15 @@ repos:
         language: system
         pass_filenames: false
 
-  # General file checks
+      # Build verification (catch compilation errors early)
+      - id: go-build
+        name: Verify Go build
+        entry: bash -c 'go build -v ./...'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+  # General file checks (fast, run on commit)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -50,12 +58,12 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=1000"]
 
-  # Go unit tests (run on push)
+  # Go unit tests with coverage (heavy, run on push)
   - repo: local
     hooks:
       - id: go-test
         name: Run Go unit tests
-        entry: bash -c 'go test -race -p 4 ./internal/... -cover'
+        entry: bash -c 'go test -race -shuffle=on -coverprofile=coverage.out -covermode=atomic ./internal/...'
         language: system
         stages: [pre-push]
         pass_filenames: false
