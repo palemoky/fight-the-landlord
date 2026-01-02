@@ -60,7 +60,7 @@ func (sm *SoundManager) Init() error {
 		}
 
 		path := filepath.Join(soundDir, name)
-		f, err := os.Open(path)
+		f, err := os.Open(filepath.Clean(path))
 		if err != nil {
 			continue
 		}

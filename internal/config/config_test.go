@@ -50,7 +50,7 @@ security:
 `
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	err := os.WriteFile(configPath, []byte(content), 0o644)
+	err := os.WriteFile(configPath, []byte(content), 0o600)
 	require.NoError(t, err)
 
 	cfg, err := Load(configPath)
@@ -82,7 +82,7 @@ func TestLoad_InvalidYAML(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "invalid.yaml")
-	err := os.WriteFile(configPath, []byte("invalid: yaml: :::"), 0o644)
+	err := os.WriteFile(configPath, []byte("invalid: yaml: :::"), 0o600)
 	require.NoError(t, err)
 
 	cfg, err := Load(configPath)
@@ -97,7 +97,7 @@ func TestLoad_AppliesDefaults(t *testing.T) {
 	content := `{}`
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "empty.yaml")
-	err := os.WriteFile(configPath, []byte(content), 0o644)
+	err := os.WriteFile(configPath, []byte(content), 0o600)
 	require.NoError(t, err)
 
 	cfg, err := Load(configPath)
@@ -174,7 +174,7 @@ func TestLoadFromEnv(t *testing.T) {
 	content := `{}`
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "env.yaml")
-	err := os.WriteFile(configPath, []byte(content), 0o644)
+	err := os.WriteFile(configPath, []byte(content), 0o600)
 	require.NoError(t, err)
 
 	cfg, err := Load(configPath)
