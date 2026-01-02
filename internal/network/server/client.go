@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/utils"
 )
 
@@ -80,7 +80,7 @@ func (c *Client) ReadPump() {
 		allowed, warning := c.server.messageLimiter.AllowMessage(c.ID)
 		if !allowed {
 			log.Printf("⚠️ 客户端 %s (IP: %s) 消息过于频繁", c.Name, c.IP)
-			c.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "消息发送过于频繁"))
+			c.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "消息发送过于频繁"))
 			// 如果警告次数过多，断开连接
 			if c.server.messageLimiter.GetWarningCount(c.ID) > 5 {
 				log.Printf("🚫 客户端 %s 因多次超速被断开连接", c.Name)
@@ -89,20 +89,20 @@ func (c *Client) ReadPump() {
 			continue
 		}
 		if warning {
-			c.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "请求过于频繁，请放慢速度"))
+			c.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeRateLimit, "请求过于频繁，请放慢速度"))
 		}
 
 		// 解析消息
-		msg, err := encoding.Decode(message)
+		msg, err := codec.Decode(message)
 		if err != nil {
 			log.Printf("消息解析错误: %v", err)
-			c.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+			c.SendMessage(codec.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 			continue
 		}
 
 		// 交给处理器处理，处理完后归还到池
 		c.server.handler.Handle(c, msg)
-		encoding.PutMessage(msg)
+		codec.PutMessage(msg)
 	}
 }
 
@@ -152,7 +152,7 @@ func (c *Client) SendMessage(msg *protocol.Message) {
 	}
 	c.mu.RUnlock()
 
-	data, err := encoding.Encode(msg)
+	data, err := codec.Encode(msg)
 	if err != nil {
 		log.Printf("消息编码错误: %v", err)
 		return

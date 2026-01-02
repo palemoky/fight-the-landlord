@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
@@ -66,6 +66,6 @@ func (h *Handler) Handle(client types.ClientInterface, msg *protocol.Message) {
 	default:
 		log.Printf("⚠️  未知消息类型: '%s' (来自玩家: %s, ID: %s)", msg.Type, client.GetName(), client.GetID())
 		log.Printf("    消息详情: Payload长度=%d bytes", len(msg.Payload))
-		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 	}
 }

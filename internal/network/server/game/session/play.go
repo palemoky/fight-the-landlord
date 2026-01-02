@@ -6,8 +6,8 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/game/rule"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // HandlePlayCards 处理出牌
@@ -63,7 +63,7 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 	})
 
 	// 广播出牌信息
-	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgCardPlayed, protocol.CardPlayedPayload{
+	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgCardPlayed, protocol.CardPlayedPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 		Cards:      convert.CardsToInfos(sortedCards), // 使用排序后的牌
@@ -110,7 +110,7 @@ func (gs *GameSession) HandlePass(playerID string) error {
 	gs.consecutivePasses++
 
 	// 广播不出
-	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgPlayerPass, protocol.PlayerPassPayload{
+	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgPlayerPass, protocol.PlayerPassPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 	}))
@@ -176,7 +176,7 @@ func (gs *GameSession) notifyPlayTurn() {
 		canBeat = beatingCards != nil
 	}
 
-	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgPlayTurn, protocol.PlayTurnPayload{
+	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgPlayTurn, protocol.PlayTurnPayload{
 		PlayerID: player.ID,
 		Timeout:  30,
 		MustPlay: mustPlay,

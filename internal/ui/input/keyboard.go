@@ -10,8 +10,8 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 	"github.com/palemoky/fight-the-landlord/internal/ui/view"
 )
@@ -24,7 +24,7 @@ func clearSystemNotification() tea.Cmd {
 
 // sendChatMessage sends a chat message and returns error command if failed
 func sendChatMessage(m model.Model, content, scope string) tea.Cmd {
-	chatMsg := encoding.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
+	chatMsg := codec.MustNewMessage(protocol.MsgChat, protocol.ChatPayload{
 		Content: content,
 		Scope:   scope,
 	})
@@ -80,11 +80,8 @@ func handleQuickMessageMenu(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
 	}
 
 	// Toggle quick message menu with 'T' key
-	if msg.String() == "t" || msg.String() == "T" {
-		if !m.Game().ShowQuickMsgMenu() {
-			m.Game().SetShowQuickMsgMenu(true)
-			return true, nil
-		}
+	if tryToggleQuickMenu(m, msg) {
+		return true, nil
 	}
 
 	// Handle menu interactions
@@ -92,58 +89,88 @@ func handleQuickMessageMenu(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
 		return false, nil
 	}
 
+	return processQuickMenuKey(m, msg)
+}
+
+func tryToggleQuickMenu(m model.Model, msg tea.KeyMsg) bool {
+	if msg.String() == "t" || msg.String() == "T" {
+		if !m.Game().ShowQuickMsgMenu() {
+			m.Game().SetShowQuickMsgMenu(true)
+			return true
+		}
+	}
+	return false
+}
+
+func processQuickMenuKey(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
 	switch msg.Type {
 	case tea.KeyEsc:
 		m.Game().SetShowQuickMsgMenu(false)
 		return true, nil
-	case tea.KeyUp:
-		scroll := m.Game().QuickMsgScroll()
+	case tea.KeyUp, tea.KeyDown:
+		return handleQuickMsgScroll(m, msg)
+	case tea.KeyEnter:
+		return handleQuickMsgEnter(m)
+	case tea.KeyBackspace, tea.KeyRunes:
+		return handleQuickMsgInput(m, msg)
+	}
+	return true, nil
+}
+
+func handleQuickMsgScroll(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
+	scroll := m.Game().QuickMsgScroll()
+	if msg.Type == tea.KeyUp {
 		if scroll > 0 {
 			m.Game().SetQuickMsgScroll(scroll - 1)
 		}
-		return true, nil
-	case tea.KeyDown:
-		scroll := m.Game().QuickMsgScroll()
+	} else {
 		maxScroll := max(len(view.QuickMessages)-10, 0)
 		if scroll < maxScroll {
 			m.Game().SetQuickMsgScroll(scroll + 1)
 		}
-		return true, nil
-	case tea.KeyEnter:
-		input := m.Game().QuickMsgInput()
-		if input != "" {
-			idx := 0
-			for _, c := range input {
-				idx = idx*10 + int(c-'0')
-			}
-			idx-- // Convert to 0-indexed
-			if idx >= 0 && idx < len(view.QuickMessages) {
-				if cmd := sendChatMessage(m, view.QuickMessages[idx], "room"); cmd != nil {
-					return true, cmd
-				}
-				m.Game().SetShowQuickMsgMenu(false)
-				return true, nil
-			}
+	}
+	return true, nil
+}
+
+func handleQuickMsgEnter(m model.Model) (bool, tea.Cmd) {
+	input := m.Game().QuickMsgInput()
+	if input != "" {
+		idx := 0
+		for _, c := range input {
+			idx = idx*10 + int(c-'0')
 		}
-		m.Game().ClearQuickMsgInput()
-		return true, nil
-	case tea.KeyBackspace:
+		idx-- // Convert to 0-indexed
+		if idx >= 0 && idx < len(view.QuickMessages) {
+			if cmd := sendChatMessage(m, view.QuickMessages[idx], "room"); cmd != nil {
+				return true, cmd
+			}
+			m.Game().SetShowQuickMsgMenu(false)
+			return true, nil
+		}
+	}
+	m.Game().ClearQuickMsgInput()
+	return true, nil
+}
+
+func handleQuickMsgInput(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
+	if msg.Type == tea.KeyBackspace {
 		input := m.Game().QuickMsgInput()
 		if len(input) > 0 {
 			m.Game().SetQuickMsgInput(input[:len(input)-1])
 		}
 		return true, nil
-	case tea.KeyRunes:
-		if msg.String() == "t" || msg.String() == "T" {
-			m.Game().SetShowQuickMsgMenu(false)
-			return true, nil
-		}
-		// Accumulate digits for message selection
-		if len(msg.Runes) == 1 && msg.Runes[0] >= '0' && msg.Runes[0] <= '9' {
-			input := m.Game().QuickMsgInput()
-			if len(input) < 2 {
-				m.Game().AppendQuickMsgInput(msg.Runes[0])
-			}
+	}
+
+	// KeyRunes
+	if msg.String() == "t" || msg.String() == "T" {
+		m.Game().SetShowQuickMsgMenu(false)
+		return true, nil
+	}
+	// Accumulate digits for message selection
+	if len(msg.Runes) == 1 && msg.Runes[0] >= '0' && msg.Runes[0] <= '9' {
+		input := m.Game().QuickMsgInput()
+		if len(input) < 2 {
+			m.Game().AppendQuickMsgInput(msg.Runes[0])
 		}
 	}
 	return true, nil
@@ -286,29 +313,29 @@ func handleLobbyEnter(m model.Model, input string) tea.Cmd {
 		}
 		m.SetPhase(model.PhaseMatching)
 		m.SetMatchingStartTime(time.Now())
-		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgQuickMatch, nil))
+		_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgQuickMatch, nil))
 
 	case "2": // 创建房间
 		if blocked, cmd := checkMaintenanceMode(m); blocked {
 			return cmd
 		}
-		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgCreateRoom, nil))
+		_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgCreateRoom, nil))
 
 	case "3": // 房间列表
 		if blocked, cmd := checkMaintenanceMode(m); blocked {
 			return cmd
 		}
 		m.SetPhase(model.PhaseRoomList)
-		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetRoomList, nil))
+		_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetRoomList, nil))
 		m.Input().Placeholder = "输入房间号或按 ESC 返回"
 
 	case "4": // 排行榜
 		m.SetPhase(model.PhaseLeaderboard)
-		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetLeaderboard, nil))
+		_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetLeaderboard, nil))
 
 	case "5": // 统计信息
 		m.SetPhase(model.PhaseStats)
-		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetStats, nil))
+		_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetStats, nil))
 
 	case "6": // 游戏规则
 		m.SetPhase(model.PhaseRules)
@@ -317,7 +344,7 @@ func handleLobbyEnter(m model.Model, input string) tea.Cmd {
 		if blocked, cmd := checkMaintenanceMode(m); blocked {
 			return cmd
 		}
-		_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
+		_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgJoinRoom, protocol.JoinRoomPayload{
 			RoomCode: input,
 		}))
 	}
@@ -384,7 +411,7 @@ func handleGameOverEnter(m model.Model) tea.Cmd {
 	m.EnterLobby()
 	m.Game().State().Reset()
 
-	_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+	_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
 
 	return nil
 }

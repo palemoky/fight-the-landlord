@@ -5,8 +5,8 @@ import (
 	"sort"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // HandleBid 处理叫地主
@@ -29,7 +29,7 @@ func (gs *GameSession) HandleBid(playerID string, bid bool) error {
 	gs.bidCount++
 
 	// 广播叫地主结果
-	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgBidResult, protocol.BidResultPayload{
+	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgBidResult, protocol.BidResultPayload{
 		PlayerID:   playerID,
 		PlayerName: currentPlayer.Name,
 		Bid:        bid,
@@ -74,7 +74,7 @@ func (gs *GameSession) setLandlord(idx int) {
 	gs.room.SetPlayerLandlord(landlord.ID)
 
 	// 广播地主信息
-	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
+	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgLandlord, protocol.LandlordPayload{
 		PlayerID:    landlord.ID,
 		PlayerName:  landlord.Name,
 		BottomCards: convert.CardsToInfos(gs.bottomCards),
@@ -83,7 +83,7 @@ func (gs *GameSession) setLandlord(idx int) {
 	// 给地主发送更新后的手牌
 	rp := gs.room.GetPlayer(landlord.ID)
 	client := rp.GetClient()
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
 		Cards:       convert.CardsToInfos(landlord.Hand),
 		BottomCards: convert.CardsToInfos(gs.bottomCards),
 	}))
@@ -100,7 +100,7 @@ func (gs *GameSession) setLandlord(idx int) {
 // notifyBidTurn 通知当前玩家叫地主
 func (gs *GameSession) notifyBidTurn() {
 	player := gs.players[gs.currentBidder]
-	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgBidTurn, protocol.BidTurnPayload{
+	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgBidTurn, protocol.BidTurnPayload{
 		PlayerID: player.ID,
 		Timeout:  30,
 	}))

@@ -8,97 +8,109 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/logger"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // readPump 从服务器读取消息
 func (c *Client) readPump() {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.LogPanic(r)
-			log.Printf("[PANIC] readPump panic recovered: %v", r)
-		}
-		// 尝试重连
-		if c.ReconnectToken != "" && !c.reconnecting.Load() {
-			go c.tryReconnect()
-		} else {
-			c.Close()
-			if c.OnClose != nil {
-				c.OnClose()
-			}
-		}
-	}()
+	defer c.handleReadExit()
 
-	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error {
-		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
-		return nil
-	})
+	c.setupPongHandler()
 
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				if c.OnError != nil {
-					c.OnError(err)
-				}
-			}
+			c.handleReadError(err)
 			return
 		}
 
-		msg, err := encoding.Decode(message)
+		msg, err := codec.Decode(message)
 		if err != nil {
 			log.Printf("消息解析错误: %v", err)
 			continue
 		}
 
-		// 处理连接成功消息
-		if msg.Type == protocol.MsgConnected {
-			var payload protocol.ConnectedPayload
-			if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
-				c.PlayerID = payload.PlayerID
-				c.PlayerName = payload.PlayerName
-				c.ReconnectToken = payload.ReconnectToken
-			}
-		}
+		c.processMessage(msg)
+	}
+}
 
-		// 处理重连成功消息 - 标记状态但不立即回调
-		isReconnected := false
-		if msg.Type == protocol.MsgReconnected {
-			c.reconnecting.Store(false)
-			c.reconnectCount = 0
-			isReconnected = true
-		}
-
-		// 处理 pong 消息计算延迟
-		if msg.Type == protocol.MsgPong {
-			var payload protocol.PongPayload
-			if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
-				latency := time.Now().UnixMilli() - payload.ClientTimestamp
-				c.Latency = latency
-				if c.OnLatencyUpdate != nil {
-					c.OnLatencyUpdate(latency)
-				}
-			}
-		}
-
-		// 回调处理
-		if c.OnMessage != nil {
-			c.OnMessage(msg)
-		}
-
-		// 同时发送到 channel
-		select {
-		case c.receive <- msg:
-		default:
-		}
-
-		// 重连成功回调放在最后，确保消息已经发送到 channel
-		if isReconnected && c.OnReconnect != nil {
-			c.OnReconnect()
+func (c *Client) handleReadExit() {
+	if r := recover(); r != nil {
+		logger.LogPanic(r)
+		log.Printf("[PANIC] readPump panic recovered: %v", r)
+	}
+	// 尝试重连
+	if c.ReconnectToken != "" && !c.reconnecting.Load() {
+		go c.tryReconnect()
+	} else {
+		c.Close()
+		if c.OnClose != nil {
+			c.OnClose()
 		}
 	}
+}
+
+func (c *Client) setupPongHandler() {
+	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error {
+		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+}
+
+func (c *Client) handleReadError(err error) {
+	if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+		if c.OnError != nil {
+			c.OnError(err)
+		}
+	}
+}
+
+func (c *Client) processMessage(msg *protocol.Message) {
+	isReconnected := c.handleInternalMessage(msg)
+
+	// 回调处理
+	if c.OnMessage != nil {
+		c.OnMessage(msg)
+	}
+
+	// 同时发送到 channel
+	select {
+	case c.receive <- msg:
+	default:
+	}
+
+	// 重连成功回调放在最后，确保消息已经发送到 channel
+	if isReconnected && c.OnReconnect != nil {
+		c.OnReconnect()
+	}
+}
+
+func (c *Client) handleInternalMessage(msg *protocol.Message) bool {
+	switch msg.Type {
+	case protocol.MsgConnected:
+		var payload protocol.ConnectedPayload
+		if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
+			c.PlayerID = payload.PlayerID
+			c.PlayerName = payload.PlayerName
+			c.ReconnectToken = payload.ReconnectToken
+		}
+	case protocol.MsgReconnected:
+		c.reconnecting.Store(false)
+		c.reconnectCount = 0
+		return true
+	case protocol.MsgPong:
+		var payload protocol.PongPayload
+		if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err == nil {
+			latency := time.Now().UnixMilli() - payload.ClientTimestamp
+			c.Latency = latency
+			if c.OnLatencyUpdate != nil {
+				c.OnLatencyUpdate(latency)
+			}
+		}
+	}
+	return false
 }
 
 // writePump 向服务器写入消息

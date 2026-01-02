@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
@@ -83,7 +83,7 @@ func (r *Room) startGame() {
 	r.State = types.RoomStateReady
 
 	// 广播游戏开始
-	r.broadcast(encoding.MustNewMessage(protocol.MsgGameStart, protocol.GameStartPayload{
+	r.broadcast(codec.MustNewMessage(protocol.MsgGameStart, protocol.GameStartPayload{
 		Players: r.GetAllPlayersInfo(),
 	}))
 

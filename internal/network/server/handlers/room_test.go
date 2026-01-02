@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 )
 
 func TestHandler_HandleCreateRoom_Maintenance(t *testing.T) {
@@ -96,7 +96,7 @@ func TestHandler_HandleJoinRoom_Success(t *testing.T) {
 	})).Return()
 
 	payload := protocol.JoinRoomPayload{RoomCode: roomCode}
-	msg := encoding.MustNewMessage(protocol.MsgJoinRoom, payload)
+	msg := codec.MustNewMessage(protocol.MsgJoinRoom, payload)
 
 	// Execute
 	h.handleJoinRoom(mockClient, msg)

@@ -16,7 +16,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
@@ -197,7 +197,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	session := s.sessionManager.CreateSession(client.ID, client.Name)
 
 	// 发送连接成功消息（包含重连令牌）
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgConnected, protocol.ConnectedPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgConnected, protocol.ConnectedPayload{
 		PlayerID:       client.ID,
 		PlayerName:     client.Name,
 		ReconnectToken: session.ReconnectToken,
@@ -292,7 +292,7 @@ func (s *Server) EnterMaintenanceMode() {
 	s.maintenanceMu.Unlock()
 
 	// 通知大厅用户服务器即将关闭
-	s.BroadcastToLobby(encoding.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
+	s.BroadcastToLobby(codec.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
 		Code:    protocol.ErrCodeServerMaintenance,
 		Message: "👷🏻‍♂️ 维护模式：停止新的房间创建",
 	}))
@@ -323,7 +323,7 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 			log.Printf("✅ 所有房间已结束，将在 %ds 后关闭服务器！\n", s.config.Game.RoomCleanupDelay)
 
 			// 通知大厅用户服务器即将关闭
-			s.BroadcastToLobby(encoding.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
+			s.BroadcastToLobby(codec.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
 				Code:    protocol.ErrCodeServerMaintenance,
 				Message: fmt.Sprintf("🚧 服务器将在 %d 秒后停机维护！", s.config.Game.RoomCleanupDelay),
 			}))

@@ -1,4 +1,4 @@
-package encoding
+package codec
 
 import (
 	"google.golang.org/protobuf/proto"
