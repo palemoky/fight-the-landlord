@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -113,7 +114,7 @@ func (rs *RedisStore) LoadRoom(ctx context.Context, code string) (*RoomData, err
 	key := roomKeyPrefix + code
 	data, err := rs.client.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return nil, nil // 房间不存在
 		}
 		return nil, err
@@ -174,7 +175,7 @@ func (rs *RedisStore) PopFromMatchQueue(ctx context.Context, count int) ([]strin
 	}
 
 	_, err := pipe.Exec(ctx)
-	if err != nil && err != redis.Nil {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
 	}
 
