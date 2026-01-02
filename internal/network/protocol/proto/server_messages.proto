@@ -33,7 +33,7 @@ message PongPayload {
 message PlayerOfflinePayload {
   string player_id = 1;
   string player_name = 2;
-  int32 timeout = 3;
+  int64 timeout = 3;
 }
 
 // PlayerOnlinePayload 玩家上线通知
@@ -44,7 +44,7 @@ message PlayerOnlinePayload {
 
 // OnlineCountPayload 在线人数更新
 message OnlineCountPayload {
-  int32 count = 1;
+  int64 count = 1;
 }
 
 // MaintenanceStatusPayload 维护状态响应
@@ -67,18 +67,18 @@ message ErrorPayload {
 message StatsResultPayload {
   string player_id = 1;
   string player_name = 2;
-  int32 total_games = 3;
-  int32 wins = 4;
-  int32 losses = 5;
+  int64 total_games = 3;
+  int64 wins = 4;
+  int64 losses = 5;
   double win_rate = 6;
-  int32 landlord_games = 7;
-  int32 landlord_wins = 8;
-  int32 farmer_games = 9;
-  int32 farmer_wins = 10;
-  int32 score = 11;
-  int32 rank = 12;
-  int32 current_streak = 13;
-  int32 max_win_streak = 14;
+  int64 landlord_games = 7;
+  int64 landlord_wins = 8;
+  int64 farmer_games = 9;
+  int64 farmer_wins = 10;
+  int64 score = 11;
+  int64 rank = 12;
+  int64 current_streak = 13;
+  int64 max_win_streak = 14;
 }
 
 // LeaderboardResultPayload 排行榜结果

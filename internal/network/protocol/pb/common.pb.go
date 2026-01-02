@@ -90,7 +90,7 @@ type PlayerInfo struct {
 	Seat          int32                  `protobuf:"varint,3,opt,name=seat,proto3" json:"seat,omitempty"`                               // 座位号 0-2
 	Ready         bool                   `protobuf:"varint,4,opt,name=ready,proto3" json:"ready,omitempty"`                             // 是否准备
 	IsLandlord    bool                   `protobuf:"varint,5,opt,name=is_landlord,json=isLandlord,proto3" json:"is_landlord,omitempty"` // 是否是地主
-	CardsCount    int32                  `protobuf:"varint,6,opt,name=cards_count,json=cardsCount,proto3" json:"cards_count,omitempty"` // 手牌数量
+	CardsCount    int64                  `protobuf:"varint,6,opt,name=cards_count,json=cardsCount,proto3" json:"cards_count,omitempty"` // 手牌数量
 	Online        bool                   `protobuf:"varint,7,opt,name=online,proto3" json:"online,omitempty"`                           // 是否在线
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -161,7 +161,7 @@ func (x *PlayerInfo) GetIsLandlord() bool {
 	return false
 }
 
-func (x *PlayerInfo) GetCardsCount() int32 {
+func (x *PlayerInfo) GetCardsCount() int64 {
 	if x != nil {
 		return x.CardsCount
 	}
@@ -348,11 +348,11 @@ func (x *GameStateDTO) GetCanBeat() bool {
 // LeaderboardEntry 排行榜条目
 type LeaderboardEntry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Rank          int32                  `protobuf:"varint,1,opt,name=rank,proto3" json:"rank,omitempty"`
+	Rank          int64                  `protobuf:"varint,1,opt,name=rank,proto3" json:"rank,omitempty"`
 	PlayerId      string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	PlayerName    string                 `protobuf:"bytes,3,opt,name=player_name,json=playerName,proto3" json:"player_name,omitempty"`
-	Score         int32                  `protobuf:"varint,4,opt,name=score,proto3" json:"score,omitempty"`
-	Wins          int32                  `protobuf:"varint,5,opt,name=wins,proto3" json:"wins,omitempty"`
+	Score         int64                  `protobuf:"varint,4,opt,name=score,proto3" json:"score,omitempty"`
+	Wins          int64                  `protobuf:"varint,5,opt,name=wins,proto3" json:"wins,omitempty"`
 	WinRate       float64                `protobuf:"fixed64,6,opt,name=win_rate,json=winRate,proto3" json:"win_rate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -388,7 +388,7 @@ func (*LeaderboardEntry) Descriptor() ([]byte, []int) {
 	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *LeaderboardEntry) GetRank() int32 {
+func (x *LeaderboardEntry) GetRank() int64 {
 	if x != nil {
 		return x.Rank
 	}
@@ -409,14 +409,14 @@ func (x *LeaderboardEntry) GetPlayerName() string {
 	return ""
 }
 
-func (x *LeaderboardEntry) GetScore() int32 {
+func (x *LeaderboardEntry) GetScore() int64 {
 	if x != nil {
 		return x.Score
 	}
 	return 0
 }
 
-func (x *LeaderboardEntry) GetWins() int32 {
+func (x *LeaderboardEntry) GetWins() int64 {
 	if x != nil {
 		return x.Wins
 	}
@@ -508,7 +508,7 @@ const file_internal_network_protocol_proto_common_proto_rawDesc = "" +
 	"\x05ready\x18\x04 \x01(\bR\x05ready\x12\x1f\n" +
 	"\vis_landlord\x18\x05 \x01(\bR\n" +
 	"isLandlord\x12\x1f\n" +
-	"\vcards_count\x18\x06 \x01(\x05R\n" +
+	"\vcards_count\x18\x06 \x01(\x03R\n" +
 	"cardsCount\x12\x16\n" +
 	"\x06online\x18\a \x01(\bR\x06online\"t\n" +
 	"\n" +
@@ -529,12 +529,12 @@ const file_internal_network_protocol_proto_common_proto_rawDesc = "" +
 	"\tmust_play\x18\b \x01(\bR\bmustPlay\x12\x19\n" +
 	"\bcan_beat\x18\t \x01(\bR\acanBeat\"\xa9\x01\n" +
 	"\x10LeaderboardEntry\x12\x12\n" +
-	"\x04rank\x18\x01 \x01(\x05R\x04rank\x12\x1b\n" +
+	"\x04rank\x18\x01 \x01(\x03R\x04rank\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x03 \x01(\tR\n" +
 	"playerName\x12\x14\n" +
-	"\x05score\x18\x04 \x01(\x05R\x05score\x12\x12\n" +
-	"\x04wins\x18\x05 \x01(\x05R\x04wins\x12\x19\n" +
+	"\x05score\x18\x04 \x01(\x03R\x05score\x12\x12\n" +
+	"\x04wins\x18\x05 \x01(\x03R\x04wins\x12\x19\n" +
 	"\bwin_rate\x18\x06 \x01(\x01R\awinRate\"o\n" +
 	"\fRoomListItem\x12\x1b\n" +
 	"\troom_code\x18\x01 \x01(\tR\broomCode\x12!\n" +

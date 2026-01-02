@@ -201,7 +201,7 @@ func TestPlayerInfoToProto(t *testing.T) {
 			assert.Equal(t, int32(tt.player.Seat), result.Seat)
 			assert.Equal(t, tt.player.Ready, result.Ready)
 			assert.Equal(t, tt.player.IsLandlord, result.IsLandlord)
-			assert.Equal(t, int32(tt.player.CardsCount), result.CardsCount)
+			assert.Equal(t, int64(tt.player.CardsCount), result.CardsCount)
 			assert.Equal(t, tt.player.Online, result.Online)
 		})
 	}

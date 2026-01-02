@@ -48,7 +48,7 @@ func playerInfoToProto(p *protocol.PlayerInfo) *pb.PlayerInfo {
 		Seat:       int32(p.Seat),
 		Ready:      p.Ready,
 		IsLandlord: p.IsLandlord,
-		CardsCount: int32(p.CardsCount),
+		CardsCount: int64(p.CardsCount),
 		Online:     p.Online,
 	}
 }
@@ -143,11 +143,11 @@ func leaderboardEntriesToProto(entries []protocol.LeaderboardEntry) []*pb.Leader
 	result := make([]*pb.LeaderboardEntry, len(entries))
 	for i, e := range entries {
 		result[i] = &pb.LeaderboardEntry{
-			Rank:       int32(e.Rank),
+			Rank:       int64(e.Rank),
 			PlayerId:   e.PlayerID,
 			PlayerName: e.PlayerName,
-			Score:      int32(e.Score),
-			Wins:       int32(e.Wins),
+			Score:      int64(e.Score),
+			Wins:       int64(e.Wins),
 			WinRate:    e.WinRate,
 		}
 	}

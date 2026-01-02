@@ -37,6 +37,6 @@ message PlayCardsPayload {
 // GetLeaderboardPayload 获取排行榜请求
 message GetLeaderboardPayload {
   string type = 1;   // total/daily/weekly
-  int32 offset = 2;  // 偏移量
-  int32 limit = 3;   // 数量
+  int64 offset = 2;  // 偏移量
+  int64 limit = 3;   // 数量
 }

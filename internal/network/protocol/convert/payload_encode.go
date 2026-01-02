@@ -75,8 +75,8 @@ func encodeClientRequests(msgType protocol.MessageType, payload any) (proto.Mess
 		p := payload.(protocol.GetLeaderboardPayload)
 		return &pb.GetLeaderboardPayload{
 			Type:   p.Type,
-			Offset: int32(p.Offset),
-			Limit:  int32(p.Limit),
+			Offset: int64(p.Offset),
+			Limit:  int64(p.Limit),
 		}, true
 	case protocol.MsgGetOnlineCount, protocol.MsgGetMaintenanceStatus:
 		// No payload needed for these messages
@@ -116,7 +116,7 @@ func encodeServerSystemMessages(msgType protocol.MessageType, payload any) (prot
 	case protocol.MsgOnlineCount:
 		p := payload.(protocol.OnlineCountPayload)
 		return &pb.OnlineCountPayload{
-			Count: int32(p.Count),
+			Count: int64(p.Count),
 		}, true
 	case protocol.MsgMaintenancePull:
 		p := payload.(protocol.MaintenanceStatusPayload)
@@ -133,18 +133,18 @@ func encodeServerSystemMessages(msgType protocol.MessageType, payload any) (prot
 		return &pb.StatsResultPayload{
 			PlayerId:      p.PlayerID,
 			PlayerName:    p.PlayerName,
-			TotalGames:    int32(p.TotalGames),
-			Wins:          int32(p.Wins),
-			Losses:        int32(p.Losses),
+			TotalGames:    int64(p.TotalGames),
+			Wins:          int64(p.Wins),
+			Losses:        int64(p.Losses),
 			WinRate:       p.WinRate,
-			LandlordGames: int32(p.LandlordGames),
-			LandlordWins:  int32(p.LandlordWins),
-			FarmerGames:   int32(p.FarmerGames),
-			FarmerWins:    int32(p.FarmerWins),
-			Score:         int32(p.Score),
-			Rank:          int32(p.Rank),
-			CurrentStreak: int32(p.CurrentStreak),
-			MaxWinStreak:  int32(p.MaxWinStreak),
+			LandlordGames: int64(p.LandlordGames),
+			LandlordWins:  int64(p.LandlordWins),
+			FarmerGames:   int64(p.FarmerGames),
+			FarmerWins:    int64(p.FarmerWins),
+			Score:         int64(p.Score),
+			Rank:          int64(p.Rank),
+			CurrentStreak: int64(p.CurrentStreak),
+			MaxWinStreak:  int64(p.MaxWinStreak),
 		}, true
 	case protocol.MsgLeaderboardResult:
 		p := payload.(protocol.LeaderboardResultPayload)
@@ -170,7 +170,7 @@ func encodeServerRoomMessages(msgType protocol.MessageType, payload any) (proto.
 		return &pb.PlayerOfflinePayload{
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
-			Timeout:    int32(p.Timeout),
+			Timeout:    int64(p.Timeout),
 		}, true
 	case protocol.MsgPlayerOnline:
 		p := payload.(protocol.PlayerOnlinePayload)
@@ -235,7 +235,7 @@ func encodeServerGameMessages(msgType protocol.MessageType, payload any) (proto.
 		p := payload.(protocol.BidTurnPayload)
 		return &pb.BidTurnPayload{
 			PlayerId: p.PlayerID,
-			Timeout:  int32(p.Timeout),
+			Timeout:  int64(p.Timeout),
 		}, true
 	case protocol.MsgBidResult:
 		p := payload.(protocol.BidResultPayload)
@@ -265,7 +265,7 @@ func encodeServerGameMessages(msgType protocol.MessageType, payload any) (proto.
 			PlayerId:   p.PlayerID,
 			PlayerName: p.PlayerName,
 			Cards:      cardsToProto(p.Cards),
-			CardsLeft:  int32(p.CardsLeft),
+			CardsLeft:  int64(p.CardsLeft),
 			HandType:   p.HandType,
 		}, true
 	case protocol.MsgPlayerPass:

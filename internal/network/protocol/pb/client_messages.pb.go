@@ -258,8 +258,8 @@ func (x *PlayCardsPayload) GetCards() []*CardInfo {
 type GetLeaderboardPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`      // total/daily/weekly
-	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"` // 偏移量
-	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`   // 数量
+	Offset        int64                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"` // 偏移量
+	Limit         int64                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`   // 数量
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -301,14 +301,14 @@ func (x *GetLeaderboardPayload) GetType() string {
 	return ""
 }
 
-func (x *GetLeaderboardPayload) GetOffset() int32 {
+func (x *GetLeaderboardPayload) GetOffset() int64 {
 	if x != nil {
 		return x.Offset
 	}
 	return 0
 }
 
-func (x *GetLeaderboardPayload) GetLimit() int32 {
+func (x *GetLeaderboardPayload) GetLimit() int64 {
 	if x != nil {
 		return x.Limit
 	}
@@ -334,8 +334,8 @@ const file_internal_network_protocol_proto_client_messages_proto_rawDesc = "" +
 	"\x05cards\x18\x01 \x03(\v2\x12.protocol.CardInfoR\x05cards\"Y\n" +
 	"\x15GetLeaderboardPayload\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x16\n" +
-	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limitBEZCgithub.com/palemoky/fight-the-landlord/internal/network/protocol/pbb\x06proto3"
+	"\x06offset\x18\x02 \x01(\x03R\x06offset\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x03R\x05limitBEZCgithub.com/palemoky/fight-the-landlord/internal/network/protocol/pbb\x06proto3"
 
 var (
 	file_internal_network_protocol_proto_client_messages_proto_rawDescOnce sync.Once
