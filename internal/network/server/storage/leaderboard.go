@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -84,7 +85,7 @@ func (lm *LeaderboardManager) GetPlayerStats(ctx context.Context, playerID strin
 	key := playerStatsKey + playerID
 	data, err := lm.redis.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return nil, nil
 		}
 		return nil, err
@@ -135,33 +136,32 @@ func (lm *LeaderboardManager) RecordGameResult(ctx context.Context, playerID, pl
 	stats.TotalGames++
 	stats.LastPlayedAt = time.Now().Unix()
 
-	// 计算积分变化
+	// 处理角色特定逻辑和积分
 	var scoreChange int
-
-	if isLandlord {
+	switch {
+	case isLandlord && isWinner: // 地主获胜
 		stats.LandlordGames++
-		if isWinner {
-			stats.LandlordWins++
-			stats.Wins++
-			scoreChange = WinAsLandlord
-			stats.CurrentStreak = max(1, stats.CurrentStreak+1)
-		} else {
-			stats.Losses++
-			scoreChange = LoseAsLandlord
-			stats.CurrentStreak = min(-1, stats.CurrentStreak-1)
-		}
-	} else {
+		stats.LandlordWins++
+		scoreChange = WinAsLandlord
+	case isLandlord && !isWinner: // 地主失败
+		stats.LandlordGames++
+		scoreChange = LoseAsLandlord
+	case !isLandlord && isWinner: // 农民获胜
 		stats.FarmerGames++
-		if isWinner {
-			stats.FarmerWins++
-			stats.Wins++
-			scoreChange = WinAsFarmer
-			stats.CurrentStreak = max(1, stats.CurrentStreak+1)
-		} else {
-			stats.Losses++
-			scoreChange = LoseAsFarmer
-			stats.CurrentStreak = min(-1, stats.CurrentStreak-1)
-		}
+		stats.FarmerWins++
+		scoreChange = WinAsFarmer
+	case !isLandlord && !isWinner: // 农民失败
+		stats.FarmerGames++
+		scoreChange = LoseAsFarmer
+	}
+
+	// 处理通用胜负逻辑
+	if isWinner {
+		stats.Wins++
+		stats.CurrentStreak = max(1, stats.CurrentStreak+1)
+	} else {
+		stats.Losses++
+		stats.CurrentStreak = min(-1, stats.CurrentStreak-1)
 	}
 
 	// 连胜加成
@@ -290,7 +290,7 @@ func (lm *LeaderboardManager) GetLeaderboard(ctx context.Context, limit int) ([]
 func (lm *LeaderboardManager) GetPlayerRank(ctx context.Context, playerID string) (int64, error) {
 	rank, err := lm.redis.ZRevRank(ctx, leaderboardKey, playerID).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return -1, nil // 未上榜
 		}
 		return -1, err
