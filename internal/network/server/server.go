@@ -137,7 +137,7 @@ func (s *Server) Start() error {
 	server := &http.Server{
 		Addr:              addr,
 		Handler:           nil,
-		ReadHeaderTimeout: 10 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second, // 防止 Slowloris 攻击
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,

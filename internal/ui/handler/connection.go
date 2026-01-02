@@ -51,7 +51,7 @@ func handleMsgReconnected(m model.Model, msg *protocol.Message) tea.Cmd {
 	return nil
 }
 
-func handleMsgPong(m model.Model, msg *protocol.Message) tea.Cmd {
+func handleMsgPong(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PongPayload
 	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	return nil

@@ -17,7 +17,7 @@ func HandleServerMessage(m model.Model, msg *protocol.Message) tea.Cmd {
 	case protocol.MsgReconnected:
 		return handleMsgReconnected(m, msg)
 	case protocol.MsgPong:
-		return handleMsgPong(m, msg)
+		return handleMsgPong(msg)
 	case protocol.MsgError:
 		return handleMsgError(m, msg)
 	case protocol.MsgOnlineCount:
