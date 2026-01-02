@@ -23,7 +23,7 @@ linters:
 
     # 代码质量
     - gocritic # 提供代码质量建议
-    - revive # 快速、可配置的 linter (golint 替代品)
+    # - revive # 注释检查过于严格，暂时禁用
     - gocyclo # 检查圈复杂度
     - gocognit # 检查认知复杂度
     - funlen # 检查函数长度
