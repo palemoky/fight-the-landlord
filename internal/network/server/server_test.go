@@ -53,7 +53,7 @@ func TestServer_HandleHealth(t *testing.T) {
 	s.handleHealth(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
