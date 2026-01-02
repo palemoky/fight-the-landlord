@@ -46,6 +46,12 @@ proto:  ## Regenerate Protocol Buffer code
 	protoc --proto_path=. --go_out=. --go_opt=module=github.com/palemoky/fight-the-landlord internal/network/protocol/proto/*.proto
 	@echo "$(GREEN)✓ Protocol Buffer code regenerated$(NC)"
 
+## gen-msgtype: 生成 MessageType 映射代码
+gen-msgtype:  ## Generate MessageType mapping code
+	@echo "$(BLUE)Generating MessageType mapping code...$(NC)"
+	@cd internal/network/protocol/convert && go run gen_message_type.go
+	@echo "$(GREEN)✓ MessageType mapping code generated$(NC)"
+
 ## release: 创建并推送版本标签
 release:  ## Create and push version tag
 	@if [ -n "$$(git status --porcelain)" ]; then \

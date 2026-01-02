@@ -8,6 +8,8 @@ run:
   tests: true
   skip-dirs:
     - internal/network/protocol/pb
+  skip-files:
+    - ".*_generated\\.go$" # 跳过所有生成的代码
 
 linters:
   # 禁用所有默认 linters
