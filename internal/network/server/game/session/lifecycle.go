@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"sort"
 
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
@@ -29,7 +29,7 @@ func (gs *GameSession) Start() {
 	gs.room.SetState(RoomStateBidding)
 
 	// 随机选择第一个叫地主的玩家
-	gs.currentBidder = rand.Intn(3)
+	gs.currentBidder = rand.IntN(3)
 
 	// 通知叫地主
 	gs.notifyBidTurn()

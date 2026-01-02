@@ -1,7 +1,7 @@
 package session
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"sort"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
@@ -48,7 +48,7 @@ func (gs *GameSession) HandleBid(playerID string, bid bool) error {
 	// 如果轮了一圈都没人叫，随机指定地主
 	if gs.bidCount >= 3 {
 		if gs.highestBidder == -1 {
-			gs.highestBidder = rand.Intn(3)
+			gs.highestBidder = rand.IntN(3)
 		}
 		gs.setLandlord(gs.highestBidder)
 		return nil

@@ -3,7 +3,7 @@ package game
 import (
 	"context"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -397,7 +397,7 @@ func (rm *RoomManager) generateRoomCode() string {
 	for {
 		code := make([]byte, roomCodeLength)
 		for i := range code {
-			code[i] = roomCodeChars[rand.Intn(len(roomCodeChars))]
+			code[i] = roomCodeChars[rand.IntN(len(roomCodeChars))]
 		}
 		codeStr := string(code)
 		if _, exists := rm.rooms[codeStr]; !exists {
