@@ -322,7 +322,8 @@ func renderPrompt(m model.Model, game model.GameAccessor, state *gameClient.Game
 	// Calculate remaining time
 	timerView := renderTimer(game.TimerDuration(), game.TimerStartTime())
 
-	if phase == model.PhaseBidding {
+	switch phase {
+	case model.PhaseBidding:
 		if game.BidTurn() == myPlayerID {
 			fmt.Fprintf(&sb, "⏳ %s | 轮到你叫地主!\n", timerView)
 		} else {
@@ -333,7 +334,7 @@ func renderPrompt(m model.Model, game model.GameAccessor, state *gameClient.Game
 				}
 			}
 		}
-	} else if phase == model.PhasePlaying {
+	case model.PhasePlaying:
 		if state.CurrentTurn == myPlayerID {
 			icon := common.FarmerIcon
 			if state.IsLandlord {
