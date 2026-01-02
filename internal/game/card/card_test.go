@@ -141,6 +141,7 @@ func TestStringers(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Suit Stringer", func(t *testing.T) {
+		t.Parallel()
 		suitTests := []struct {
 			suit Suit
 			want string
@@ -160,6 +161,7 @@ func TestStringers(t *testing.T) {
 
 	// --- 测试 Rank.String() ---
 	t.Run("Rank Stringer", func(t *testing.T) {
+		t.Parallel()
 		rankTests := []struct {
 			rank Rank
 			want string
