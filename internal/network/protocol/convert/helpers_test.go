@@ -198,7 +198,7 @@ func TestPlayerInfoToProto(t *testing.T) {
 			result := playerInfoToProto(&tt.player)
 			assert.Equal(t, tt.player.ID, result.Id)
 			assert.Equal(t, tt.player.Name, result.Name)
-			assert.Equal(t, int32(tt.player.Seat), result.Seat)
+			assert.Equal(t, int64(tt.player.Seat), result.Seat)
 			assert.Equal(t, tt.player.Ready, result.Ready)
 			assert.Equal(t, tt.player.IsLandlord, result.IsLandlord)
 			assert.Equal(t, int64(tt.player.CardsCount), result.CardsCount)

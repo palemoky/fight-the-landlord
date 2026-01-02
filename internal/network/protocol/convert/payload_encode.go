@@ -155,7 +155,7 @@ func encodeServerSystemMessages(msgType protocol.MessageType, payload any) (prot
 	case protocol.MsgError:
 		p := payload.(protocol.ErrorPayload)
 		return &pb.ErrorPayload{
-			Code:    int32(p.Code),
+			Code:    int64(p.Code),
 			Message: p.Message,
 		}, true
 	}
@@ -255,7 +255,7 @@ func encodeServerGameMessages(msgType protocol.MessageType, payload any) (proto.
 		p := payload.(protocol.PlayTurnPayload)
 		return &pb.PlayTurnPayload{
 			PlayerId: p.PlayerID,
-			Timeout:  int32(p.Timeout),
+			Timeout:  int64(p.Timeout),
 			MustPlay: p.MustPlay,
 			CanBeat:  p.CanBeat,
 		}, true

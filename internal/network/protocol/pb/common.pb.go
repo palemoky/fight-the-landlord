@@ -24,9 +24,9 @@ const (
 // CardInfo 牌信息
 type CardInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Suit          int32                  `protobuf:"varint,1,opt,name=suit,proto3" json:"suit,omitempty"`   // 花色: 0=黑桃, 1=红心, 2=梅花, 3=方块, 4=王
-	Rank          int32                  `protobuf:"varint,2,opt,name=rank,proto3" json:"rank,omitempty"`   // 点数: 3-17 (3-2, 小王=16, 大王=17)
-	Color         int32                  `protobuf:"varint,3,opt,name=color,proto3" json:"color,omitempty"` // 颜色: 0=黑, 1=红
+	Suit          int64                  `protobuf:"varint,1,opt,name=suit,proto3" json:"suit,omitempty"`   // 花色: 0=黑桃, 1=红心, 2=梅花, 3=方块, 4=王
+	Rank          int64                  `protobuf:"varint,2,opt,name=rank,proto3" json:"rank,omitempty"`   // 点数: 3-17 (3-2, 小王=16, 大王=17)
+	Color         int64                  `protobuf:"varint,3,opt,name=color,proto3" json:"color,omitempty"` // 颜色: 0=黑, 1=红
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,21 +61,21 @@ func (*CardInfo) Descriptor() ([]byte, []int) {
 	return file_internal_network_protocol_proto_common_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *CardInfo) GetSuit() int32 {
+func (x *CardInfo) GetSuit() int64 {
 	if x != nil {
 		return x.Suit
 	}
 	return 0
 }
 
-func (x *CardInfo) GetRank() int32 {
+func (x *CardInfo) GetRank() int64 {
 	if x != nil {
 		return x.Rank
 	}
 	return 0
 }
 
-func (x *CardInfo) GetColor() int32 {
+func (x *CardInfo) GetColor() int64 {
 	if x != nil {
 		return x.Color
 	}
@@ -87,7 +87,7 @@ type PlayerInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Seat          int32                  `protobuf:"varint,3,opt,name=seat,proto3" json:"seat,omitempty"`                               // 座位号 0-2
+	Seat          int64                  `protobuf:"varint,3,opt,name=seat,proto3" json:"seat,omitempty"`                               // 座位号 0-2
 	Ready         bool                   `protobuf:"varint,4,opt,name=ready,proto3" json:"ready,omitempty"`                             // 是否准备
 	IsLandlord    bool                   `protobuf:"varint,5,opt,name=is_landlord,json=isLandlord,proto3" json:"is_landlord,omitempty"` // 是否是地主
 	CardsCount    int64                  `protobuf:"varint,6,opt,name=cards_count,json=cardsCount,proto3" json:"cards_count,omitempty"` // 手牌数量
@@ -140,7 +140,7 @@ func (x *PlayerInfo) GetName() string {
 	return ""
 }
 
-func (x *PlayerInfo) GetSeat() int32 {
+func (x *PlayerInfo) GetSeat() int64 {
 	if x != nil {
 		return x.Seat
 	}
@@ -434,8 +434,8 @@ func (x *LeaderboardEntry) GetWinRate() float64 {
 type RoomListItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RoomCode      string                 `protobuf:"bytes,1,opt,name=room_code,json=roomCode,proto3" json:"room_code,omitempty"`
-	PlayerCount   int32                  `protobuf:"varint,2,opt,name=player_count,json=playerCount,proto3" json:"player_count,omitempty"`
-	MaxPlayers    int32                  `protobuf:"varint,3,opt,name=max_players,json=maxPlayers,proto3" json:"max_players,omitempty"`
+	PlayerCount   int64                  `protobuf:"varint,2,opt,name=player_count,json=playerCount,proto3" json:"player_count,omitempty"`
+	MaxPlayers    int64                  `protobuf:"varint,3,opt,name=max_players,json=maxPlayers,proto3" json:"max_players,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -477,14 +477,14 @@ func (x *RoomListItem) GetRoomCode() string {
 	return ""
 }
 
-func (x *RoomListItem) GetPlayerCount() int32 {
+func (x *RoomListItem) GetPlayerCount() int64 {
 	if x != nil {
 		return x.PlayerCount
 	}
 	return 0
 }
 
-func (x *RoomListItem) GetMaxPlayers() int32 {
+func (x *RoomListItem) GetMaxPlayers() int64 {
 	if x != nil {
 		return x.MaxPlayers
 	}
@@ -497,14 +497,14 @@ const file_internal_network_protocol_proto_common_proto_rawDesc = "" +
 	"\n" +
 	",internal/network/protocol/proto/common.proto\x12\bprotocol\"H\n" +
 	"\bCardInfo\x12\x12\n" +
-	"\x04suit\x18\x01 \x01(\x05R\x04suit\x12\x12\n" +
-	"\x04rank\x18\x02 \x01(\x05R\x04rank\x12\x14\n" +
-	"\x05color\x18\x03 \x01(\x05R\x05color\"\xb4\x01\n" +
+	"\x04suit\x18\x01 \x01(\x03R\x04suit\x12\x12\n" +
+	"\x04rank\x18\x02 \x01(\x03R\x04rank\x12\x14\n" +
+	"\x05color\x18\x03 \x01(\x03R\x05color\"\xb4\x01\n" +
 	"\n" +
 	"PlayerInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
-	"\x04seat\x18\x03 \x01(\x05R\x04seat\x12\x14\n" +
+	"\x04seat\x18\x03 \x01(\x03R\x04seat\x12\x14\n" +
 	"\x05ready\x18\x04 \x01(\bR\x05ready\x12\x1f\n" +
 	"\vis_landlord\x18\x05 \x01(\bR\n" +
 	"isLandlord\x12\x1f\n" +
@@ -538,8 +538,8 @@ const file_internal_network_protocol_proto_common_proto_rawDesc = "" +
 	"\bwin_rate\x18\x06 \x01(\x01R\awinRate\"o\n" +
 	"\fRoomListItem\x12\x1b\n" +
 	"\troom_code\x18\x01 \x01(\tR\broomCode\x12!\n" +
-	"\fplayer_count\x18\x02 \x01(\x05R\vplayerCount\x12\x1f\n" +
-	"\vmax_players\x18\x03 \x01(\x05R\n" +
+	"\fplayer_count\x18\x02 \x01(\x03R\vplayerCount\x12\x1f\n" +
+	"\vmax_players\x18\x03 \x01(\x03R\n" +
 	"maxPlayersBEZCgithub.com/palemoky/fight-the-landlord/internal/network/protocol/pbb\x06proto3"
 
 var (

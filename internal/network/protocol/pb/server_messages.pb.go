@@ -456,7 +456,7 @@ func (x *MaintenancePayload) GetMaintenance() bool {
 // ErrorPayload 错误响应
 type ErrorPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Code          int64                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -492,7 +492,7 @@ func (*ErrorPayload) Descriptor() ([]byte, []int) {
 	return file_internal_network_protocol_proto_server_messages_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *ErrorPayload) GetCode() int32 {
+func (x *ErrorPayload) GetCode() int64 {
 	if x != nil {
 		return x.Code
 	}
@@ -789,7 +789,7 @@ const file_internal_network_protocol_proto_server_messages_proto_rawDesc = "" +
 	"\x12MaintenancePayload\x12 \n" +
 	"\vmaintenance\x18\x01 \x01(\bR\vmaintenance\"<\n" +
 	"\fErrorPayload\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x18\n" +
+	"\x04code\x18\x01 \x01(\x03R\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xc1\x03\n" +
 	"\x12StatsResultPayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +

@@ -59,7 +59,7 @@ message MaintenancePayload {
 
 // ErrorPayload 错误响应
 message ErrorPayload {
-  int32 code = 1;
+  int64 code = 1;
   string message = 2;
 }
 

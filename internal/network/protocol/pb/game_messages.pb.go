@@ -563,7 +563,7 @@ func (x *LandlordPayload) GetBottomCards() []*CardInfo {
 type PlayTurnPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	Timeout       int32                  `protobuf:"varint,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Timeout       int64                  `protobuf:"varint,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	MustPlay      bool                   `protobuf:"varint,3,opt,name=must_play,json=mustPlay,proto3" json:"must_play,omitempty"`
 	CanBeat       bool                   `protobuf:"varint,4,opt,name=can_beat,json=canBeat,proto3" json:"can_beat,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -607,7 +607,7 @@ func (x *PlayTurnPayload) GetPlayerId() string {
 	return ""
 }
 
-func (x *PlayTurnPayload) GetTimeout() int32 {
+func (x *PlayTurnPayload) GetTimeout() int64 {
 	if x != nil {
 		return x.Timeout
 	}
@@ -868,7 +868,7 @@ const file_internal_network_protocol_proto_game_messages_proto_rawDesc = "" +
 	"\fbottom_cards\x18\x03 \x03(\v2\x12.protocol.CardInfoR\vbottomCards\"\x80\x01\n" +
 	"\x0fPlayTurnPayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x18\n" +
-	"\atimeout\x18\x02 \x01(\x05R\atimeout\x12\x1b\n" +
+	"\atimeout\x18\x02 \x01(\x03R\atimeout\x12\x1b\n" +
 	"\tmust_play\x18\x03 \x01(\bR\bmustPlay\x12\x19\n" +
 	"\bcan_beat\x18\x04 \x01(\bR\acanBeat\"\xb7\x01\n" +
 	"\x11CardPlayedPayload\x12\x1b\n" +
