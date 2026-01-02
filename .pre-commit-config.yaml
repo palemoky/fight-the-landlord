@@ -25,7 +25,6 @@ repos:
           - --fix
           - --timeout=5m
           - --config=.golangci.yml
-          - --new-from-rev=HEAD~1 # Only check changed files
 
   # Go formatting and imports
   - repo: local
