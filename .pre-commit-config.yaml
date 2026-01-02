@@ -25,6 +25,7 @@ repos:
           - --fix
           - --timeout=5m
           - --config=.golangci.yml
+        pass_filenames: false
 
   # Go formatting and imports
   - repo: local
