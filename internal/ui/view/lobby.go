@@ -58,7 +58,7 @@ func LobbyView(m model.Model) string {
 	}
 
 	lobbyModel := m.Lobby()
-	var menuLines []string
+	menuLines := make([]string, 0, 2+len(menuItems))
 	menuLines = append(menuLines, "请选择:", "")
 	for i, item := range menuItems {
 		prefix := "  "
