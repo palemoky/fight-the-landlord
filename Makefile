@@ -18,6 +18,11 @@ help:  ## Show this help message
 	@echo "$(BLUE)════════════════════════════════════════$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-15s$(NC) %s\n", $$1, $$2}'
 
+## lint: 运行 linter
+lint:  ## Run linter
+	@echo "$(BLUE)Running linter...$(NC)"
+	golangci-lint run
+
 ## test: 运行所有测试
 test:  ## Run all tests
 	@echo "$(BLUE)Running tests...$(NC)"
