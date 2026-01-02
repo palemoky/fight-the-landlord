@@ -14,6 +14,7 @@ import (
 
 // Helper to create a room with a running game session and mock clients
 func setupGameRoom(t *testing.T) (*game.Room, []*MockClient) {
+	t.Helper()
 	room := &game.Room{
 		Code:        "123",
 		Players:     make(map[string]*game.RoomPlayer),
@@ -74,23 +75,22 @@ func TestHandler_HandleBid_Success(t *testing.T) {
 
 		h.handleBid(c, msg)
 
-		// If success, gs state changes to Playing
+		// 成功情况：状态改变
 		if gs.GetStateForSerialization() == session.GameStatePlaying {
 			success = true
 			break
-		} else if len(c.Calls) > callsBefore {
-			// Check if we got an error message
-			lastCall := c.Calls[len(c.Calls)-1]
-			if lastCall.Method == "SendMessage" {
-				msgSent := lastCall.Arguments.Get(0).(*protocol.Message)
-				if msgSent.Type == protocol.MsgError {
-					var errP protocol.ErrorPayload
-					if err := convert.DecodePayload(protocol.MsgError, msgSent.Payload, &errP); err != nil {
-						t.Logf("Failed to decode error payload: %v", err)
-					} else {
-						t.Logf("Client %s bid failed: Code=%d Msg=%s", c.GetID(), errP.Code, errP.Message)
-					}
-				}
+		}
+
+		// 无响应情况：直接跳过
+		if len(c.Calls) <= callsBefore {
+			continue
+		}
+
+		// 失败情况：尝试解析并记录错误
+		lastCall := c.Calls[len(c.Calls)-1]
+		if lastCall.Method == "SendMessage" {
+			if msgSent, ok := lastCall.Arguments.Get(0).(*protocol.Message); ok && msgSent.Type == protocol.MsgError {
+				logErrorPayload(t, c.GetID(), msgSent)
 			}
 		}
 	}
@@ -160,4 +160,14 @@ func TestHandler_HandlePlayCards_Success(t *testing.T) {
 
 	// Verify hand size decreased
 	assert.Equal(t, 19, len(landlordPlayer.Hand))
+}
+
+func logErrorPayload(t *testing.T, clientID string, msg *protocol.Message) {
+	t.Helper()
+	var errP protocol.ErrorPayload
+	if err := convert.DecodePayload(protocol.MsgError, msg.Payload, &errP); err != nil {
+		t.Logf("Failed to decode error payload: %v", err)
+	} else {
+		t.Logf("Client %s bid failed: Code=%d Msg=%s", clientID, errP.Code, errP.Message)
+	}
 }
