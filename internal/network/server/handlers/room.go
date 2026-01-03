@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"errors"
+
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
@@ -11,7 +13,7 @@ import (
 func (h *Handler) handleCreateRoom(client types.ClientInterface) {
 	// 维护模式检查
 	if h.server.IsMaintenanceMode() {
-		client.SendMessage(encoding.NewErrorMessageWithText(
+		client.SendMessage(codec.NewErrorMessageWithText(
 			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停创建房间"))
 		return
 	}
@@ -23,17 +25,17 @@ func (h *Handler) handleCreateRoom(client types.ClientInterface) {
 
 	roomInterface, err := h.server.GetRoomManager().CreateRoom(client)
 	if err != nil {
-		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		return
 	}
 
 	room, ok := roomInterface.(*game.Room)
 	if !ok || room == nil {
-		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "创建房间失败"))
+		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, "创建房间失败"))
 		return
 	}
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgRoomCreated, protocol.RoomCreatedPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgRoomCreated, protocol.RoomCreatedPayload{
 		RoomCode: room.Code,
 		Player:   room.GetPlayerInfo(client.GetID()),
 	}))
@@ -43,14 +45,14 @@ func (h *Handler) handleCreateRoom(client types.ClientInterface) {
 func (h *Handler) handleJoinRoom(client types.ClientInterface, msg *protocol.Message) {
 	// 维护模式检查
 	if h.server.IsMaintenanceMode() {
-		client.SendMessage(encoding.NewErrorMessageWithText(
+		client.SendMessage(codec.NewErrorMessageWithText(
 			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停加入房间"))
 		return
 	}
 
-	payload, err := encoding.ParsePayload[protocol.JoinRoomPayload](msg)
+	payload, err := codec.ParsePayload[protocol.JoinRoomPayload](msg)
 	if err != nil {
-		client.SendMessage(encoding.NewErrorMessage(protocol.ErrCodeInvalidMsg))
+		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeInvalidMsg))
 		return
 	}
 
@@ -61,21 +63,22 @@ func (h *Handler) handleJoinRoom(client types.ClientInterface, msg *protocol.Mes
 
 	roomInterface, err := h.server.GetRoomManager().JoinRoom(client, payload.RoomCode)
 	if err != nil {
-		if roomErr, ok := err.(*game.RoomError); ok {
-			client.SendMessage(encoding.NewErrorMessage(roomErr.Code))
+		var roomErr *game.RoomError
+		if errors.As(err, &roomErr) {
+			client.SendMessage(codec.NewErrorMessage(roomErr.Code))
 		} else {
-			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+			client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 		return
 	}
 
 	room, ok := roomInterface.(*game.Room)
 	if !ok || room == nil {
-		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "加入房间失败"))
+		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, "加入房间失败"))
 		return
 	}
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgRoomJoined, protocol.RoomJoinedPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgRoomJoined, protocol.RoomJoinedPayload{
 		RoomCode: room.Code,
 		Player:   room.GetPlayerInfo(client.GetID()),
 		Players:  room.GetAllPlayersInfo(),
@@ -91,7 +94,7 @@ func (h *Handler) handleLeaveRoom(client types.ClientInterface) {
 func (h *Handler) handleQuickMatch(client types.ClientInterface) {
 	// 维护模式检查
 	if h.server.IsMaintenanceMode() {
-		client.SendMessage(encoding.NewErrorMessageWithText(
+		client.SendMessage(codec.NewErrorMessageWithText(
 			protocol.ErrCodeServerMaintenance, "服务器维护中，暂停快速匹配"))
 		return
 	}
@@ -108,10 +111,11 @@ func (h *Handler) handleQuickMatch(client types.ClientInterface) {
 func (h *Handler) handleReady(client types.ClientInterface, ready bool) {
 	err := h.server.GetRoomManager().SetPlayerReady(client, ready)
 	if err != nil {
-		if roomErr, ok := err.(*game.RoomError); ok {
-			client.SendMessage(encoding.NewErrorMessage(roomErr.Code))
+		var roomErr *game.RoomError
+		if errors.As(err, &roomErr) {
+			client.SendMessage(codec.NewErrorMessage(roomErr.Code))
 		} else {
-			client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+			client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
 		}
 	}
 }

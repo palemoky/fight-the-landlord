@@ -8,19 +8,19 @@ option go_package = "github.com/palemoky/fight-the-landlord/internal/network/pro
 
 // CardInfo 牌信息
 message CardInfo {
-  int32 suit = 1;  // 花色: 0=黑桃, 1=红心, 2=梅花, 3=方块, 4=王
-  int32 rank = 2;  // 点数: 3-17 (3-2, 小王=16, 大王=17)
-  int32 color = 3; // 颜色: 0=黑, 1=红
+  int64 suit = 1;  // 花色: 0=黑桃, 1=红心, 2=梅花, 3=方块, 4=王
+  int64 rank = 2;  // 点数: 3-17 (3-2, 小王=16, 大王=17)
+  int64 color = 3; // 颜色: 0=黑, 1=红
 }
 
 // PlayerInfo 玩家信息
 message PlayerInfo {
   string id = 1;
   string name = 2;
-  int32 seat = 3;        // 座位号 0-2
+  int64 seat = 3;        // 座位号 0-2
   bool ready = 4;        // 是否准备
   bool is_landlord = 5;  // 是否是地主
-  int32 cards_count = 6; // 手牌数量
+  int64 cards_count = 6; // 手牌数量
   bool online = 7;       // 是否在线
 }
 
@@ -46,17 +46,17 @@ message GameStateDTO {
 
 // LeaderboardEntry 排行榜条目
 message LeaderboardEntry {
-  int32 rank = 1;
+  int64 rank = 1;
   string player_id = 2;
   string player_name = 3;
-  int32 score = 4;
-  int32 wins = 5;
+  int64 score = 4;
+  int64 wins = 5;
   double win_rate = 6;
 }
 
 // RoomListItem 房间列表项
 message RoomListItem {
   string room_code = 1;
-  int32 player_count = 2;
-  int32 max_players = 3;
+  int64 player_count = 2;
+  int64 max_players = 3;
 }

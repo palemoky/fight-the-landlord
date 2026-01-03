@@ -9,7 +9,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/logger"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 )
 
 // Reconnect 手动发送重连请求
@@ -17,7 +17,7 @@ func (c *Client) Reconnect() error {
 	if c.ReconnectToken == "" || c.PlayerID == "" {
 		return errors.New("no reconnect token")
 	}
-	return c.SendMessage(encoding.MustNewMessage(protocol.MsgReconnect, protocol.ReconnectPayload{
+	return c.SendMessage(codec.MustNewMessage(protocol.MsgReconnect, protocol.ReconnectPayload{
 		Token:    c.ReconnectToken,
 		PlayerID: c.PlayerID,
 	}))
@@ -81,7 +81,10 @@ func (c *Client) tryReconnect() {
 			EnableCompression: false,
 		}
 
-		conn, _, err := dialer.Dial(c.ServerURL, nil)
+		conn, resp, err := dialer.Dial(c.ServerURL, nil)
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
 		if err != nil {
 			continue
 		}

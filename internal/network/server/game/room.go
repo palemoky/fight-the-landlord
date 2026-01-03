@@ -3,12 +3,12 @@ package game
 import (
 	"context"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
@@ -133,7 +133,7 @@ func (rm *RoomManager) JoinRoom(client types.ClientInterface, code string) (inte
 	log.Printf("👤 玩家 %s 加入房间 %s", client.GetName(), code)
 
 	// 通知房间内其他玩家
-	room.broadcastExcept(client.GetID(), encoding.MustNewMessage(protocol.MsgPlayerJoined, protocol.PlayerJoinedPayload{
+	room.broadcastExcept(client.GetID(), codec.MustNewMessage(protocol.MsgPlayerJoined, protocol.PlayerJoinedPayload{
 		Player: room.GetPlayerInfo(client.GetID()),
 	}))
 
@@ -167,7 +167,7 @@ func (rm *RoomManager) LeaveRoom(client types.ClientInterface) {
 	}
 
 	// 通知其他玩家
-	room.broadcastExcept(client.GetID(), encoding.MustNewMessage(protocol.MsgPlayerLeft, protocol.PlayerLeftPayload{
+	room.broadcastExcept(client.GetID(), codec.MustNewMessage(protocol.MsgPlayerLeft, protocol.PlayerLeftPayload{
 		PlayerID:   client.GetID(),
 		PlayerName: client.GetName(),
 	}))
@@ -224,7 +224,7 @@ func (rm *RoomManager) SetPlayerReady(client types.ClientInterface, ready bool) 
 	player.Ready = ready
 
 	// 广播准备状态
-	room.broadcast(encoding.MustNewMessage(protocol.MsgPlayerReady, protocol.PlayerReadyPayload{
+	room.broadcast(codec.MustNewMessage(protocol.MsgPlayerReady, protocol.PlayerReadyPayload{
 		PlayerID: client.GetID(),
 		Ready:    ready,
 	}))
@@ -289,7 +289,7 @@ func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 		if playerOnline {
 			allOffline = false
 			// 通知其他在线玩家
-			player.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
+			player.Client.SendMessage(codec.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
 				PlayerID:   client.GetID(),
 				PlayerName: client.GetName(),
 				Timeout:    20, // 20秒离线等待
@@ -328,7 +328,7 @@ func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 }
 
 // ReconnectPlayer 玩家重连到房间
-func (rm *RoomManager) ReconnectPlayer(oldClient types.ClientInterface, newClient types.ClientInterface) error {
+func (rm *RoomManager) ReconnectPlayer(oldClient, newClient types.ClientInterface) error {
 	roomCode := oldClient.GetRoom()
 	if roomCode == "" {
 		return nil // 不在房间中，无需重连
@@ -356,7 +356,7 @@ func (rm *RoomManager) ReconnectPlayer(oldClient types.ClientInterface, newClien
 	// 通知其他玩家该玩家已上线
 	for id, p := range room.Players {
 		if id != newClient.GetID() && p.Client != nil {
-			p.Client.SendMessage(encoding.MustNewMessage(protocol.MsgPlayerOnline, protocol.PlayerOnlinePayload{
+			p.Client.SendMessage(codec.MustNewMessage(protocol.MsgPlayerOnline, protocol.PlayerOnlinePayload{
 				PlayerID:   newClient.GetID(),
 				PlayerName: newClient.GetName(),
 			}))
@@ -397,7 +397,7 @@ func (rm *RoomManager) generateRoomCode() string {
 	for {
 		code := make([]byte, roomCodeLength)
 		for i := range code {
-			code[i] = roomCodeChars[rand.Intn(len(roomCodeChars))]
+			code[i] = roomCodeChars[rand.IntN(len(roomCodeChars))]
 		}
 		codeStr := string(code)
 		if _, exists := rm.rooms[codeStr]; !exists {
@@ -430,7 +430,7 @@ func (rm *RoomManager) cleanup() {
 		if room.State == types.RoomStateWaiting && now.Sub(room.CreatedAt) > timeout {
 			room.mu.RUnlock()
 			// 通知所有玩家房间已关闭
-			room.broadcast(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "房间超时已关闭"))
+			room.broadcast(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, "房间超时已关闭"))
 			// 清理玩家状态
 			for _, p := range room.Players {
 				p.Client.SetRoom("")

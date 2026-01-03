@@ -168,7 +168,7 @@ type MockChatLimiter struct {
 	mock.Mock
 }
 
-func (m *MockChatLimiter) AllowChat(playerID string) (bool, string) {
+func (m *MockChatLimiter) AllowChat(playerID string) (allowed bool, reason string) {
 	args := m.Called(playerID)
 	return args.Bool(0), args.String(1)
 }

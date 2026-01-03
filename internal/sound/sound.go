@@ -35,8 +35,16 @@ func (sm *SoundManager) Init() error {
 	}
 	sm.enabled = true
 
-	// Load sounds
-	// We'll look for sounds in "assets/sounds"
+	// Load sounds from assets directory
+	if err := sm.loadSoundFiles(sampleRate); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// loadSoundFiles loads all sound files from the assets/sounds directory
+func (sm *SoundManager) loadSoundFiles(sampleRate beep.SampleRate) error {
 	soundDir := "assets/sounds"
 	files, err := os.ReadDir(soundDir)
 	if err != nil {
@@ -59,49 +67,56 @@ func (sm *SoundManager) Init() error {
 			continue
 		}
 
-		path := filepath.Join(soundDir, name)
-		f, err := os.Open(path)
-		if err != nil {
+		if err := sm.loadSoundFile(soundDir, name, baseName, ext, sampleRate); err != nil {
+			// Continue loading other files even if one fails
 			continue
 		}
-
-		var streamer beep.StreamSeekCloser
-		var format beep.Format
-
-		switch ext {
-		case ".mp3":
-			streamer, format, err = mp3.Decode(f)
-		case ".wav":
-			streamer, format, err = wav.Decode(f)
-		}
-
-		if err != nil {
-			_ = f.Close()
-			continue
-		}
-
-		// Resample if necessary
-		var resampled beep.Streamer = streamer
-		if format.SampleRate != sampleRate {
-			resampled = beep.Resample(4, format.SampleRate, sampleRate, streamer)
-		}
-
-		// Use standard stereo format
-		standardFormat := beep.Format{
-			SampleRate:  sampleRate,
-			NumChannels: 2,
-			Precision:   4,
-		}
-
-		buffer := beep.NewBuffer(standardFormat)
-		buffer.Append(resampled)
-
-		_ = streamer.Close()
-		_ = f.Close()
-
-		sm.buffers[baseName] = buffer
 	}
 
+	return nil
+}
+
+// loadSoundFile loads a single sound file into the buffer
+func (sm *SoundManager) loadSoundFile(soundDir, name, baseName, ext string, sampleRate beep.SampleRate) error {
+	path := filepath.Join(soundDir, name)
+	f, err := os.Open(filepath.Clean(path))
+	if err != nil {
+		return err
+	}
+	defer func() { _ = f.Close() }()
+
+	var streamer beep.StreamSeekCloser
+	var format beep.Format
+
+	switch ext {
+	case ".mp3":
+		streamer, format, err = mp3.Decode(f)
+	case ".wav":
+		streamer, format, err = wav.Decode(f)
+	}
+
+	if err != nil {
+		return err
+	}
+	defer func() { _ = streamer.Close() }()
+
+	// Resample if necessary
+	var resampled beep.Streamer = streamer
+	if format.SampleRate != sampleRate {
+		resampled = beep.Resample(4, format.SampleRate, sampleRate, streamer)
+	}
+
+	// Use standard stereo format
+	standardFormat := beep.Format{
+		SampleRate:  sampleRate,
+		NumChannels: 2,
+		Precision:   4,
+	}
+
+	buffer := beep.NewBuffer(standardFormat)
+	buffer.Append(resampled)
+
+	sm.buffers[baseName] = buffer
 	return nil
 }
 

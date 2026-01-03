@@ -216,7 +216,7 @@ func renderCardCounter(counter *gameClient.CardCounter) string {
 		card.Rank5, card.Rank4, card.Rank3,
 	}
 
-	var names []string
+	names := make([]string, 0, len(ranks))
 	for _, rank := range ranks {
 		name := rank.String()
 		switch rank {
@@ -231,7 +231,7 @@ func renderCardCounter(counter *gameClient.CardCounter) string {
 	sb.WriteString(strings.Repeat("─", 44) + "\n")
 
 	remaining := counter.GetRemaining()
-	var counts []string
+	counts := make([]string, 0, len(ranks))
 	for _, rank := range ranks {
 		count := remaining[rank]
 		counts = append(counts, fmt.Sprintf("%-2d", count))
@@ -242,8 +242,7 @@ func renderCardCounter(counter *gameClient.CardCounter) string {
 }
 
 func renderMiddleSection(state *gameClient.GameState, myPlayerID string) string {
-	var parts []string
-
+	parts := make([]string, 0, 3) // max 2 other players + 1 last play view
 	for _, p := range state.Players {
 		if p.ID == myPlayerID {
 			continue
@@ -322,7 +321,8 @@ func renderPrompt(m model.Model, game model.GameAccessor, state *gameClient.Game
 	// Calculate remaining time
 	timerView := renderTimer(game.TimerDuration(), game.TimerStartTime())
 
-	if phase == model.PhaseBidding {
+	switch phase {
+	case model.PhaseBidding:
 		if game.BidTurn() == myPlayerID {
 			fmt.Fprintf(&sb, "⏳ %s | 轮到你叫地主!\n", timerView)
 		} else {
@@ -333,7 +333,7 @@ func renderPrompt(m model.Model, game model.GameAccessor, state *gameClient.Game
 				}
 			}
 		}
-	} else if phase == model.PhasePlaying {
+	case model.PhasePlaying:
 		if state.CurrentTurn == myPlayerID {
 			icon := common.FarmerIcon
 			if state.IsLandlord {

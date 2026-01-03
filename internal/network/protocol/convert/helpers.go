@@ -9,9 +9,9 @@ import (
 
 func cardToProto(c protocol.CardInfo) *pb.CardInfo {
 	return &pb.CardInfo{
-		Suit:  int32(c.Suit),
-		Rank:  int32(c.Rank),
-		Color: int32(c.Color),
+		Suit:  int64(c.Suit),
+		Rank:  int64(c.Rank),
+		Color: int64(c.Color),
 	}
 }
 
@@ -45,10 +45,10 @@ func playerInfoToProto(p *protocol.PlayerInfo) *pb.PlayerInfo {
 	return &pb.PlayerInfo{
 		Id:         p.ID,
 		Name:       p.Name,
-		Seat:       int32(p.Seat),
+		Seat:       int64(p.Seat),
 		Ready:      p.Ready,
 		IsLandlord: p.IsLandlord,
-		CardsCount: int32(p.CardsCount),
+		CardsCount: int64(p.CardsCount),
 		Online:     p.Online,
 	}
 }
@@ -143,11 +143,11 @@ func leaderboardEntriesToProto(entries []protocol.LeaderboardEntry) []*pb.Leader
 	result := make([]*pb.LeaderboardEntry, len(entries))
 	for i, e := range entries {
 		result[i] = &pb.LeaderboardEntry{
-			Rank:       int32(e.Rank),
+			Rank:       int64(e.Rank),
 			PlayerId:   e.PlayerID,
 			PlayerName: e.PlayerName,
-			Score:      int32(e.Score),
-			Wins:       int32(e.Wins),
+			Score:      int64(e.Score),
+			Wins:       int64(e.Wins),
 			WinRate:    e.WinRate,
 		}
 	}
@@ -176,8 +176,8 @@ func roomListItemsToProto(rooms []protocol.RoomListItem) []*pb.RoomListItem {
 	for i, r := range rooms {
 		result[i] = &pb.RoomListItem{
 			RoomCode:    r.RoomCode,
-			PlayerCount: int32(r.PlayerCount),
-			MaxPlayers:  int32(r.MaxPlayers),
+			PlayerCount: int64(r.PlayerCount),
+			MaxPlayers:  int64(r.MaxPlayers),
 		}
 	}
 	return result

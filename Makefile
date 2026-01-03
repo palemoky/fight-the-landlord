@@ -18,6 +18,11 @@ help:  ## Show this help message
 	@echo "$(BLUE)════════════════════════════════════════$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-15s$(NC) %s\n", $$1, $$2}'
 
+## lint: 运行 linter
+lint:  ## Run linter
+	@echo "$(BLUE)Running linter...$(NC)"
+	golangci-lint run
+
 ## test: 运行所有测试
 test:  ## Run all tests
 	@echo "$(BLUE)Running tests...$(NC)"
@@ -40,6 +45,12 @@ proto:  ## Regenerate Protocol Buffer code
 	fi
 	protoc --proto_path=. --go_out=. --go_opt=module=github.com/palemoky/fight-the-landlord internal/network/protocol/proto/*.proto
 	@echo "$(GREEN)✓ Protocol Buffer code regenerated$(NC)"
+
+## gen-msgtype: 生成 MessageType 映射代码
+gen-msgtype:  ## Generate MessageType mapping code
+	@echo "$(BLUE)Generating MessageType mapping code...$(NC)"
+	@cd internal/network/protocol/convert && go run gen_message_type.go
+	@echo "$(GREEN)✓ MessageType mapping code generated$(NC)"
 
 ## release: 创建并推送版本标签
 release:  ## Create and push version tag
@@ -76,6 +87,22 @@ release:  ## Create and push version tag
 	if [ "$$CONFIRM" != "y" ] && [ "$$CONFIRM" != "Y" ]; then \
 		echo "$(YELLOW)Aborted$(NC)"; \
 		exit 1; \
+	fi; \
+	if [ "$$LATEST_TAG" != "none" ]; then \
+		NEW_VER=$$(echo $$VERSION | sed 's/^v//'); \
+		CUR_VER=$$(echo $$LATEST_TAG | sed 's/^v//'); \
+		NEW_MAJOR=$$(echo $$NEW_VER | cut -d. -f1); \
+		NEW_MINOR=$$(echo $$NEW_VER | cut -d. -f2); \
+		NEW_PATCH=$$(echo $$NEW_VER | cut -d. -f3); \
+		CUR_MAJOR=$$(echo $$CUR_VER | cut -d. -f1); \
+		CUR_MINOR=$$(echo $$CUR_VER | cut -d. -f2); \
+		CUR_PATCH=$$(echo $$CUR_VER | cut -d. -f3); \
+		if [ $$NEW_MAJOR -lt $$CUR_MAJOR ] || \
+		   ([ $$NEW_MAJOR -eq $$CUR_MAJOR ] && [ $$NEW_MINOR -lt $$CUR_MINOR ]) || \
+		   ([ $$NEW_MAJOR -eq $$CUR_MAJOR ] && [ $$NEW_MINOR -eq $$CUR_MINOR ] && [ $$NEW_PATCH -le $$CUR_PATCH ]); then \
+			echo "$(RED)Error: New version $$VERSION must be greater than $$LATEST_TAG$(NC)"; \
+			exit 1; \
+		fi; \
 	fi; \
 	if git config user.signingkey >/dev/null 2>&1 && command -v gpg >/dev/null 2>&1; then \
 		echo "$(BLUE)Creating GPG signed tag $$VERSION...$(NC)"; \

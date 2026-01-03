@@ -23,13 +23,13 @@ func Init() error {
 	}
 
 	logDir := filepath.Join(homeDir, ".fight-the-landlord")
-	if err := os.MkdirAll(logDir, 0o755); err != nil {
+	if err := os.MkdirAll(logDir, 0o750); err != nil {
 		return fmt.Errorf("failed to create log directory: %w", err)
 	}
 
 	// Create or append to debug.log
 	logPath = filepath.Join(logDir, "debug.log")
-	debugLog, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	debugLog, err = os.OpenFile(filepath.Clean(logPath), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to open log file: %w", err)
 	}
@@ -39,7 +39,7 @@ func Init() error {
 		_ = debugLog.Close()
 		backupPath := filepath.Join(logDir, fmt.Sprintf("debug.log.%d", time.Now().Unix()))
 		_ = os.Rename(logPath, backupPath)
-		debugLog, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+		debugLog, err = os.OpenFile(filepath.Clean(logPath), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 		if err != nil {
 			return fmt.Errorf("failed to create new log file: %w", err)
 		}

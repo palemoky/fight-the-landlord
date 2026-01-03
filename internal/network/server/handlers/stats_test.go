@@ -29,7 +29,6 @@ func TestHandler_HandleGetStats_Success(t *testing.T) {
 
 	// Expectations
 	mockClient.On("GetID").Return(playerID)
-	// mockClient.On("GetName").Return("Player1") // Used inside if stats==nil logic, but here stats != nil
 
 	mockServer.On("GetLeaderboard").Return(mockLeaderboard)
 

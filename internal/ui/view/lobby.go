@@ -12,66 +12,26 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 )
 
-// LobbyView renders the lobby view.
-func LobbyView(m model.Model) string {
-	lobby := m.Lobby()
-	var sb strings.Builder
-
-	title := common.TitleStyle("🎮 欢乐斗地主")
-	sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, title))
-	sb.WriteString("\n\n")
-
-	if m.PlayerName() != "" {
-		welcome := fmt.Sprintf("欢迎, %s!", m.PlayerName())
-		sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, welcome))
-		sb.WriteString("\n")
-
-		// Show system notification
-		if notification := m.GetCurrentNotification(); notification != nil {
-			var notificationStyle lipgloss.Style
-			switch notification.Type {
-			case model.NotifyError, model.NotifyRateLimit:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
-			case model.NotifyReconnecting:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-			case model.NotifyReconnectSuccess:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
-			case model.NotifyMaintenance:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
-			case model.NotifyOnlineCount:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
-			}
-			sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center,
-				notificationStyle.Render(notification.Message)))
-		}
-		sb.WriteString("\n")
-		sb.WriteString("\n")
+// getNotificationStyle returns the appropriate style for a notification type.
+func getNotificationStyle(notifyType model.NotificationType) lipgloss.Style {
+	switch notifyType {
+	case model.NotifyError, model.NotifyRateLimit:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+	case model.NotifyReconnecting:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	case model.NotifyReconnectSuccess:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+	case model.NotifyMaintenance:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+	case model.NotifyOnlineCount:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
+	default:
+		return lipgloss.NewStyle()
 	}
+}
 
-	menuItems := []string{
-		"1. 快速匹配",
-		"2. 创建房间",
-		"3. 加入房间",
-		"4. 排行榜",
-		"5. 我的战绩",
-		"6. 游戏规则",
-	}
-
-	lobbyModel := m.Lobby()
-	var menuLines []string
-	menuLines = append(menuLines, "请选择:", "")
-	for i, item := range menuItems {
-		prefix := "  "
-		if i == lobbyModel.SelectedIndex() {
-			prefix = "▶ "
-		}
-		menuLines = append(menuLines, prefix+item)
-	}
-
-	menu := common.BoxStyle.Padding(0, 2).Render(lipgloss.JoinVertical(lipgloss.Left, menuLines...))
-	menuHeight := lipgloss.Height(menu)
-
-	// Chat box
+// renderChatBox renders the chat box component for the lobby.
+func renderChatBox(lobby model.LobbyAccessor, height int) string {
 	var chatLines []string
 	if len(lobby.ChatHistory()) > 0 {
 		history := lobby.ChatHistory()
@@ -93,7 +53,7 @@ func LobbyView(m model.Model) string {
 	}
 
 	chatHeader := lipgloss.NewStyle().Bold(true).Render("💬 聊天室")
-	innerHeight := menuHeight - 2
+	innerHeight := height - 2
 	contentLines := []string{chatHeader}
 	contentLines = append(contentLines, chatLines...)
 	usedLines := len(contentLines) + 1
@@ -105,7 +65,58 @@ func LobbyView(m model.Model) string {
 
 	chatBoxWidth := 50
 	chatBoxContent := lipgloss.JoinVertical(lipgloss.Left, contentLines...)
-	chatBox := common.BoxStyle.Width(chatBoxWidth).Height(innerHeight).Render(chatBoxContent)
+	return common.BoxStyle.Width(chatBoxWidth).Height(innerHeight).Render(chatBoxContent)
+}
+
+// LobbyView renders the lobby view.
+func LobbyView(m model.Model) string {
+	lobby := m.Lobby()
+	var sb strings.Builder
+
+	title := common.TitleStyle("🎮 欢乐斗地主")
+	sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, title))
+	sb.WriteString("\n\n")
+
+	if m.PlayerName() != "" {
+		welcome := fmt.Sprintf("欢迎, %s!", m.PlayerName())
+		sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, welcome))
+		sb.WriteString("\n")
+
+		// Show system notification
+		if notification := m.GetCurrentNotification(); notification != nil {
+			notificationStyle := getNotificationStyle(notification.Type)
+			sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center,
+				notificationStyle.Render(notification.Message)))
+		}
+		sb.WriteString("\n")
+		sb.WriteString("\n")
+	}
+
+	menuItems := []string{
+		"1. 快速匹配",
+		"2. 创建房间",
+		"3. 加入房间",
+		"4. 排行榜",
+		"5. 我的战绩",
+		"6. 游戏规则",
+	}
+
+	lobbyModel := m.Lobby()
+	menuLines := make([]string, 0, 2+len(menuItems))
+	menuLines = append(menuLines, "请选择:", "")
+	for i, item := range menuItems {
+		prefix := "  "
+		if i == lobbyModel.SelectedIndex() {
+			prefix = "▶ "
+		}
+		menuLines = append(menuLines, prefix+item)
+	}
+
+	menu := common.BoxStyle.Padding(0, 2).Render(lipgloss.JoinVertical(lipgloss.Left, menuLines...))
+	menuHeight := lipgloss.Height(menu)
+
+	// Chat box
+	chatBox := renderChatBox(lobby, menuHeight)
 
 	mainContent := lipgloss.JoinHorizontal(lipgloss.Top, menu, "  ", chatBox)
 	sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, mainContent))

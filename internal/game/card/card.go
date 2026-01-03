@@ -2,7 +2,7 @@ package card
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 )
 
@@ -94,41 +94,30 @@ func (r Rank) String() string {
 	}
 }
 
+// charToRank 用于快速查找字符对应的 Rank
+var charToRank = map[rune]Rank{
+	'3': Rank3,
+	'4': Rank4,
+	'5': Rank5,
+	'6': Rank6,
+	'7': Rank7,
+	'8': Rank8,
+	'9': Rank9,
+	'T': Rank10,
+	'J': RankJ,
+	'Q': RankQ,
+	'K': RankK,
+	'A': RankA,
+	'2': Rank2,
+	'B': RankBlackJoker,
+	'R': RankRedJoker,
+}
+
 func RankFromChar(char rune) (Rank, error) {
-	switch char {
-	case '3':
-		return Rank3, nil
-	case '4':
-		return Rank4, nil
-	case '5':
-		return Rank5, nil
-	case '6':
-		return Rank6, nil
-	case '7':
-		return Rank7, nil
-	case '8':
-		return Rank8, nil
-	case '9':
-		return Rank9, nil
-	case 'T':
-		return Rank10, nil
-	case 'J':
-		return RankJ, nil
-	case 'Q':
-		return RankQ, nil
-	case 'K':
-		return RankK, nil
-	case 'A':
-		return RankA, nil
-	case '2':
-		return Rank2, nil
-	case 'B':
-		return RankBlackJoker, nil
-	case 'R':
-		return RankRedJoker, nil
-	default:
-		return -1, fmt.Errorf("无法识别的点数: %c", char)
+	if rank, ok := charToRank[char]; ok {
+		return rank, nil
 	}
+	return -1, fmt.Errorf("无法识别的点数: %c", char)
 }
 
 // Deck 定义一副牌
@@ -145,8 +134,10 @@ func NewDeck() Deck {
 			deck = append(deck, Card{Suit: s, Rank: r, Color: color})
 		}
 	}
-	deck = append(deck, Card{Suit: Joker, Rank: RankBlackJoker, Color: Black})
-	deck = append(deck, Card{Suit: Joker, Rank: RankRedJoker, Color: Red})
+	deck = append(deck,
+		Card{Suit: Joker, Rank: RankBlackJoker, Color: Black},
+		Card{Suit: Joker, Rank: RankRedJoker, Color: Red},
+	)
 	return deck
 }
 

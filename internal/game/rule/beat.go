@@ -156,54 +156,66 @@ func findWinningPlane(analysis HandAnalysis, opponentHand ParsedHand, kickerType
 	}
 
 	for i := 0; i <= len(trioRanks)-length; i++ {
-		isPlane := true
-		for j := 1; j < length; j++ {
-			if trioRanks[i+j-1]+1 != trioRanks[i+j] {
-				isPlane = false
-				break
-			}
+		// Check for continuous sequence (Plane body)
+		if !isContinuousSequence(trioRanks, i, length) {
+			continue
 		}
 
-		if isPlane && trioRanks[i] > opponentHand.KeyRank {
-			// Found a higher plane. Now check for kickers.
-			totalCardsInHand := 0
-			for _, c := range analysis.counts {
-				totalCardsInHand += c
-			}
-			remainingCardCount := totalCardsInHand - (length * 3)
-
-			switch kickerType {
-			case 0: // No kickers
-				return true
-			case 1: // Need N singles
-				if remainingCardCount >= length {
-					return true
-				}
-			case 2: // Need N pairs
-				if remainingCardCount < length*2 {
-					continue
-				}
-				// This is a complex check. A simplified but effective heuristic:
-				// Count how many pairs can be formed from the rest of the hand.
-				kickerPairs := 0
-				for r, count := range analysis.counts {
-					// Is this rank part of the plane we just found?
-					isPlaneRank := false
-					for k := range length {
-						if trioRanks[i+k] == r {
-							isPlaneRank = true
-							break
-						}
-					}
-					if !isPlaneRank {
-						kickerPairs += count / 2
-					}
-				}
-				if kickerPairs >= length {
-					return true
-				}
-			}
+		// Check if rank is higher
+		if trioRanks[i] <= opponentHand.KeyRank {
+			continue
 		}
+
+		// Check for kickers
+		if checkKickers(analysis, trioRanks, i, length, kickerType) {
+			return true
+		}
+	}
+	return false
+}
+
+// isContinuousSequence checks if a slice of ranks forms a continuous sequence
+func isContinuousSequence(ranks []card.Rank, startIndex, length int) bool {
+	for j := 1; j < length; j++ {
+		if ranks[startIndex+j-1]+1 != ranks[startIndex+j] {
+			return false
+		}
+	}
+	return true
+}
+
+// checkKickers checks if the hand has enough kickers for the plane
+func checkKickers(analysis HandAnalysis, trioRanks []card.Rank, startIndex, length, kickerType int) bool {
+	if kickerType == 0 {
+		return true
+	}
+
+	totalCardsInHand := 0
+	for _, c := range analysis.counts {
+		totalCardsInHand += c
+	}
+	remainingCardCount := totalCardsInHand - (length * 3)
+
+	switch kickerType {
+	case 1: // Need N singles
+		return remainingCardCount >= length
+	case 2: // Need N pairs
+		if remainingCardCount < length*2 {
+			return false
+		}
+
+		startRank := trioRanks[startIndex]
+		endRank := trioRanks[startIndex+length-1]
+
+		kickerPairs := 0
+		for r, count := range analysis.counts {
+			// Skip ranks that are part of the plane
+			if r >= startRank && r <= endRank {
+				continue
+			}
+			kickerPairs += count / 2
+		}
+		return kickerPairs >= length
 	}
 	return false
 }

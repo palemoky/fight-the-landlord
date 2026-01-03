@@ -3,92 +3,65 @@
 # Run manually: pre-commit run --all-files
 
 repos:
-  # Go linting with golangci-lint (modern, comprehensive)
+  # General file checks (fast, run on commit)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-yaml
+        args: ["--unsafe"] # Allow custom tags
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+
+  # Go linting with golangci-lint
   - repo: https://github.com/golangci/golangci-lint
     rev: v2.7.2
     hooks:
       - id: golangci-lint
-        name: Run golangci-lint
-        stages: [pre-commit]
         args:
           - --fix
           - --timeout=5m
           - --config=.golangci.yml
-        pass_filenames: false # 检查所有文件，不只是暂存的文件
+        pass_filenames: false
 
-  # Go tools
+  # Go formatting and imports
   - repo: local
     hooks:
-      # Format Go code with gofumpt (stricter than gofmt)
-      - id: gofumpt
-        name: Format Go code (gofumpt)
-        entry: gofumpt -w
-        language: system
-        types: [go]
-        stages: [pre-commit]
-        pass_filenames: true
-        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
-
-      # Format Go imports
-      - id: goimports
-        name: Format Go imports (goimports)
-        entry: goimports -w -local github.com/palemoky/fight-the-landlord
-        language: system
-        types: [go]
-        stages: [pre-commit]
-        pass_filenames: true
-        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
-
-      # Run go mod tidy
       - id: go-mod-tidy
         name: Tidy Go modules
         entry: go mod tidy
         language: system
-        stages: [pre-commit]
         pass_filenames: false
 
-  # General file checks
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-      # Remove trailing whitespace
-      - id: trailing-whitespace
-        name: Remove trailing whitespace
-        stages: [pre-commit]
+      - id: goimports
+        name: Format Go imports
+        entry: goimports -w -local github.com/palemoky/fight-the-landlord
+        language: system
+        types: [go]
+        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
-      # Ensure files end with newline
-      - id: end-of-file-fixer
-        name: Fix end of files
-        stages: [pre-commit]
+      - id: gofumpt
+        name: Format Go code
+        entry: gofumpt -w
+        language: system
+        types: [go]
+        exclude: 'internal/network/protocol/pb/.*\.pb\.go$'
 
-      # Check JSON syntax
-      - id: check-json
-        name: Check JSON syntax
-        stages: [pre-commit]
+      # Build verification (catch compilation errors early)
+      - id: go-build
+        name: Verify Go build
+        entry: bash -c 'go build -v ./...'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
 
-      # Check YAML syntax
-      - id: check-yaml
-        name: Check YAML syntax
-        stages: [pre-commit]
-        args: ["--unsafe"] # Allow custom tags
-
-      # Check for merge conflicts
-      - id: check-merge-conflict
-        name: Check for merge conflicts
-        stages: [pre-commit]
-
-      # Check for large files
-      - id: check-added-large-files
-        name: Check for large files
-        stages: [pre-commit]
-        args: ["--maxkb=1000"]
-
-  # Go unit tests (run on push)
-  - repo: local
-    hooks:
+      # Go unit tests with coverage (heavy, run on push)
       - id: go-test
         name: Run Go unit tests
-        entry: bash -c 'go test -race -tags "fts5" -p 4 ./internal/... -cover'
+        entry: bash -c 'go test -race -shuffle=on -coverprofile=coverage.out -covermode=atomic ./internal/...'
         language: system
         stages: [pre-push]
         pass_filenames: false

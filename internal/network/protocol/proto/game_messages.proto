@@ -52,7 +52,7 @@ message DealCardsPayload {
 // BidTurnPayload 轮到叫地主通知
 message BidTurnPayload {
   string player_id = 1;
-  int32 timeout = 2;
+  int64 timeout = 2;
 }
 
 // BidResultPayload 叫地主结果通知
@@ -72,7 +72,7 @@ message LandlordPayload {
 // PlayTurnPayload 轮到出牌通知
 message PlayTurnPayload {
   string player_id = 1;
-  int32 timeout = 2;
+  int64 timeout = 2;
   bool must_play = 3;
   bool can_beat = 4;
 }
@@ -82,7 +82,7 @@ message CardPlayedPayload {
   string player_id = 1;
   string player_name = 2;
   repeated CardInfo cards = 3;
-  int32 cards_left = 4;
+  int64 cards_left = 4;
   string hand_type = 5;
 }
 

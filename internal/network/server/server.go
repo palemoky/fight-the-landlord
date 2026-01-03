@@ -1,13 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game/session"
@@ -134,7 +135,15 @@ func (s *Server) Start() error {
 	go s.monitorStats()
 
 	log.Printf("🚀 服务器启动在 ws://%s/ws (CPU核心数: %d)", addr, runtime.NumCPU())
-	return http.ListenAndServe(addr, nil)
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           nil,
+		ReadHeaderTimeout: 10 * time.Second, // 防止 Slowloris 攻击
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	return server.ListenAndServe()
 }
 
 // handleWebSocket 处理 WebSocket 连接
@@ -197,7 +206,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	session := s.sessionManager.CreateSession(client.ID, client.Name)
 
 	// 发送连接成功消息（包含重连令牌）
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgConnected, protocol.ConnectedPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgConnected, protocol.ConnectedPayload{
 		PlayerID:       client.ID,
 		PlayerName:     client.Name,
 		ReconnectToken: session.ReconnectToken,
@@ -292,7 +301,7 @@ func (s *Server) EnterMaintenanceMode() {
 	s.maintenanceMu.Unlock()
 
 	// 通知大厅用户服务器即将关闭
-	s.BroadcastToLobby(encoding.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
+	s.BroadcastToLobby(codec.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
 		Code:    protocol.ErrCodeServerMaintenance,
 		Message: "👷🏻‍♂️ 维护模式：停止新的房间创建",
 	}))
@@ -323,7 +332,7 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 			log.Printf("✅ 所有房间已结束，将在 %ds 后关闭服务器！\n", s.config.Game.RoomCleanupDelay)
 
 			// 通知大厅用户服务器即将关闭
-			s.BroadcastToLobby(encoding.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
+			s.BroadcastToLobby(codec.MustNewMessage(protocol.MsgError, protocol.ErrorPayload{
 				Code:    protocol.ErrCodeServerMaintenance,
 				Message: fmt.Sprintf("🚧 服务器将在 %d 秒后停机维护！", s.config.Game.RoomCleanupDelay),
 			}))
@@ -357,8 +366,9 @@ func (s *Server) sendShutdownNotification() {
 	message := "斗地主服务器已优雅关闭，开始升级吧！"
 
 	// 发送 POST 请求
-	payload := fmt.Sprintf(`{"text":"%s"}`, message)
-	req, err := http.NewRequest("POST", speakerURL, strings.NewReader(payload))
+	payloadData := map[string]string{"text": message}
+	payloadBytes, _ := json.Marshal(payloadData)
+	req, err := http.NewRequest(http.MethodPost, speakerURL, bytes.NewReader(payloadBytes))
 	if err != nil {
 		log.Printf("创建通知请求失败: %v", err)
 		return

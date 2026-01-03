@@ -10,6 +10,7 @@ import (
 )
 
 func newTestLeaderboardManager(t *testing.T) (*LeaderboardManager, *miniredis.Miniredis) {
+	t.Helper()
 	mr, err := miniredis.Run()
 	if err != nil {
 		t.Fatalf("failed to start miniredis: %v", err)
@@ -44,7 +45,7 @@ func TestLeaderboard_RecordGameResult_NewPlayer(t *testing.T) {
 	assert.Equal(t, 1, stats.Wins)
 	assert.Equal(t, 1, stats.LandlordGames)
 	assert.Equal(t, 1, stats.LandlordWins)
-	assert.Equal(t, 30, stats.Score) // WinAsLandlord = 30
+	assert.Equal(t, 30, stats.Score)
 	assert.Equal(t, 1, stats.CurrentStreak)
 }
 
@@ -113,9 +114,11 @@ func TestLeaderboard_GetLeaderboard(t *testing.T) {
 	ctx := context.Background()
 
 	// Create p1: Score 30
-	lm.RecordGameResult(ctx, "p1", "Player1", true, true)
+	err := lm.RecordGameResult(ctx, "p1", "Player1", true, true)
+	assert.NoError(t, err)
 	// Create p2: Score 15
-	lm.RecordGameResult(ctx, "p2", "Player2", false, true)
+	err = lm.RecordGameResult(ctx, "p2", "Player2", false, true)
+	assert.NoError(t, err)
 
 	entries, err := lm.GetLeaderboard(ctx, 10)
 	assert.NoError(t, err)
@@ -137,8 +140,10 @@ func TestLeaderboard_GetPlayerRank(t *testing.T) {
 	defer mr.Close()
 	ctx := context.Background()
 
-	lm.RecordGameResult(ctx, "p1", "Player1", true, true)  // Score 30
-	lm.RecordGameResult(ctx, "p2", "Player2", false, true) // Score 15
+	err := lm.RecordGameResult(ctx, "p1", "Player1", true, true) // Score 30
+	assert.NoError(t, err)
+	err = lm.RecordGameResult(ctx, "p2", "Player2", false, true) // Score 15
+	assert.NoError(t, err)
 
 	rank, err := lm.GetPlayerRank(ctx, "p1")
 	assert.NoError(t, err)

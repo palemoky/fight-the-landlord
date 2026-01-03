@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"math/rand"
+	"math/rand/v2"
 )
 
 // 昵称词库
@@ -23,7 +23,7 @@ var (
 
 // GenerateNickname 生成随机昵称
 func GenerateNickname() string {
-	adj := adjectives[rand.Intn(len(adjectives))]
-	noun := nouns[rand.Intn(len(nouns))]
+	adj := adjectives[rand.IntN(len(adjectives))]
+	noun := nouns[rand.IntN(len(nouns))]
 	return adj + noun
 }

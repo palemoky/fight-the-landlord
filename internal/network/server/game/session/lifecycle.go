@@ -3,13 +3,13 @@ package session
 import (
 	"context"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"sort"
 
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 )
 
 // Start 开始游戏
@@ -29,7 +29,7 @@ func (gs *GameSession) Start() {
 	gs.room.SetState(RoomStateBidding)
 
 	// 随机选择第一个叫地主的玩家
-	gs.currentBidder = rand.Intn(3)
+	gs.currentBidder = rand.IntN(3)
 
 	// 通知叫地主
 	gs.notifyBidTurn()
@@ -59,7 +59,7 @@ func (gs *GameSession) deal() {
 	for _, p := range gs.players {
 		rp := gs.room.GetPlayer(p.ID)
 		client := rp.GetClient()
-		client.SendMessage(encoding.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
+		client.SendMessage(codec.MustNewMessage(protocol.MsgDealCards, protocol.DealCardsPayload{
 			Cards:       convert.CardsToInfos(p.Hand),
 			BottomCards: make([]protocol.CardInfo, 3), // 暂时不显示
 		}))
@@ -82,7 +82,7 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 	}
 
 	// 广播游戏结束
-	gs.room.Broadcast(encoding.MustNewMessage(protocol.MsgGameOver, protocol.GameOverPayload{
+	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgGameOver, protocol.GameOverPayload{
 		WinnerID:    winner.ID,
 		WinnerName:  winner.Name,
 		IsLandlord:  winner.IsLandlord,

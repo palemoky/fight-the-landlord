@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/storage"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
@@ -16,13 +16,13 @@ func (h *Handler) handleGetStats(client types.ClientInterface) {
 	ctx := context.Background()
 	stats, err := h.server.GetLeaderboard().GetPlayerStats(ctx, client.GetID())
 	if err != nil {
-		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取统计失败"))
+		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取统计失败"))
 		return
 	}
 
 	if stats == nil {
 		// 没有统计数据，返回空数据
-		client.SendMessage(encoding.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
+		client.SendMessage(codec.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
 			PlayerID:   client.GetID(),
 			PlayerName: client.GetName(),
 		}))
@@ -32,7 +32,7 @@ func (h *Handler) handleGetStats(client types.ClientInterface) {
 	// 类型断言
 	playerStats, ok := stats.(*storage.PlayerStats)
 	if !ok {
-		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "统计数据格式错误"))
+		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, "统计数据格式错误"))
 		return
 	}
 
@@ -44,7 +44,7 @@ func (h *Handler) handleGetStats(client types.ClientInterface) {
 		winRate = float64(playerStats.Wins) / float64(playerStats.TotalGames) * 100
 	}
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgStatsResult, protocol.StatsResultPayload{
 		PlayerID:      playerStats.PlayerID,
 		PlayerName:    playerStats.PlayerName,
 		TotalGames:    playerStats.TotalGames,
@@ -64,7 +64,7 @@ func (h *Handler) handleGetStats(client types.ClientInterface) {
 
 // handleGetLeaderboard 获取排行榜
 func (h *Handler) handleGetLeaderboard(client types.ClientInterface, msg *protocol.Message) {
-	payload, err := encoding.ParsePayload[protocol.GetLeaderboardPayload](msg)
+	payload, err := codec.ParsePayload[protocol.GetLeaderboardPayload](msg)
 	if err != nil {
 		// 默认获取总排行榜前 10
 		payload = &protocol.GetLeaderboardPayload{
@@ -84,7 +84,7 @@ func (h *Handler) handleGetLeaderboard(client types.ClientInterface, msg *protoc
 
 	entries, err := h.server.GetLeaderboard().GetLeaderboard(context.Background(), payload.Limit)
 	if err != nil {
-		client.SendMessage(encoding.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取排行榜失败"))
+		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, "获取排行榜失败"))
 		return
 	}
 
@@ -103,7 +103,7 @@ func (h *Handler) handleGetLeaderboard(client types.ClientInterface, msg *protoc
 		}
 	}
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgLeaderboardResult, protocol.LeaderboardResultPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgLeaderboardResult, protocol.LeaderboardResultPayload{
 		Type:    payload.Type,
 		Entries: protocolEntries,
 	}))
@@ -121,7 +121,7 @@ func (h *Handler) handleGetRoomList(client types.ClientInterface) {
 		}
 	}
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgRoomListResult, protocol.RoomListResultPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgRoomListResult, protocol.RoomListResultPayload{
 		Rooms: rooms,
 	}))
 }
@@ -130,7 +130,7 @@ func (h *Handler) handleGetRoomList(client types.ClientInterface) {
 func (h *Handler) handleGetOnlineCount(client types.ClientInterface) {
 	count := h.server.GetOnlineCount()
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgOnlineCount, protocol.OnlineCountPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgOnlineCount, protocol.OnlineCountPayload{
 		Count: count,
 	}))
 }
@@ -139,7 +139,7 @@ func (h *Handler) handleGetOnlineCount(client types.ClientInterface) {
 func (h *Handler) handleGetMaintenanceStatus(client types.ClientInterface) {
 	maintenance := h.server.IsMaintenanceMode()
 
-	client.SendMessage(encoding.MustNewMessage(protocol.MsgMaintenancePull, protocol.MaintenanceStatusPayload{
+	client.SendMessage(codec.MustNewMessage(protocol.MsgMaintenancePull, protocol.MaintenanceStatusPayload{
 		Maintenance: maintenance,
 	}))
 }

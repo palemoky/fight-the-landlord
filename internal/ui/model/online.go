@@ -12,7 +12,6 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/network/client"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 	"github.com/palemoky/fight-the-landlord/internal/sound"
 	"github.com/palemoky/fight-the-landlord/internal/ui/common"
 )
@@ -253,119 +252,74 @@ func (m *OnlineModel) ReconnectMaxTries() int { return m.reconnectMaxTries }
 // SetReconnectMaxTries sets the max reconnect tries.
 func (m *OnlineModel) SetReconnectMaxTries(t int) { m.reconnectMaxTries = t }
 
-// Update handles tea messages.
-func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
-
+// dispatchMessage 分发消息到对应的处理函数，返回命令和是否需要提前返回
+func (m *OnlineModel) dispatchMessage(msg tea.Msg) (cmds []tea.Cmd, earlyReturn bool, result tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.lobby.SetSize(msg.Width, msg.Height)
-		m.game.SetSize(msg.Width, msg.Height)
+		m.handleWindowSize(msg)
 
 	case ConnectedMsg:
-		m.EnterLobby()
-		m.playerID = m.client.PlayerID
-		m.playerName = m.client.PlayerName
-		m.client.StartHeartbeat()
-		cmds = append(cmds, m.listenForMessages())
+		cmds = append(cmds, m.handleConnected())
 
 	case ConnectionErrorMsg:
-		m.error = fmt.Sprintf("无法连接到服务器: %v\n\n按 ESC 退出", msg.Err)
-		m.phase = PhaseConnecting
+		m.handleConnectionError(msg)
 
 	case ReconnectingMsg:
-		m.reconnecting = true
-		m.reconnectAttempt = msg.Attempt
-		m.reconnectMaxTries = msg.MaxTries
-		m.SetNotification(NotifyReconnecting, fmt.Sprintf("🔄 正在重连 (%d/%d)...", msg.Attempt, msg.MaxTries), false)
-		cmds = append(cmds, m.listenForReconnect())
+		cmds = append(cmds, m.handleReconnecting(msg))
 
 	case ReconnectSuccessMsg:
-		m.reconnecting = false
-		m.ClearNotification(NotifyReconnecting)
-		m.ClearNotification(NotifyError)
-		m.ClearNotification(NotifyRateLimit)
-		m.SetNotification(NotifyReconnectSuccess, "✅ 重连成功！", true)
-		cmds = append(cmds, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-			return ClearReconnectMsg{}
-		}))
-		cmds = append(cmds, m.listenForReconnect())
-		if m.client.IsConnected() {
-			cmds = append(cmds, m.listenForMessages())
-		}
+		cmds = append(cmds, m.handleReconnectSuccess()...)
 
 	case ClearReconnectMsg:
-		m.ClearNotification(NotifyReconnectSuccess)
-		if m.phase == PhaseLobby {
-			_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetOnlineCount, nil))
-			_ = m.client.SendMessage(encoding.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
-		}
+		m.handleClearReconnect()
 
 	case ClearErrorMsg:
 		m.error = ""
 
 	case ClearSystemNotificationMsg:
-		// Clear temporary notifications (error, rate limit)
 		m.ClearNotification(NotifyError)
 		m.ClearNotification(NotifyRateLimit)
 
 	case ClearInputErrorMsg:
-		// Restore input placeholder after displaying error
-		switch m.phase {
-		case PhaseBidding:
-			if m.game.BidTurn() == m.playerID {
-				m.input.Placeholder = "叫地主? (Y/N)"
-			}
-		case PhasePlaying:
-			if m.game.State().CurrentTurn == m.playerID {
-				switch {
-				case m.game.MustPlay():
-					m.input.Placeholder = "你必须出牌 (如 33344)"
-				case m.game.CanBeat():
-					m.input.Placeholder = "出牌或 PASS"
-				default:
-					m.input.Placeholder = "没有能大过上家的牌，输入 PASS"
-				}
-			}
-		}
+		m.handleClearInputError()
 
 	case ServerMessage:
-		// Handle server message via injected handler
-		if m.serverMessageHandler != nil {
-			if cmd := m.serverMessageHandler(m, msg.Msg); cmd != nil {
-				cmds = append(cmds, cmd)
-			}
-		}
-		if m.client.IsConnected() {
-			cmds = append(cmds, m.listenForMessages())
-		}
+		cmds = append(cmds, m.processServerMessage(msg)...)
 
 	case tea.KeyMsg:
-		// Handle keyboard input via injected handler
-		if m.keyHandler != nil {
-			handled, keyCmd := m.keyHandler(m, msg)
-			if keyCmd != nil {
-				cmds = append(cmds, keyCmd)
-			}
-			if handled {
-				return m, tea.Batch(cmds...)
-			}
+		if handled, keyCmd := m.processKeyMsg(msg); handled {
+			return nil, true, keyCmd
 		}
 
 	case timer.TickMsg, timer.TimeoutMsg:
 		// Timer updates handled here
 	}
 
+	return cmds, false, nil
+}
+
+// Update handles tea messages.
+func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
+	// Dispatch message
+	dispatchCmds, earlyReturn, result := m.dispatchMessage(msg)
+	if earlyReturn {
+		return m, result
+	}
+	cmds = append(cmds, dispatchCmds...)
+
+	// Update timer
 	m.timer, cmd = m.timer.Update(msg)
 	cmds = append(cmds, cmd)
 
+	// Update input
 	newInput, cmd := m.input.Update(msg)
 	*m.input = newInput
 	cmds = append(cmds, cmd)
 
+	// Matching phase tick
 	if m.phase == PhaseMatching {
 		cmds = append(cmds, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return tea.WindowSizeMsg{Width: m.width, Height: m.height}

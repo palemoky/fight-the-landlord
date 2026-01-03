@@ -8,73 +8,53 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 )
 
-// HandleServerMessage dispatches server messages to appropriate handlers.
-func HandleServerMessage(m model.Model, msg *protocol.Message) tea.Cmd {
-	switch msg.Type {
+// messageHandler 消息处理函数类型
+type messageHandler func(m model.Model, msg *protocol.Message) tea.Cmd
+
+// messageHandlers 消息处理器映射表
+var messageHandlers = map[protocol.MessageType]messageHandler{
 	// Connection
-	case protocol.MsgConnected:
-		return handleMsgConnected(m, msg)
-	case protocol.MsgReconnected:
-		return handleMsgReconnected(m, msg)
-	case protocol.MsgPong:
-		return handleMsgPong(m, msg)
-	case protocol.MsgError:
-		return handleMsgError(m, msg)
-	case protocol.MsgOnlineCount:
-		return handleMsgOnlineCount(m, msg)
+	protocol.MsgConnected:   handleMsgConnected,
+	protocol.MsgReconnected: handleMsgReconnected,
+	protocol.MsgPong:        func(_ model.Model, msg *protocol.Message) tea.Cmd { return handleMsgPong(msg) },
+	protocol.MsgError:       handleMsgError,
+	protocol.MsgOnlineCount: handleMsgOnlineCount,
 
 	// Room
-	case protocol.MsgRoomCreated:
-		return handleMsgRoomCreated(m, msg)
-	case protocol.MsgRoomJoined:
-		return handleMsgRoomJoined(m, msg)
-	case protocol.MsgPlayerJoined:
-		return handleMsgPlayerJoined(m, msg)
-	case protocol.MsgPlayerLeft:
-		return handleMsgPlayerLeft(m, msg)
-	case protocol.MsgPlayerReady:
-		return handleMsgPlayerReady(m, msg)
-	case protocol.MsgPlayerOffline:
-		return handleMsgPlayerOffline(m, msg)
-	case protocol.MsgPlayerOnline:
-		return handleMsgPlayerOnline(m, msg)
-	case protocol.MsgRoomListResult:
-		return handleMsgRoomListResult(m, msg)
+	protocol.MsgRoomCreated:    handleMsgRoomCreated,
+	protocol.MsgRoomJoined:     handleMsgRoomJoined,
+	protocol.MsgPlayerJoined:   handleMsgPlayerJoined,
+	protocol.MsgPlayerLeft:     handleMsgPlayerLeft,
+	protocol.MsgPlayerReady:    handleMsgPlayerReady,
+	protocol.MsgPlayerOffline:  handleMsgPlayerOffline,
+	protocol.MsgPlayerOnline:   handleMsgPlayerOnline,
+	protocol.MsgRoomListResult: handleMsgRoomListResult,
 
 	// Game
-	case protocol.MsgGameStart:
-		return handleMsgGameStart(m, msg)
-	case protocol.MsgDealCards:
-		return handleMsgDealCards(m, msg)
-	case protocol.MsgBidTurn:
-		return handleMsgBidTurn(m, msg)
-	case protocol.MsgBidResult:
-		return nil
-	case protocol.MsgLandlord:
-		return handleMsgLandlord(m, msg)
-	case protocol.MsgPlayTurn:
-		return handleMsgPlayTurn(m, msg)
-	case protocol.MsgCardPlayed:
-		return handleMsgCardPlayed(m, msg)
-	case protocol.MsgPlayerPass:
-		return nil
-	case protocol.MsgGameOver:
-		return handleMsgGameOver(m, msg)
+	protocol.MsgGameStart:  handleMsgGameStart,
+	protocol.MsgDealCards:  handleMsgDealCards,
+	protocol.MsgBidTurn:    handleMsgBidTurn,
+	protocol.MsgBidResult:  func(_ model.Model, _ *protocol.Message) tea.Cmd { return nil },
+	protocol.MsgLandlord:   handleMsgLandlord,
+	protocol.MsgPlayTurn:   handleMsgPlayTurn,
+	protocol.MsgCardPlayed: handleMsgCardPlayed,
+	protocol.MsgPlayerPass: func(_ model.Model, _ *protocol.Message) tea.Cmd { return nil },
+	protocol.MsgGameOver:   handleMsgGameOver,
 
 	// Stats
-	case protocol.MsgStatsResult:
-		return handleMsgStatsResult(m, msg)
-	case protocol.MsgLeaderboardResult:
-		return handleMsgLeaderboardResult(m, msg)
+	protocol.MsgStatsResult:       handleMsgStatsResult,
+	protocol.MsgLeaderboardResult: handleMsgLeaderboardResult,
 
 	// Chat & Maintenance
-	case protocol.MsgChat:
-		return handleMsgChat(m, msg)
-	case protocol.MsgMaintenancePush:
-		return handleMsgMaintenancePush(m, msg)
-	case protocol.MsgMaintenancePull:
-		return handleMsgMaintenancePull(m, msg)
-	}
+	protocol.MsgChat:            handleMsgChat,
+	protocol.MsgMaintenancePush: handleMsgMaintenancePush,
+	protocol.MsgMaintenancePull: handleMsgMaintenancePull,
+}
 
+// HandleServerMessage dispatches server messages to appropriate handlers.
+func HandleServerMessage(m model.Model, msg *protocol.Message) tea.Cmd {
+	if handler, ok := messageHandlers[msg.Type]; ok {
+		return handler(m, msg)
+	}
 	return nil
 }

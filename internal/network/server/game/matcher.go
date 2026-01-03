@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/types"
 )
 
@@ -109,7 +109,7 @@ func (m *Matcher) createMatchRoom(players []types.ClientInterface) {
 
 	for _, client := range players {
 		// 发送加入房间成功消息
-		client.SendMessage(encoding.MustNewMessage(protocol.MsgRoomJoined, protocol.RoomJoinedPayload{
+		client.SendMessage(codec.MustNewMessage(protocol.MsgRoomJoined, protocol.RoomJoinedPayload{
 			RoomCode: room.Code,
 			Player:   room.GetPlayerInfo(client.GetID()),
 			Players:  room.GetAllPlayersInfo(),
@@ -125,7 +125,7 @@ func (m *Matcher) createMatchRoom(players []types.ClientInterface) {
 
 	// 广播所有玩家准备状态
 	for _, player := range room.Players {
-		room.broadcast(encoding.MustNewMessage(protocol.MsgPlayerReady, protocol.PlayerReadyPayload{
+		room.broadcast(codec.MustNewMessage(protocol.MsgPlayerReady, protocol.PlayerReadyPayload{
 			PlayerID: player.Client.GetID(),
 			Ready:    true,
 		}))

@@ -209,7 +209,7 @@ type PlayerOfflinePayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	PlayerName    string                 `protobuf:"bytes,2,opt,name=player_name,json=playerName,proto3" json:"player_name,omitempty"`
-	Timeout       int32                  `protobuf:"varint,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Timeout       int64                  `protobuf:"varint,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -258,7 +258,7 @@ func (x *PlayerOfflinePayload) GetPlayerName() string {
 	return ""
 }
 
-func (x *PlayerOfflinePayload) GetTimeout() int32 {
+func (x *PlayerOfflinePayload) GetTimeout() int64 {
 	if x != nil {
 		return x.Timeout
 	}
@@ -321,7 +321,7 @@ func (x *PlayerOnlinePayload) GetPlayerName() string {
 // OnlineCountPayload 在线人数更新
 type OnlineCountPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Count         int32                  `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	Count         int64                  `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -356,7 +356,7 @@ func (*OnlineCountPayload) Descriptor() ([]byte, []int) {
 	return file_internal_network_protocol_proto_server_messages_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *OnlineCountPayload) GetCount() int32 {
+func (x *OnlineCountPayload) GetCount() int64 {
 	if x != nil {
 		return x.Count
 	}
@@ -456,7 +456,7 @@ func (x *MaintenancePayload) GetMaintenance() bool {
 // ErrorPayload 错误响应
 type ErrorPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Code          int64                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -492,7 +492,7 @@ func (*ErrorPayload) Descriptor() ([]byte, []int) {
 	return file_internal_network_protocol_proto_server_messages_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *ErrorPayload) GetCode() int32 {
+func (x *ErrorPayload) GetCode() int64 {
 	if x != nil {
 		return x.Code
 	}
@@ -511,18 +511,18 @@ type StatsResultPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	PlayerName    string                 `protobuf:"bytes,2,opt,name=player_name,json=playerName,proto3" json:"player_name,omitempty"`
-	TotalGames    int32                  `protobuf:"varint,3,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
-	Wins          int32                  `protobuf:"varint,4,opt,name=wins,proto3" json:"wins,omitempty"`
-	Losses        int32                  `protobuf:"varint,5,opt,name=losses,proto3" json:"losses,omitempty"`
+	TotalGames    int64                  `protobuf:"varint,3,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
+	Wins          int64                  `protobuf:"varint,4,opt,name=wins,proto3" json:"wins,omitempty"`
+	Losses        int64                  `protobuf:"varint,5,opt,name=losses,proto3" json:"losses,omitempty"`
 	WinRate       float64                `protobuf:"fixed64,6,opt,name=win_rate,json=winRate,proto3" json:"win_rate,omitempty"`
-	LandlordGames int32                  `protobuf:"varint,7,opt,name=landlord_games,json=landlordGames,proto3" json:"landlord_games,omitempty"`
-	LandlordWins  int32                  `protobuf:"varint,8,opt,name=landlord_wins,json=landlordWins,proto3" json:"landlord_wins,omitempty"`
-	FarmerGames   int32                  `protobuf:"varint,9,opt,name=farmer_games,json=farmerGames,proto3" json:"farmer_games,omitempty"`
-	FarmerWins    int32                  `protobuf:"varint,10,opt,name=farmer_wins,json=farmerWins,proto3" json:"farmer_wins,omitempty"`
-	Score         int32                  `protobuf:"varint,11,opt,name=score,proto3" json:"score,omitempty"`
-	Rank          int32                  `protobuf:"varint,12,opt,name=rank,proto3" json:"rank,omitempty"`
-	CurrentStreak int32                  `protobuf:"varint,13,opt,name=current_streak,json=currentStreak,proto3" json:"current_streak,omitempty"`
-	MaxWinStreak  int32                  `protobuf:"varint,14,opt,name=max_win_streak,json=maxWinStreak,proto3" json:"max_win_streak,omitempty"`
+	LandlordGames int64                  `protobuf:"varint,7,opt,name=landlord_games,json=landlordGames,proto3" json:"landlord_games,omitempty"`
+	LandlordWins  int64                  `protobuf:"varint,8,opt,name=landlord_wins,json=landlordWins,proto3" json:"landlord_wins,omitempty"`
+	FarmerGames   int64                  `protobuf:"varint,9,opt,name=farmer_games,json=farmerGames,proto3" json:"farmer_games,omitempty"`
+	FarmerWins    int64                  `protobuf:"varint,10,opt,name=farmer_wins,json=farmerWins,proto3" json:"farmer_wins,omitempty"`
+	Score         int64                  `protobuf:"varint,11,opt,name=score,proto3" json:"score,omitempty"`
+	Rank          int64                  `protobuf:"varint,12,opt,name=rank,proto3" json:"rank,omitempty"`
+	CurrentStreak int64                  `protobuf:"varint,13,opt,name=current_streak,json=currentStreak,proto3" json:"current_streak,omitempty"`
+	MaxWinStreak  int64                  `protobuf:"varint,14,opt,name=max_win_streak,json=maxWinStreak,proto3" json:"max_win_streak,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -571,21 +571,21 @@ func (x *StatsResultPayload) GetPlayerName() string {
 	return ""
 }
 
-func (x *StatsResultPayload) GetTotalGames() int32 {
+func (x *StatsResultPayload) GetTotalGames() int64 {
 	if x != nil {
 		return x.TotalGames
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetWins() int32 {
+func (x *StatsResultPayload) GetWins() int64 {
 	if x != nil {
 		return x.Wins
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetLosses() int32 {
+func (x *StatsResultPayload) GetLosses() int64 {
 	if x != nil {
 		return x.Losses
 	}
@@ -599,56 +599,56 @@ func (x *StatsResultPayload) GetWinRate() float64 {
 	return 0
 }
 
-func (x *StatsResultPayload) GetLandlordGames() int32 {
+func (x *StatsResultPayload) GetLandlordGames() int64 {
 	if x != nil {
 		return x.LandlordGames
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetLandlordWins() int32 {
+func (x *StatsResultPayload) GetLandlordWins() int64 {
 	if x != nil {
 		return x.LandlordWins
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetFarmerGames() int32 {
+func (x *StatsResultPayload) GetFarmerGames() int64 {
 	if x != nil {
 		return x.FarmerGames
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetFarmerWins() int32 {
+func (x *StatsResultPayload) GetFarmerWins() int64 {
 	if x != nil {
 		return x.FarmerWins
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetScore() int32 {
+func (x *StatsResultPayload) GetScore() int64 {
 	if x != nil {
 		return x.Score
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetRank() int32 {
+func (x *StatsResultPayload) GetRank() int64 {
 	if x != nil {
 		return x.Rank
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetCurrentStreak() int32 {
+func (x *StatsResultPayload) GetCurrentStreak() int64 {
 	if x != nil {
 		return x.CurrentStreak
 	}
 	return 0
 }
 
-func (x *StatsResultPayload) GetMaxWinStreak() int32 {
+func (x *StatsResultPayload) GetMaxWinStreak() int64 {
 	if x != nil {
 		return x.MaxWinStreak
 	}
@@ -777,39 +777,39 @@ const file_internal_network_protocol_proto_server_messages_proto_rawDesc = "" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
 	"playerName\x12\x18\n" +
-	"\atimeout\x18\x03 \x01(\x05R\atimeout\"S\n" +
+	"\atimeout\x18\x03 \x01(\x03R\atimeout\"S\n" +
 	"\x13PlayerOnlinePayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
 	"playerName\"*\n" +
 	"\x12OnlineCountPayload\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x05R\x05count\"<\n" +
+	"\x05count\x18\x01 \x01(\x03R\x05count\"<\n" +
 	"\x18MaintenanceStatusPayload\x12 \n" +
 	"\vmaintenance\x18\x01 \x01(\bR\vmaintenance\"6\n" +
 	"\x12MaintenancePayload\x12 \n" +
 	"\vmaintenance\x18\x01 \x01(\bR\vmaintenance\"<\n" +
 	"\fErrorPayload\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x18\n" +
+	"\x04code\x18\x01 \x01(\x03R\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xc1\x03\n" +
 	"\x12StatsResultPayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
 	"playerName\x12\x1f\n" +
-	"\vtotal_games\x18\x03 \x01(\x05R\n" +
+	"\vtotal_games\x18\x03 \x01(\x03R\n" +
 	"totalGames\x12\x12\n" +
-	"\x04wins\x18\x04 \x01(\x05R\x04wins\x12\x16\n" +
-	"\x06losses\x18\x05 \x01(\x05R\x06losses\x12\x19\n" +
+	"\x04wins\x18\x04 \x01(\x03R\x04wins\x12\x16\n" +
+	"\x06losses\x18\x05 \x01(\x03R\x06losses\x12\x19\n" +
 	"\bwin_rate\x18\x06 \x01(\x01R\awinRate\x12%\n" +
-	"\x0elandlord_games\x18\a \x01(\x05R\rlandlordGames\x12#\n" +
-	"\rlandlord_wins\x18\b \x01(\x05R\flandlordWins\x12!\n" +
-	"\ffarmer_games\x18\t \x01(\x05R\vfarmerGames\x12\x1f\n" +
+	"\x0elandlord_games\x18\a \x01(\x03R\rlandlordGames\x12#\n" +
+	"\rlandlord_wins\x18\b \x01(\x03R\flandlordWins\x12!\n" +
+	"\ffarmer_games\x18\t \x01(\x03R\vfarmerGames\x12\x1f\n" +
 	"\vfarmer_wins\x18\n" +
-	" \x01(\x05R\n" +
+	" \x01(\x03R\n" +
 	"farmerWins\x12\x14\n" +
-	"\x05score\x18\v \x01(\x05R\x05score\x12\x12\n" +
-	"\x04rank\x18\f \x01(\x05R\x04rank\x12%\n" +
-	"\x0ecurrent_streak\x18\r \x01(\x05R\rcurrentStreak\x12$\n" +
-	"\x0emax_win_streak\x18\x0e \x01(\x05R\fmaxWinStreak\"d\n" +
+	"\x05score\x18\v \x01(\x03R\x05score\x12\x12\n" +
+	"\x04rank\x18\f \x01(\x03R\x04rank\x12%\n" +
+	"\x0ecurrent_streak\x18\r \x01(\x03R\rcurrentStreak\x12$\n" +
+	"\x0emax_win_streak\x18\x0e \x01(\x03R\fmaxWinStreak\"d\n" +
 	"\x18LeaderboardResultPayload\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x124\n" +
 	"\aentries\x18\x02 \x03(\v2\x1a.protocol.LeaderboardEntryR\aentries\"E\n" +

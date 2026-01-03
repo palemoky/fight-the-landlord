@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/server/game"
 )
 
@@ -36,7 +36,7 @@ func TestHandler_HandleChat_Lobby(t *testing.T) {
 		Content: "Hello World",
 		Scope:   "lobby",
 	}
-	msg := encoding.MustNewMessage(protocol.MsgChat, payload)
+	msg := codec.MustNewMessage(protocol.MsgChat, payload)
 
 	h.handleChat(mockClient, msg)
 
@@ -68,7 +68,7 @@ func TestHandler_HandleChat_RateLimited(t *testing.T) {
 
 	// 3. Execution
 	payload := protocol.ChatPayload{Content: "Spam"}
-	msg := encoding.MustNewMessage(protocol.MsgChat, payload)
+	msg := codec.MustNewMessage(protocol.MsgChat, payload)
 
 	h.handleChat(mockClient, msg)
 
@@ -135,7 +135,7 @@ func TestHandler_HandleChat_Room(t *testing.T) {
 		Content: "Hello Room",
 		Scope:   "room",
 	}
-	msg := encoding.MustNewMessage(protocol.MsgChat, payload)
+	msg := codec.MustNewMessage(protocol.MsgChat, payload)
 
 	h.handleChat(mockClient, msg)
 

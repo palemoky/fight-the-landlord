@@ -210,7 +210,7 @@ func TestLeaderboardTable_LongPlayerName(t *testing.T) {
 	// Should not contain the full long name
 	assert.NotEmpty(t, result)
 	// Name should be truncated (TruncateName limits to 10 chars)
-	require.True(t, len(result) > 0)
+	require.True(t, result != "")
 
 	// The full name should not appear as-is (it gets truncated)
 	lines := strings.Split(result, "\n")

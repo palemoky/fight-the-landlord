@@ -14,6 +14,7 @@ import (
 )
 
 func newTestRedisStore(t *testing.T) (*RedisStore, *miniredis.Miniredis) {
+	t.Helper()
 	mr, err := miniredis.Run()
 	if err != nil {
 		t.Fatalf("failed to start miniredis: %v", err)

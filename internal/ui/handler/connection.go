@@ -7,8 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 )
 
@@ -19,8 +19,8 @@ func handleMsgConnected(m model.Model, msg *protocol.Message) tea.Cmd {
 	m.SetPlayerInfo(payload.PlayerID, payload.PlayerName)
 	m.Client().ReconnectToken = payload.ReconnectToken
 
-	_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetOnlineCount, nil))
-	_ = m.Client().SendMessage(encoding.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
+	_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+	_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
 
 	m.Input().Placeholder = "输入选项 (1-5) 或房间号"
 	m.Input().Focus()
@@ -51,14 +51,14 @@ func handleMsgReconnected(m model.Model, msg *protocol.Message) tea.Cmd {
 	return nil
 }
 
-func handleMsgPong(m model.Model, msg *protocol.Message) tea.Cmd {
+func handleMsgPong(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PongPayload
 	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
 	return nil
 }
 
 func handleMsgError(m model.Model, msg *protocol.Message) tea.Cmd {
-	payload, err := encoding.ParsePayload[protocol.ErrorPayload](msg)
+	payload, err := codec.ParsePayload[protocol.ErrorPayload](msg)
 	if err != nil {
 		return nil
 	}

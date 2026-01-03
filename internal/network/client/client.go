@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/encoding"
+	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
 )
 
 const (
@@ -71,7 +71,10 @@ func (c *Client) Connect() error {
 		EnableCompression: false,
 	}
 
-	conn, _, err := dialer.Dial(c.ServerURL, nil)
+	conn, resp, err := dialer.Dial(c.ServerURL, nil)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
@@ -94,7 +97,7 @@ func (c *Client) SendMessage(msg *protocol.Message) error {
 	}
 	c.mu.RUnlock()
 
-	data, err := encoding.Encode(msg)
+	data, err := codec.Encode(msg)
 	if err != nil {
 		return err
 	}
