@@ -366,7 +366,7 @@ func (s *Server) sendShutdownNotification() {
 
 	// 发送 POST 请求
 	payload := fmt.Sprintf(`{"text":"%s"}`, message)
-	req, err := http.NewRequest("POST", speakerURL, strings.NewReader(payload))
+	req, err := http.NewRequest(http.MethodPost, speakerURL, strings.NewReader(payload))
 	if err != nil {
 		log.Printf("创建通知请求失败: %v", err)
 		return
