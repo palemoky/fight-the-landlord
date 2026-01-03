@@ -42,6 +42,7 @@ linters:
     # 风格
     - misspell # 拼写检查
     - unconvert # 检查不必要的类型转换
+    - usestdlibvars # 推荐使用标准库常量
     - unparam # 检查未使用的函数参数
     - nakedret # 检查裸返回
     - dogsled # 检查过多的空白标识符赋值
@@ -56,6 +57,7 @@ linters:
       enable-all: true
       disable:
         - shadow # 变量遮蔽检查可能过于严格
+        - fieldalignment # 字段对齐优化对小项目意义不大
 
     gocritic:
       enabled-tags:
@@ -65,6 +67,7 @@ linters:
       disabled-checks:
         - unlambda # 不强制将 lambda 替换为函数引用
         - hugeParam # 对于游戏逻辑，大参数有时是必要的
+        - importShadow # 导入遮蔽检查过于严格
 
     revive:
       rules:
