@@ -108,54 +108,50 @@ func (lm *LeaderboardManager) SavePlayerStats(ctx context.Context, stats *Player
 	return lm.redis.Set(ctx, key, data, 0).Err()
 }
 
-// RecordGameResult 记录游戏结果
-func (lm *LeaderboardManager) RecordGameResult(ctx context.Context, playerID, playerName string, isLandlord, isWinner bool) error {
-	// 获取或创建玩家统计
+// getOrCreateStats 获取或创建玩家统计
+func (lm *LeaderboardManager) getOrCreateStats(ctx context.Context, playerID, playerName string) (*PlayerStats, error) {
 	statsInterface, err := lm.GetPlayerStats(ctx, playerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	var stats *PlayerStats
 	if statsInterface == nil {
-		stats = &PlayerStats{
+		return &PlayerStats{
 			PlayerID:   playerID,
 			PlayerName: playerName,
 			CreatedAt:  time.Now().Unix(),
-		}
-	} else {
-		var ok bool
-		stats, ok = statsInterface.(*PlayerStats)
-		if !ok {
-			return fmt.Errorf("invalid stats type")
-		}
+		}, nil
 	}
 
-	// 更新名称（可能已更改）
-	stats.PlayerName = playerName
-	stats.TotalGames++
-	stats.LastPlayedAt = time.Now().Unix()
+	stats, ok := statsInterface.(*PlayerStats)
+	if !ok {
+		return nil, fmt.Errorf("invalid stats type")
+	}
+	return stats, nil
+}
 
-	// 处理角色特定逻辑和积分
-	var scoreChange int
+// updateRoleStats 更新角色相关统计并返回基础积分变化
+func updateRoleStats(stats *PlayerStats, isLandlord, isWinner bool) int {
 	switch {
-	case isLandlord && isWinner: // 地主获胜
+	case isLandlord && isWinner:
 		stats.LandlordGames++
 		stats.LandlordWins++
-		scoreChange = WinAsLandlord
-	case isLandlord && !isWinner: // 地主失败
+		return WinAsLandlord
+	case isLandlord && !isWinner:
 		stats.LandlordGames++
-		scoreChange = LoseAsLandlord
-	case !isLandlord && isWinner: // 农民获胜
+		return LoseAsLandlord
+	case !isLandlord && isWinner:
 		stats.FarmerGames++
 		stats.FarmerWins++
-		scoreChange = WinAsFarmer
-	case !isLandlord && !isWinner: // 农民失败
+		return WinAsFarmer
+	default: // !isLandlord && !isWinner
 		stats.FarmerGames++
-		scoreChange = LoseAsFarmer
+		return LoseAsFarmer
 	}
+}
 
-	// 处理通用胜负逻辑
+// updateWinLossStats 更新胜负统计和连胜/连败
+func updateWinLossStats(stats *PlayerStats, isWinner bool) {
 	if isWinner {
 		stats.Wins++
 		stats.CurrentStreak = max(1, stats.CurrentStreak+1)
@@ -164,35 +160,50 @@ func (lm *LeaderboardManager) RecordGameResult(ctx context.Context, playerID, pl
 		stats.CurrentStreak = min(-1, stats.CurrentStreak-1)
 	}
 
-	// 连胜加成
-	switch {
-	case stats.CurrentStreak >= 10:
-		scoreChange += StreakBonus10
-	case stats.CurrentStreak >= 5:
-		scoreChange += StreakBonus5
-	case stats.CurrentStreak >= 3:
-		scoreChange += StreakBonus3
-	}
-
-	// 更新最大连胜
 	if stats.CurrentStreak > stats.MaxWinStreak {
 		stats.MaxWinStreak = stats.CurrentStreak
 	}
+}
 
-	// 更新积分（最低为0）
+// calculateStreakBonus 计算连胜加成
+func calculateStreakBonus(streak int) int {
+	switch {
+	case streak >= 10:
+		return StreakBonus10
+	case streak >= 5:
+		return StreakBonus5
+	case streak >= 3:
+		return StreakBonus3
+	default:
+		return 0
+	}
+}
+
+// RecordGameResult 记录游戏结果
+func (lm *LeaderboardManager) RecordGameResult(ctx context.Context, playerID, playerName string, isLandlord, isWinner bool) error {
+	stats, err := lm.getOrCreateStats(ctx, playerID, playerName)
+	if err != nil {
+		return err
+	}
+
+	// 更新基本信息
+	stats.PlayerName = playerName
+	stats.TotalGames++
+	stats.LastPlayedAt = time.Now().Unix()
+
+	// 更新角色和胜负统计
+	scoreChange := updateRoleStats(stats, isLandlord, isWinner)
+	updateWinLossStats(stats, isWinner)
+
+	// 计算连胜加成并更新积分
+	scoreChange += calculateStreakBonus(stats.CurrentStreak)
 	stats.Score = max(0, stats.Score+scoreChange)
 
-	// 保存统计
+	// 保存并更新排行榜
 	if err := lm.SavePlayerStats(ctx, stats); err != nil {
 		return err
 	}
-
-	// 更新排行榜
-	if err := lm.UpdateLeaderboard(ctx, stats); err != nil {
-		return err
-	}
-
-	return nil
+	return lm.UpdateLeaderboard(ctx, stats)
 }
 
 // UpdateLeaderboard 更新排行榜

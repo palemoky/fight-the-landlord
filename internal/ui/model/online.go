@@ -252,11 +252,8 @@ func (m *OnlineModel) ReconnectMaxTries() int { return m.reconnectMaxTries }
 // SetReconnectMaxTries sets the max reconnect tries.
 func (m *OnlineModel) SetReconnectMaxTries(t int) { m.reconnectMaxTries = t }
 
-// Update handles tea messages.
-func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
-
+// dispatchMessage 分发消息到对应的处理函数，返回命令和是否需要提前返回
+func (m *OnlineModel) dispatchMessage(msg tea.Msg) (cmds []tea.Cmd, earlyReturn bool, result tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.handleWindowSize(msg)
@@ -291,23 +288,38 @@ func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		if handled, keyCmd := m.processKeyMsg(msg); handled {
-			if keyCmd != nil {
-				return m, keyCmd
-			}
-			return m, nil
+			return nil, true, keyCmd
 		}
 
 	case timer.TickMsg, timer.TimeoutMsg:
 		// Timer updates handled here
 	}
 
+	return cmds, false, nil
+}
+
+// Update handles tea messages.
+func (m *OnlineModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
+	// Dispatch message
+	dispatchCmds, earlyReturn, result := m.dispatchMessage(msg)
+	if earlyReturn {
+		return m, result
+	}
+	cmds = append(cmds, dispatchCmds...)
+
+	// Update timer
 	m.timer, cmd = m.timer.Update(msg)
 	cmds = append(cmds, cmd)
 
+	// Update input
 	newInput, cmd := m.input.Update(msg)
 	*m.input = newInput
 	cmds = append(cmds, cmd)
 
+	// Matching phase tick
 	if m.phase == PhaseMatching {
 		cmds = append(cmds, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return tea.WindowSizeMsg{Width: m.width, Height: m.height}

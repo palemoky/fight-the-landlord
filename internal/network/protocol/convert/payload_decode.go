@@ -115,8 +115,8 @@ func decodeServerPayload(msgType protocol.MessageType, data []byte, target any) 
 	return false, nil
 }
 
-// decodeSystemMessages 解码系统相关消息
-func decodeSystemMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+// decodeConnectionMessages 解码连接相关消息
+func decodeConnectionMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
 	switch msgType {
 	case protocol.MsgConnected:
 		var pbMsg pb.ConnectedPayload
@@ -139,6 +139,39 @@ func decodeSystemMessages(msgType protocol.MessageType, data []byte, target any)
 			ServerTimestamp: pbMsg.ServerTimestamp,
 		}
 		return true, nil
+	case protocol.MsgReconnected:
+		var pbMsg pb.ReconnectedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return true, err
+		}
+		var gameState *protocol.GameStateDTO
+		if pbMsg.GameState != nil {
+			gameState = protoToGameStateDTO(pbMsg.GameState)
+		}
+		*target.(*protocol.ReconnectedPayload) = protocol.ReconnectedPayload{
+			PlayerID:   pbMsg.PlayerId,
+			PlayerName: pbMsg.PlayerName,
+			RoomCode:   pbMsg.RoomCode,
+			GameState:  gameState,
+		}
+		return true, nil
+	case protocol.MsgError:
+		var pbMsg pb.ErrorPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return true, err
+		}
+		*target.(*protocol.ErrorPayload) = protocol.ErrorPayload{
+			Code:    int(pbMsg.Code),
+			Message: pbMsg.Message,
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+// decodeInfoMessages 解码信息查询相关消息
+func decodeInfoMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+	switch msgType {
 	case protocol.MsgOnlineCount:
 		var pbMsg pb.OnlineCountPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
@@ -164,32 +197,6 @@ func decodeSystemMessages(msgType protocol.MessageType, data []byte, target any)
 		}
 		*target.(*protocol.MaintenancePayload) = protocol.MaintenancePayload{
 			Maintenance: pbMsg.Maintenance,
-		}
-		return true, nil
-	case protocol.MsgError:
-		var pbMsg pb.ErrorPayload
-		if err := proto.Unmarshal(data, &pbMsg); err != nil {
-			return true, err
-		}
-		*target.(*protocol.ErrorPayload) = protocol.ErrorPayload{
-			Code:    int(pbMsg.Code),
-			Message: pbMsg.Message,
-		}
-		return true, nil
-	case protocol.MsgReconnected:
-		var pbMsg pb.ReconnectedPayload
-		if err := proto.Unmarshal(data, &pbMsg); err != nil {
-			return true, err
-		}
-		var gameState *protocol.GameStateDTO
-		if pbMsg.GameState != nil {
-			gameState = protoToGameStateDTO(pbMsg.GameState)
-		}
-		*target.(*protocol.ReconnectedPayload) = protocol.ReconnectedPayload{
-			PlayerID:   pbMsg.PlayerId,
-			PlayerName: pbMsg.PlayerName,
-			RoomCode:   pbMsg.RoomCode,
-			GameState:  gameState,
 		}
 		return true, nil
 	case protocol.MsgStatsResult:
@@ -228,8 +235,16 @@ func decodeSystemMessages(msgType protocol.MessageType, data []byte, target any)
 	return false, nil
 }
 
-// decodeRoomMessages 解码房间及玩家状态消息
-func decodeRoomMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+// decodeSystemMessages 解码系统相关消息
+func decodeSystemMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+	if ok, err := decodeConnectionMessages(msgType, data, target); ok {
+		return true, err
+	}
+	return decodeInfoMessages(msgType, data, target)
+}
+
+// decodePlayerStateMessages 解码玩家状态消息
+func decodePlayerStateMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
 	switch msgType {
 	case protocol.MsgPlayerOffline:
 		var pbMsg pb.PlayerOfflinePayload
@@ -250,27 +265,6 @@ func decodeRoomMessages(msgType protocol.MessageType, data []byte, target any) (
 		*target.(*protocol.PlayerOnlinePayload) = protocol.PlayerOnlinePayload{
 			PlayerID:   pbMsg.PlayerId,
 			PlayerName: pbMsg.PlayerName,
-		}
-		return true, nil
-	case protocol.MsgRoomCreated:
-		var pbMsg pb.RoomCreatedPayload
-		if err := proto.Unmarshal(data, &pbMsg); err != nil {
-			return true, err
-		}
-		*target.(*protocol.RoomCreatedPayload) = protocol.RoomCreatedPayload{
-			RoomCode: pbMsg.RoomCode,
-			Player:   protoToPlayerInfo(pbMsg.Player),
-		}
-		return true, nil
-	case protocol.MsgRoomJoined:
-		var pbMsg pb.RoomJoinedPayload
-		if err := proto.Unmarshal(data, &pbMsg); err != nil {
-			return true, err
-		}
-		*target.(*protocol.RoomJoinedPayload) = protocol.RoomJoinedPayload{
-			RoomCode: pbMsg.RoomCode,
-			Player:   protoToPlayerInfo(pbMsg.Player),
-			Players:  protoToPlayerInfos(pbMsg.Players),
 		}
 		return true, nil
 	case protocol.MsgPlayerJoined:
@@ -302,6 +296,34 @@ func decodeRoomMessages(msgType protocol.MessageType, data []byte, target any) (
 			Ready:    pbMsg.Ready,
 		}
 		return true, nil
+	}
+	return false, nil
+}
+
+// decodeRoomStateMessages 解码房间状态消息
+func decodeRoomStateMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+	switch msgType {
+	case protocol.MsgRoomCreated:
+		var pbMsg pb.RoomCreatedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return true, err
+		}
+		*target.(*protocol.RoomCreatedPayload) = protocol.RoomCreatedPayload{
+			RoomCode: pbMsg.RoomCode,
+			Player:   protoToPlayerInfo(pbMsg.Player),
+		}
+		return true, nil
+	case protocol.MsgRoomJoined:
+		var pbMsg pb.RoomJoinedPayload
+		if err := proto.Unmarshal(data, &pbMsg); err != nil {
+			return true, err
+		}
+		*target.(*protocol.RoomJoinedPayload) = protocol.RoomJoinedPayload{
+			RoomCode: pbMsg.RoomCode,
+			Player:   protoToPlayerInfo(pbMsg.Player),
+			Players:  protoToPlayerInfos(pbMsg.Players),
+		}
+		return true, nil
 	case protocol.MsgRoomListResult:
 		var pbMsg pb.RoomListResultPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
@@ -315,8 +337,16 @@ func decodeRoomMessages(msgType protocol.MessageType, data []byte, target any) (
 	return false, nil
 }
 
-// decodeGameMessages 解码游戏逻辑相关消息
-func decodeGameMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+// decodeRoomMessages 解码房间及玩家状态消息
+func decodeRoomMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+	if ok, err := decodePlayerStateMessages(msgType, data, target); ok {
+		return true, err
+	}
+	return decodeRoomStateMessages(msgType, data, target)
+}
+
+// decodeBiddingMessages 解码叫地主阶段消息
+func decodeBiddingMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
 	switch msgType {
 	case protocol.MsgGameStart:
 		var pbMsg pb.GameStartPayload
@@ -369,6 +399,13 @@ func decodeGameMessages(msgType protocol.MessageType, data []byte, target any) (
 			BottomCards: protoToCards(pbMsg.BottomCards),
 		}
 		return true, nil
+	}
+	return false, nil
+}
+
+// decodePlayingMessages 解码出牌阶段消息
+func decodePlayingMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+	switch msgType {
 	case protocol.MsgPlayTurn:
 		var pbMsg pb.PlayTurnPayload
 		if err := proto.Unmarshal(data, &pbMsg); err != nil {
@@ -418,4 +455,12 @@ func decodeGameMessages(msgType protocol.MessageType, data []byte, target any) (
 		return true, nil
 	}
 	return false, nil
+}
+
+// decodeGameMessages 解码游戏逻辑相关消息
+func decodeGameMessages(msgType protocol.MessageType, data []byte, target any) (bool, error) {
+	if ok, err := decodeBiddingMessages(msgType, data, target); ok {
+		return true, err
+	}
+	return decodePlayingMessages(msgType, data, target)
 }
