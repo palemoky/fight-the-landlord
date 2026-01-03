@@ -12,6 +12,62 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 )
 
+// getNotificationStyle returns the appropriate style for a notification type.
+func getNotificationStyle(notifyType model.NotificationType) lipgloss.Style {
+	switch notifyType {
+	case model.NotifyError, model.NotifyRateLimit:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+	case model.NotifyReconnecting:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	case model.NotifyReconnectSuccess:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+	case model.NotifyMaintenance:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
+	case model.NotifyOnlineCount:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
+	default:
+		return lipgloss.NewStyle()
+	}
+}
+
+// renderChatBox renders the chat box component for the lobby.
+func renderChatBox(lobby model.LobbyAccessor, height int) string {
+	var chatLines []string
+	if len(lobby.ChatHistory()) > 0 {
+		history := lobby.ChatHistory()
+		count := len(history)
+		start := 0
+		if count > 5 {
+			start = count - 5
+		}
+		for i := start; i < count; i++ {
+			chatLines = append(chatLines, history[i])
+		}
+	} else {
+		chatLines = append(chatLines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("暂无消息..."))
+	}
+
+	chatInputView := lobby.ChatInput().View()
+	if !lobby.ChatInput().Focused() {
+		chatInputView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天...")
+	}
+
+	chatHeader := lipgloss.NewStyle().Bold(true).Render("💬 聊天室")
+	innerHeight := height - 2
+	contentLines := []string{chatHeader}
+	contentLines = append(contentLines, chatLines...)
+	usedLines := len(contentLines) + 1
+	emptyLines := max(innerHeight-usedLines, 0)
+	for range emptyLines {
+		contentLines = append(contentLines, "")
+	}
+	contentLines = append(contentLines, chatInputView)
+
+	chatBoxWidth := 50
+	chatBoxContent := lipgloss.JoinVertical(lipgloss.Left, contentLines...)
+	return common.BoxStyle.Width(chatBoxWidth).Height(innerHeight).Render(chatBoxContent)
+}
+
 // LobbyView renders the lobby view.
 func LobbyView(m model.Model) string {
 	lobby := m.Lobby()
@@ -28,19 +84,7 @@ func LobbyView(m model.Model) string {
 
 		// Show system notification
 		if notification := m.GetCurrentNotification(); notification != nil {
-			var notificationStyle lipgloss.Style
-			switch notification.Type {
-			case model.NotifyError, model.NotifyRateLimit:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
-			case model.NotifyReconnecting:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-			case model.NotifyReconnectSuccess:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
-			case model.NotifyMaintenance:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
-			case model.NotifyOnlineCount:
-				notificationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
-			}
+			notificationStyle := getNotificationStyle(notification.Type)
 			sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center,
 				notificationStyle.Render(notification.Message)))
 		}
@@ -72,40 +116,7 @@ func LobbyView(m model.Model) string {
 	menuHeight := lipgloss.Height(menu)
 
 	// Chat box
-	var chatLines []string
-	if len(lobby.ChatHistory()) > 0 {
-		history := lobby.ChatHistory()
-		count := len(history)
-		start := 0
-		if count > 5 {
-			start = count - 5
-		}
-		for i := start; i < count; i++ {
-			chatLines = append(chatLines, history[i])
-		}
-	} else {
-		chatLines = append(chatLines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("暂无消息..."))
-	}
-
-	chatInputView := lobby.ChatInput().View()
-	if !lobby.ChatInput().Focused() {
-		chatInputView = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("按 / 键聊天...")
-	}
-
-	chatHeader := lipgloss.NewStyle().Bold(true).Render("💬 聊天室")
-	innerHeight := menuHeight - 2
-	contentLines := []string{chatHeader}
-	contentLines = append(contentLines, chatLines...)
-	usedLines := len(contentLines) + 1
-	emptyLines := max(innerHeight-usedLines, 0)
-	for range emptyLines {
-		contentLines = append(contentLines, "")
-	}
-	contentLines = append(contentLines, chatInputView)
-
-	chatBoxWidth := 50
-	chatBoxContent := lipgloss.JoinVertical(lipgloss.Left, contentLines...)
-	chatBox := common.BoxStyle.Width(chatBoxWidth).Height(innerHeight).Render(chatBoxContent)
+	chatBox := renderChatBox(lobby, menuHeight)
 
 	mainContent := lipgloss.JoinHorizontal(lipgloss.Top, menu, "  ", chatBox)
 	sb.WriteString(lipgloss.PlaceHorizontal(m.Width(), lipgloss.Center, mainContent))
