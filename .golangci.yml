@@ -1,5 +1,5 @@
 # golangci-lint configuration v2
-# https://golangci-lint.run/usage/configuration/
+# https://golangci-lint.run/docs/configuration/file
 
 version: "2"
 
@@ -8,8 +8,8 @@ run:
   tests: true
 
 linters:
-  # 禁用所有默认 linters
-  disable-all: true
+  # 禁用所有默认 linters，只启用明确指定的
+  default: none
 
   # 启用推荐的 linters
   enable:
@@ -21,7 +21,6 @@ linters:
 
     # 代码质量
     - gocritic # 提供代码质量建议
-    # - revive # 注释检查过于严格，暂时禁用
     - gocyclo # 检查圈复杂度
     - gocognit # 检查认知复杂度
     - funlen # 检查函数长度
@@ -69,13 +68,6 @@ linters:
         - hugeParam # 对于游戏逻辑，大参数有时是必要的
         - importShadow # 导入遮蔽检查过于严格
 
-    revive:
-      rules:
-        - name: exported
-          disabled: true # 不强制要求所有导出项都有注释
-        - name: package-comments
-          disabled: true # 不强制要求包注释
-
     gocyclo:
       min-complexity: 15 # 圈复杂度阈值
 
@@ -88,12 +80,6 @@ linters:
 
     nestif:
       min-complexity: 5 # 嵌套复杂度阈值
-
-    gofumpt:
-      extra-rules: true
-
-    goimports:
-      local-prefixes: github.com/palemoky/fight-the-landlord
 
     misspell:
       locale: US
@@ -110,32 +96,39 @@ linters:
       asserts: true
       comparison: true
 
+  # 排除规则 (v2 格式)
+  exclusions:
+    # 生成文件排除模式
+    generated: lax
+
+    # 预设排除规则
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+
+    # 自定义排除规则
+    rules:
+      # 测试文件中放宽某些检查
+      - path: _test\.go
+        linters:
+          - errcheck
+          - dupl
+          - funlen
+          - gocyclo
+          - gocognit
+
+      # main 函数和 init 函数允许更长
+      - source: "^func (main|init)\\("
+        linters:
+          - funlen
+
+    # 排除的路径
+    paths:
+      - internal/network/protocol/pb
+      - ".*_generated\\.go$"
+
 issues:
-  exclude-dirs:
-    - internal/network/protocol/pb
-
-  exclude-files:
-    - ".*_generated\\.go$" # 跳过所有生成的代码
-
-  # 排除规则
-  exclude-rules:
-    # 测试文件中放宽某些检查
-    - path: _test\.go
-      linters:
-        - errcheck
-        - dupl
-        - funlen
-        - gocyclo
-        - gocognit
-
-    # main 函数和 init 函数允许更长
-    - source: "^func (main|init)\\("
-      linters:
-        - funlen
-
   # 最大问题数 (0 = 无限制)
   max-issues-per-linter: 0
   max-same-issues: 0
-
-  # 不排除默认的排除项
-  exclude-use-default: false
