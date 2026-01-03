@@ -421,7 +421,7 @@ func FuzzRankFromChar(f *testing.F) {
 	// 模糊测试的目标函数
 	f.Fuzz(func(t *testing.T, input string) {
 		// 期望至少一个字符
-		if len(input) == 0 {
+		if input == "" {
 			return
 		}
 

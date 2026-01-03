@@ -155,7 +155,7 @@ func handleQuickMsgEnter(m model.Model) (bool, tea.Cmd) {
 func handleQuickMsgInput(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
 	if msg.Type == tea.KeyBackspace {
 		input := m.Game().QuickMsgInput()
-		if len(input) > 0 {
+		if input != "" {
 			m.Game().SetQuickMsgInput(input[:len(input)-1])
 		}
 		return true, nil
@@ -370,7 +370,7 @@ func handleRoomListEnter(m model.Model, input string) tea.Cmd {
 }
 
 func handleWaitingEnter(m model.Model, input string) tea.Cmd {
-	if strings.ToLower(input) == "r" || strings.ToLower(input) == "ready" {
+	if strings.EqualFold(input, "r") || strings.EqualFold(input, "ready") {
 		_ = m.Client().Ready()
 	}
 	return nil
@@ -393,7 +393,7 @@ func handlePlayingEnter(m model.Model, input string) tea.Cmd {
 		upperInput := strings.ToUpper(input)
 		if upperInput == "PASS" || upperInput == "P" {
 			_ = m.Client().Pass()
-		} else if len(input) > 0 {
+		} else if input != "" {
 			cards, err := card.FindCardsInHand(m.Game().State().Hand, strings.ToUpper(input))
 			if err != nil {
 				m.Input().Placeholder = err.Error()

@@ -328,7 +328,7 @@ func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 }
 
 // ReconnectPlayer 玩家重连到房间
-func (rm *RoomManager) ReconnectPlayer(oldClient types.ClientInterface, newClient types.ClientInterface) error {
+func (rm *RoomManager) ReconnectPlayer(oldClient, newClient types.ClientInterface) error {
 	roomCode := oldClient.GetRoom()
 	if roomCode == "" {
 		return nil // 不在房间中，无需重连

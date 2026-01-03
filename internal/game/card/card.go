@@ -145,8 +145,10 @@ func NewDeck() Deck {
 			deck = append(deck, Card{Suit: s, Rank: r, Color: color})
 		}
 	}
-	deck = append(deck, Card{Suit: Joker, Rank: RankBlackJoker, Color: Black})
-	deck = append(deck, Card{Suit: Joker, Rank: RankRedJoker, Color: Red})
+	deck = append(deck,
+		Card{Suit: Joker, Rank: RankBlackJoker, Color: Black},
+		Card{Suit: Joker, Rank: RankRedJoker, Color: Red},
+	)
 	return deck
 }
 

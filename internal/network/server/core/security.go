@@ -274,7 +274,7 @@ func NewMessageRateLimiter(maxPerSecond int) *MessageRateLimiter {
 }
 
 // AllowMessage 检查是否允许发送消息
-func (ml *MessageRateLimiter) AllowMessage(clientID string) (allowed bool, warning bool) {
+func (ml *MessageRateLimiter) AllowMessage(clientID string) (allowed, warning bool) {
 	ml.mu.Lock()
 	defer ml.mu.Unlock()
 

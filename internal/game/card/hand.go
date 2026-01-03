@@ -68,7 +68,7 @@ func FindCardsInHand(hand []Card, input string) ([]Card, error) {
 }
 
 // RemoveCards 从手牌中移除指定的牌
-func RemoveCards(hand []Card, toRemove []Card) []Card {
+func RemoveCards(hand, toRemove []Card) []Card {
 	var result []Card
 	for _, hCard := range hand {
 		if !slices.Contains(toRemove, hCard) {

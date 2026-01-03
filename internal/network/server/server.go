@@ -1,13 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -365,8 +366,9 @@ func (s *Server) sendShutdownNotification() {
 	message := "斗地主服务器已优雅关闭，开始升级吧！"
 
 	// 发送 POST 请求
-	payload := fmt.Sprintf(`{"text":"%s"}`, message)
-	req, err := http.NewRequest(http.MethodPost, speakerURL, strings.NewReader(payload))
+	payloadData := map[string]string{"text": message}
+	payloadBytes, _ := json.Marshal(payloadData)
+	req, err := http.NewRequest(http.MethodPost, speakerURL, bytes.NewReader(payloadBytes))
 	if err != nil {
 		log.Printf("创建通知请求失败: %v", err)
 		return

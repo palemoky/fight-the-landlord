@@ -45,7 +45,7 @@ func TestLeaderboard_RecordGameResult_NewPlayer(t *testing.T) {
 	assert.Equal(t, 1, stats.Wins)
 	assert.Equal(t, 1, stats.LandlordGames)
 	assert.Equal(t, 1, stats.LandlordWins)
-	assert.Equal(t, 30, stats.Score) // WinAsLandlord = 30
+	assert.Equal(t, 30, stats.Score)
 	assert.Equal(t, 1, stats.CurrentStreak)
 }
 

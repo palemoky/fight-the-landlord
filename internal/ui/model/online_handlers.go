@@ -48,8 +48,7 @@ func (m *OnlineModel) handleReconnectSuccess() []tea.Cmd {
 	var cmds []tea.Cmd
 	cmds = append(cmds, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
 		return ClearReconnectMsg{}
-	}))
-	cmds = append(cmds, m.listenForReconnect())
+	}), m.listenForReconnect())
 
 	if m.client.IsConnected() {
 		cmds = append(cmds, m.listenForMessages())
