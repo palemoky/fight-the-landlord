@@ -6,10 +6,6 @@ version: "2"
 run:
   timeout: 5m
   tests: true
-  skip-dirs:
-    - internal/network/protocol/pb
-  skip-files:
-    - ".*_generated\\.go$" # 跳过所有生成的代码
 
 linters:
   # 禁用所有默认 linters
@@ -55,63 +51,69 @@ linters:
     - thelper # 检测测试辅助函数是否调用 t.Helper()
     - tparallel # 检测 t.Parallel() 的不当使用
 
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - shadow # 变量遮蔽检查可能过于严格
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - shadow # 变量遮蔽检查可能过于严格
 
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-    disabled-checks:
-      - unlambda # 不强制将 lambda 替换为函数引用
-      - hugeParam # 对于游戏逻辑，大参数有时是必要的
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - unlambda # 不强制将 lambda 替换为函数引用
+        - hugeParam # 对于游戏逻辑，大参数有时是必要的
 
-  revive:
-    rules:
-      - name: exported
-        disabled: true # 不强制要求所有导出项都有注释
-      - name: package-comments
-        disabled: true # 不强制要求包注释
+    revive:
+      rules:
+        - name: exported
+          disabled: true # 不强制要求所有导出项都有注释
+        - name: package-comments
+          disabled: true # 不强制要求包注释
 
-  gocyclo:
-    min-complexity: 15 # 圈复杂度阈值
+    gocyclo:
+      min-complexity: 15 # 圈复杂度阈值
 
-  gocognit:
-    min-complexity: 30 # 认知复杂度阈值
+    gocognit:
+      min-complexity: 30 # 认知复杂度阈值
 
-  funlen:
-    lines: 100 # 函数最大行数
-    statements: 60 # 函数最大语句数
+    funlen:
+      lines: 100 # 函数最大行数
+      statements: 60 # 函数最大语句数
 
-  nestif:
-    min-complexity: 5 # 嵌套复杂度阈值
+    nestif:
+      min-complexity: 5 # 嵌套复杂度阈值
 
-  gofumpt:
-    extra-rules: true
+    gofumpt:
+      extra-rules: true
 
-  goimports:
-    local-prefixes: github.com/palemoky/fight-the-landlord
+    goimports:
+      local-prefixes: github.com/palemoky/fight-the-landlord
 
-  misspell:
-    locale: US
+    misspell:
+      locale: US
 
-  nakedret:
-    max-func-lines: 30 # 允许裸返回的最大函数行数
+    nakedret:
+      max-func-lines: 30 # 允许裸返回的最大函数行数
 
-  gosec:
-    excludes:
-      - G404 # 使用弱随机数生成器
+    gosec:
+      excludes:
+        - G404 # 使用弱随机数生成器
 
-  errorlint:
-    errorf: true
-    asserts: true
-    comparison: true
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
 
 issues:
+  exclude-dirs:
+    - internal/network/protocol/pb
+
+  exclude-files:
+    - ".*_generated\\.go$" # 跳过所有生成的代码
+
   # 排除规则
   exclude-rules:
     # 测试文件中放宽某些检查
