@@ -235,15 +235,13 @@ func handleRuneKey(m model.Model, msg tea.KeyMsg) (bool, tea.Cmd) {
 		return false, nil
 	}
 
-	if msg.Runes[0] == 'c' || msg.Runes[0] == 'C' {
-		if m.Phase() == model.PhaseBidding || m.Phase() == model.PhasePlaying {
+	// Handle game toggles (only during bidding/playing)
+	if m.Phase() == model.PhaseBidding || m.Phase() == model.PhasePlaying {
+		switch msg.Runes[0] {
+		case 'c', 'C':
 			m.Game().SetCardCounterEnabled(!m.Game().CardCounterEnabled())
 			return true, nil
-		}
-	}
-
-	if msg.Runes[0] == 'h' || msg.Runes[0] == 'H' {
-		if m.Phase() == model.PhaseBidding || m.Phase() == model.PhasePlaying {
+		case 'h', 'H':
 			m.Game().SetShowingHelp(!m.Game().ShowingHelp())
 			return true, nil
 		}

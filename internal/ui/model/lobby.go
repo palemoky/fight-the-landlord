@@ -91,32 +91,37 @@ func (m *LobbyModel) AddChatMessage(msg string) {
 }
 func (m *LobbyModel) ChatInput() *textinput.Model { return &m.chatInput }
 
-func (m *LobbyModel) HandleUpKey(phase GamePhase) {
-	if phase == PhaseRoomList && len(m.availableRooms) > 0 {
-		m.selectedRoomIdx--
-		if m.selectedRoomIdx < 0 {
-			m.selectedRoomIdx = len(m.availableRooms) - 1
+// HandleNavigationKey 处理上下键导航
+// direction: -1 表示向上，1 表示向下
+func (m *LobbyModel) HandleNavigationKey(phase GamePhase, direction int) {
+	switch phase {
+	case PhaseRoomList:
+		if len(m.availableRooms) > 0 {
+			m.selectedRoomIdx += direction
+			if m.selectedRoomIdx < 0 {
+				m.selectedRoomIdx = len(m.availableRooms) - 1
+			} else if m.selectedRoomIdx >= len(m.availableRooms) {
+				m.selectedRoomIdx = 0
+			}
 		}
-	} else if phase == PhaseLobby {
-		m.selectedIndex--
+	case PhaseLobby:
+		m.selectedIndex += direction
 		if m.selectedIndex < 0 {
 			m.selectedIndex = 5
+		} else if m.selectedIndex > 5 {
+			m.selectedIndex = 0
 		}
 	}
 }
 
+// HandleUpKey 处理向上键
+func (m *LobbyModel) HandleUpKey(phase GamePhase) {
+	m.HandleNavigationKey(phase, -1)
+}
+
+// HandleDownKey 处理向下键
 func (m *LobbyModel) HandleDownKey(phase GamePhase) {
-	if phase == PhaseRoomList && len(m.availableRooms) > 0 {
-		m.selectedRoomIdx++
-		if m.selectedRoomIdx >= len(m.availableRooms) {
-			m.selectedRoomIdx = 0
-		}
-	} else if phase == PhaseLobby {
-		m.selectedIndex++
-		if m.selectedIndex > 5 {
-			m.selectedIndex = 0
-		}
-	}
+	m.HandleNavigationKey(phase, 1)
 }
 
 func (m *LobbyModel) Width() int  { return m.width }
