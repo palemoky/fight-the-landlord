@@ -48,9 +48,23 @@ type SimpleClient struct {
 	Messages []*protocol.Message
 }
 
+// NewSimpleClient 创建简单的 mock 客户端
+func NewSimpleClient(id, name string) *SimpleClient {
+	return &SimpleClient{
+		ID:       id,
+		Name:     name,
+		Messages: make([]*protocol.Message, 0),
+	}
+}
+
 func (m *SimpleClient) GetID() string                     { return m.ID }
 func (m *SimpleClient) GetName() string                   { return m.Name }
 func (m *SimpleClient) GetRoom() string                   { return m.RoomCode }
 func (m *SimpleClient) SetRoom(code string)               { m.RoomCode = code }
 func (m *SimpleClient) SendMessage(msg *protocol.Message) { m.Messages = append(m.Messages, msg) }
 func (m *SimpleClient) Close()                            {}
+
+// SentMessages 返回已发送的消息列表（用于测试断言）
+func (m *SimpleClient) SentMessages() []*protocol.Message {
+	return m.Messages
+}
