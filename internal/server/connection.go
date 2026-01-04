@@ -6,14 +6,13 @@ import (
 
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/protocol/codec"
-	"github.com/palemoky/fight-the-landlord/internal/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/types"
 )
 
 // handleWebSocket 处理 WebSocket 连接
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// 获取真实客户端IP
-	clientIP := core.GetClientIP(r)
+	clientIP := GetClientIP(r)
 
 	// 维护模式检查（最优先）
 	if s.IsMaintenanceMode() {

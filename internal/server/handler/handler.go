@@ -8,7 +8,6 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/protocol/codec"
-	"github.com/palemoky/fight-the-landlord/internal/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/server/session"
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
 	"github.com/palemoky/fight-the-landlord/internal/types"
@@ -19,7 +18,7 @@ type HandlerDeps struct {
 	Server         types.ServerInterface
 	RoomManager    *room.RoomManager
 	Matcher        *match.Matcher
-	ChatLimiter    *core.ChatRateLimiter
+	ChatLimiter    types.ChatLimiter
 	Leaderboard    *storage.LeaderboardManager
 	SessionManager *session.SessionManager
 }
@@ -29,7 +28,7 @@ type Handler struct {
 	server         types.ServerInterface
 	roomManager    *room.RoomManager
 	matcher        *match.Matcher
-	chatLimiter    *core.ChatRateLimiter
+	chatLimiter    types.ChatLimiter
 	leaderboard    *storage.LeaderboardManager
 	sessionManager *session.SessionManager
 	handlers       map[protocol.MessageType]handlerFunc

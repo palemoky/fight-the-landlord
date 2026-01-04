@@ -4,7 +4,7 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 )
 
-// ServerInterface 服务器上下文接口 - 避免循环依赖
+// ServerInterface 定义服务器接口（用于打破循环依赖）
 type ServerInterface interface {
 	IsMaintenanceMode() bool
 	GetOnlineCount() int
@@ -14,12 +14,18 @@ type ServerInterface interface {
 	UnregisterClient(id string)
 }
 
-// ClientInterface 客户端接口
+// ClientInterface 定义客户端接口
 type ClientInterface interface {
 	GetID() string
 	GetName() string
 	GetRoom() string
-	SetRoom(roomCode string)
+	SetRoom(code string)
 	SendMessage(msg *protocol.Message)
 	Close()
+}
+
+// ChatLimiter 聊天速率限制器接口
+type ChatLimiter interface {
+	AllowChat(clientID string) (allowed bool, reason string)
+	RemoveClient(clientID string)
 }

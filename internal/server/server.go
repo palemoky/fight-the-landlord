@@ -15,7 +15,6 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/match"
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
-	"github.com/palemoky/fight-the-landlord/internal/server/core"
 	"github.com/palemoky/fight-the-landlord/internal/server/handler"
 	"github.com/palemoky/fight-the-landlord/internal/server/session"
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
@@ -47,11 +46,11 @@ type Server struct {
 	handler        *handler.Handler
 
 	// 安全组件
-	rateLimiter    *core.RateLimiter
-	originChecker  *core.OriginChecker
-	messageLimiter *core.MessageRateLimiter
-	chatLimiter    *core.ChatRateLimiter
-	ipFilter       *core.IPFilter
+	rateLimiter    *RateLimiter
+	originChecker  *OriginChecker
+	messageLimiter *MessageRateLimiter
+	chatLimiter    *ChatRateLimiter
+	ipFilter       *IPFilter
 
 	// 连接控制
 	maxConnections int
@@ -86,19 +85,19 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		clients:        make(map[string]*Client),
 		sessionManager: session.NewSessionManager(),
 		// 初始化安全组件
-		rateLimiter: core.NewRateLimiter(
+		rateLimiter: NewRateLimiter(
 			cfg.Security.RateLimit.MaxPerSecond,
 			cfg.Security.RateLimit.MaxPerMinute,
 			cfg.Security.RateLimit.BanDurationTime(),
 		),
-		originChecker:  core.NewOriginChecker(cfg.Security.AllowedOrigins),
-		messageLimiter: core.NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
-		chatLimiter: core.NewChatRateLimiter(
+		originChecker:  NewOriginChecker(cfg.Security.AllowedOrigins),
+		messageLimiter: NewMessageRateLimiter(cfg.Security.MessageLimit.MaxPerSecond),
+		chatLimiter: NewChatRateLimiter(
 			cfg.Security.ChatLimit.MaxPerSecond,
 			cfg.Security.ChatLimit.MaxPerMinute,
 			cfg.Security.ChatLimit.CooldownDuration(),
 		),
-		ipFilter: core.NewIPFilter(),
+		ipFilter: NewIPFilter(),
 		// 初始化连接控制
 		maxConnections: cfg.Server.MaxConnections,
 		semaphore:      make(chan struct{}, cfg.Server.MaxConnections),
