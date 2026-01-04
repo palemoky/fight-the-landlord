@@ -6,14 +6,14 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
+	payloadconv "github.com/palemoky/fight-the-landlord/internal/protocol/convert/payload"
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 )
 
 func handleMsgChat(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.ChatPayload
-	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := payloadconv.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
@@ -58,7 +58,7 @@ func setMaintenanceNotification(m model.Model, maintenance bool) {
 
 func handleMsgMaintenancePush(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenancePayload
-	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := payloadconv.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
@@ -68,7 +68,7 @@ func handleMsgMaintenancePush(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgMaintenancePull(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.MaintenanceStatusPayload
-	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := payloadconv.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 

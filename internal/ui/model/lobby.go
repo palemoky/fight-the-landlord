@@ -5,8 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/client"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/transport"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 
 // LobbyModel handles the lobby interface.
 type LobbyModel struct {
-	client *client.Client
+	client *transport.Client
 	width  int
 	height int
 
@@ -41,7 +41,7 @@ type LobbyModel struct {
 }
 
 // NewLobbyModel creates a new LobbyModel.
-func NewLobbyModel(c *client.Client, input *textinput.Model) *LobbyModel {
+func NewLobbyModel(c *transport.Client, input *textinput.Model) *LobbyModel {
 	chatInput := textinput.New()
 	chatInput.Placeholder = "按 / 键聊天..."
 	chatInput.CharLimit = 50
@@ -125,7 +125,7 @@ func (m *LobbyModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 }
-func (m *LobbyModel) Input() *textinput.Model  { return m.input }
-func (m *LobbyModel) SelectedIndex() int       { return m.selectedIndex }
-func (m *LobbyModel) SetSelectedIndex(idx int) { m.selectedIndex = idx }
-func (m *LobbyModel) Client() *client.Client   { return m.client }
+func (m *LobbyModel) Input() *textinput.Model   { return m.input }
+func (m *LobbyModel) SelectedIndex() int        { return m.selectedIndex }
+func (m *LobbyModel) SetSelectedIndex(idx int)  { m.selectedIndex = idx }
+func (m *LobbyModel) Client() *transport.Client { return m.client }

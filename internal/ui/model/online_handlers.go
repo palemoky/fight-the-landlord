@@ -6,8 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol/codec"
 )
 
 func (m *OnlineModel) handleWindowSize(msg tea.WindowSizeMsg) {

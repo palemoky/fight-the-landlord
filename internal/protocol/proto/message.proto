@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package protocol;
+
+option go_package = "github.com/palemoky/fight-the-landlord/internal/protocol/pb";
+
+
+
+// ========== 消息类型枚举 ==========
+
+enum MessageType {
+  MSG_UNKNOWN = 0;
+
+  // 客户端 -> 服务端
+  MSG_RECONNECT = 1;
+  MSG_PING = 2;
+  MSG_CREATE_ROOM = 3;
+  MSG_JOIN_ROOM = 4;
+  MSG_LEAVE_ROOM = 5;
+  MSG_QUICK_MATCH = 6;
+  MSG_READY = 7;
+  MSG_CANCEL_READY = 8;
+  MSG_BID = 9;
+  MSG_PLAY_CARDS = 10;
+  MSG_PASS = 11;
+  MSG_GET_STATS = 12;
+  MSG_GET_LEADERBOARD = 13;
+  MSG_GET_ROOM_LIST = 14;
+  MSG_GET_ONLINE_COUNT = 15;
+  MSG_GET_MAINTENANCE_STATUS = 17;
+  MSG_CHAT = 16;
+
+  // 服务端 -> 客户端
+  MSG_CONNECTED = 100;
+  MSG_RECONNECTED = 101;
+  MSG_PONG = 102;
+  MSG_PLAYER_OFFLINE = 103;
+  MSG_PLAYER_ONLINE = 104;
+  MSG_ONLINE_COUNT = 105;
+  MSG_ROOM_CREATED = 106;
+  MSG_ROOM_JOINED = 107;
+  MSG_PLAYER_JOINED = 108;
+  MSG_PLAYER_LEFT = 109;
+  MSG_PLAYER_READY = 110;
+  MSG_MATCH_FOUND = 111;
+  MSG_GAME_START = 112;
+  MSG_DEAL_CARDS = 113;
+  MSG_BID_TURN = 114;
+  MSG_BID_RESULT = 115;
+  MSG_LANDLORD = 116;
+  MSG_PLAY_TURN = 117;
+  MSG_CARD_PLAYED = 118;
+  MSG_PLAYER_PASS = 119;
+  MSG_GAME_OVER = 120;
+  MSG_ROUND_RESULT = 121;
+  MSG_STATS_RESULT = 122;
+  MSG_LEADERBOARD_RESULT = 123;
+  MSG_ROOM_LIST_RESULT = 124;
+  MSG_MAINTENANCE_STATUS = 125;
+  MSG_MAINTENANCE = 126;
+  MSG_ERROR = 200;
+}
+
+// ========== 基础消息包装器 ==========
+
+// Message 所有消息的外层包装
+message Message {
+  MessageType type = 1;
+  bytes payload = 2;
+}

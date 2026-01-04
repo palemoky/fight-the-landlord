@@ -32,39 +32,46 @@ const (
 )
 
 // String 返回牌型的中文名称
+// handTypeNames 牌型名称映射表
+var handTypeNames = map[HandType]string{
+	Single:           "单张",
+	Pair:             "对子",
+	Trio:             "三张",
+	TrioWithSingle:   "三带一",
+	TrioWithPair:     "三带二",
+	Straight:         "顺子",
+	PairStraight:     "连对",
+	Plane:            "飞机",
+	PlaneWithSingles: "飞机带单",
+	PlaneWithPairs:   "飞机带对",
+	Bomb:             "炸弹",
+	FourWithTwo:      "四带二",
+	FourWithTwoPairs: "四带两对",
+	Rocket:           "王炸",
+}
+
+// handChecker 牌型检查函数类型
+type handChecker func(HandAnalysis, ParsedHand) bool
+
+// handCheckers 牌型检查函数映射表
+var handCheckers = map[HandType]handChecker{
+	Single:           func(a HandAnalysis, h ParsedHand) bool { return findWinningSingle(a, h) },
+	Pair:             func(a HandAnalysis, h ParsedHand) bool { return findWinningPair(a, h) },
+	Trio:             func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 0) },
+	TrioWithSingle:   func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 1) },
+	TrioWithPair:     func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 2) },
+	Straight:         func(a HandAnalysis, h ParsedHand) bool { return findWinningStraight(a, h) },
+	PairStraight:     func(a HandAnalysis, h ParsedHand) bool { return findWinningPairStraight(a, h) },
+	Plane:            func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 0) },
+	PlaneWithSingles: func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 1) },
+	PlaneWithPairs:   func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 2) },
+}
+
 func (h HandType) String() string {
-	switch h {
-	case Single:
-		return "单张"
-	case Pair:
-		return "对子"
-	case Trio:
-		return "三张"
-	case TrioWithSingle:
-		return "三带一"
-	case TrioWithPair:
-		return "三带二"
-	case Straight:
-		return "顺子"
-	case PairStraight:
-		return "连对"
-	case Plane:
-		return "飞机"
-	case PlaneWithSingles:
-		return "飞机带单"
-	case PlaneWithPairs:
-		return "飞机带对"
-	case Bomb:
-		return "炸弹"
-	case FourWithTwo:
-		return "四带二"
-	case FourWithTwoPairs:
-		return "四带两对"
-	case Rocket:
-		return "王炸"
-	default:
-		return "无效"
+	if name, ok := handTypeNames[h]; ok {
+		return name
 	}
+	return "无效"
 }
 
 // ParsedHand 解析后的手牌，用于比较
@@ -216,28 +223,8 @@ func CanBeatWithHand(playerHand []card.Card, opponentHand ParsedHand) bool {
 	}
 
 	// 3. 检查是否有同类型的、更大的牌
-	switch opponentHand.Type {
-	case Single:
-		return findWinningSingle(analysis, opponentHand)
-	case Pair:
-		return findWinningPair(analysis, opponentHand)
-	case Trio:
-		return findWinningTrio(analysis, opponentHand, 0)
-	case TrioWithSingle:
-		return findWinningTrio(analysis, opponentHand, 1)
-	case TrioWithPair:
-		return findWinningTrio(analysis, opponentHand, 2)
-	case Straight:
-		return findWinningStraight(analysis, opponentHand)
-	case PairStraight:
-		return findWinningPairStraight(analysis, opponentHand)
-	case Plane:
-		return findWinningPlane(analysis, opponentHand, 0)
-	case PlaneWithSingles:
-		return findWinningPlane(analysis, opponentHand, 1)
-	case PlaneWithPairs:
-		return findWinningPlane(analysis, opponentHand, 2)
-	default:
-		return false
+	if checker, ok := handCheckers[opponentHand.Type]; ok {
+		return checker(analysis, opponentHand)
 	}
+	return false
 }

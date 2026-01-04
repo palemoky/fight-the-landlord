@@ -125,7 +125,7 @@ linters:
 
     # 排除的路径
     paths:
-      - internal/network/protocol/pb
+      - internal/protocol/pb
       - ".*_generated\\.go$"
 
 issues:

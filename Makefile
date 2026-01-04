@@ -35,21 +35,18 @@ coverage:  ## Generate test coverage report
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "$(GREEN)✓ Coverage report generated: coverage.html$(NC)"
 
-## proto: 重新生成 Protocol Buffer 代码
-proto:  ## Regenerate Protocol Buffer code
+## proto: 重新生成 Protocol Buffer 和消息类型映射代码
+proto:  ## Regenerate Protocol Buffer and message type mapping code
 	@echo "$(BLUE)Regenerating Protocol Buffer code...$(NC)"
 	@if ! command -v protoc >/dev/null 2>&1; then \
 		echo "$(RED)Error: protoc not found$(NC)"; \
 		echo "$(YELLOW)Install it with: brew install protobuf$(NC)"; \
 		exit 1; \
 	fi
-	protoc --proto_path=. --go_out=. --go_opt=module=github.com/palemoky/fight-the-landlord internal/network/protocol/proto/*.proto
+	protoc --proto_path=. --go_out=. --go_opt=module=github.com/palemoky/fight-the-landlord internal/protocol/proto/*.proto
 	@echo "$(GREEN)✓ Protocol Buffer code regenerated$(NC)"
-
-## gen-msgtype: 生成 MessageType 映射代码
-gen-msgtype:  ## Generate MessageType mapping code
 	@echo "$(BLUE)Generating MessageType mapping code...$(NC)"
-	@cd internal/network/protocol/convert && go run gen_message_type.go
+	@cd internal/protocol/convert/msgtype && go run gen.go
 	@echo "$(GREEN)✓ MessageType mapping code generated$(NC)"
 
 ## release: 创建并推送版本标签

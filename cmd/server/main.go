@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/palemoky/fight-the-landlord/internal/config"
-	"github.com/palemoky/fight-the-landlord/internal/network/server"
+	"github.com/palemoky/fight-the-landlord/internal/server"
 )
 
 func main() {

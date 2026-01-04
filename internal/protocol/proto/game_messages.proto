@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package protocol;
+
+option go_package = "github.com/palemoky/fight-the-landlord/internal/protocol/pb";
+
+import "internal/protocol/proto/common.proto";
+
+// ========== 游戏流程消息 ==========
+
+// RoomCreatedPayload 房间创建成功响应
+message RoomCreatedPayload {
+  string room_code = 1;
+  PlayerInfo player = 2;
+}
+
+// RoomJoinedPayload 加入房间成功响应
+message RoomJoinedPayload {
+  string room_code = 1;
+  PlayerInfo player = 2;
+  repeated PlayerInfo players = 3;
+}
+
+// PlayerJoinedPayload 其他玩家加入通知
+message PlayerJoinedPayload {
+  PlayerInfo player = 1;
+}
+
+// PlayerLeftPayload 玩家离开通知
+message PlayerLeftPayload {
+  string player_id = 1;
+  string player_name = 2;
+}
+
+// PlayerReadyPayload 玩家准备通知
+message PlayerReadyPayload {
+  string player_id = 1;
+  bool ready = 2;
+}
+
+// GameStartPayload 游戏开始通知
+message GameStartPayload {
+  repeated PlayerInfo players = 1;
+}
+
+// DealCardsPayload 发牌通知
+message DealCardsPayload {
+  repeated CardInfo cards = 1;
+  repeated CardInfo bottom_cards = 2;
+}
+
+// BidTurnPayload 轮到叫地主通知
+message BidTurnPayload {
+  string player_id = 1;
+  int64 timeout = 2;
+}
+
+// BidResultPayload 叫地主结果通知
+message BidResultPayload {
+  string player_id = 1;
+  string player_name = 2;
+  bool bid = 3;
+}
+
+// LandlordPayload 地主确定通知
+message LandlordPayload {
+  string player_id = 1;
+  string player_name = 2;
+  repeated CardInfo bottom_cards = 3;
+}
+
+// PlayTurnPayload 轮到出牌通知
+message PlayTurnPayload {
+  string player_id = 1;
+  int64 timeout = 2;
+  bool must_play = 3;
+  bool can_beat = 4;
+}
+
+// CardPlayedPayload 出牌通知
+message CardPlayedPayload {
+  string player_id = 1;
+  string player_name = 2;
+  repeated CardInfo cards = 3;
+  int64 cards_left = 4;
+  string hand_type = 5;
+}
+
+// PlayerPassPayload 不出通知
+message PlayerPassPayload {
+  string player_id = 1;
+  string player_name = 2;
+}
+
+// GameOverPayload 游戏结束通知
+message GameOverPayload {
+  string winner_id = 1;
+  string winner_name = 2;
+  bool is_landlord = 3;
+  repeated PlayerHand player_hands = 4;
+}

@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
 )
 
 // --- GameModel Tests ---
