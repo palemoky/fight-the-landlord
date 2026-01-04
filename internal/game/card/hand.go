@@ -8,17 +8,22 @@ import (
 
 // findRocketInHand 查找手牌中的王炸
 func findRocketInHand(hand []Card) ([]Card, bool) {
-	var black, red *Card
+	var black, red Card
+	var foundBlack, foundRed bool
+
 	for i := range hand {
-		if hand[i].Rank == RankBlackJoker {
-			black = &hand[i]
+		switch hand[i].Rank {
+		case RankBlackJoker:
+			black = hand[i]
+			foundBlack = true
+		case RankRedJoker:
+			red = hand[i]
+			foundRed = true
 		}
-		if hand[i].Rank == RankRedJoker {
-			red = &hand[i]
+
+		if foundBlack && foundRed {
+			return []Card{black, red}, true
 		}
-	}
-	if black != nil && red != nil {
-		return []Card{*black, *red}, true
 	}
 	return nil, false
 }
