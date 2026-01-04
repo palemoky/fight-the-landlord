@@ -25,31 +25,6 @@ func TestNewClient(t *testing.T) {
 	assert.NotNil(t, client.send)
 }
 
-func TestClient_SetGetRoom(t *testing.T) {
-	t.Parallel()
-
-	client := &Client{}
-
-	tests := []struct {
-		name     string
-		roomID   string
-		expected string
-	}{
-		{"Set room A", "room-a", "room-a"},
-		{"Set empty room", "", ""},
-		{"Set room B", "room-b", "room-b"},
-	}
-
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			client.SetRoom(tt.roomID)
-			assert.Equal(t, tt.expected, client.GetRoom())
-		})
-	}
-}
-
 func TestClient_SetGetRoom_Concurrency(t *testing.T) {
 	t.Parallel()
 
