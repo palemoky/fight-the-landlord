@@ -9,24 +9,40 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/protocol/codec"
+	"github.com/palemoky/fight-the-landlord/internal/server/session"
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
 	"github.com/palemoky/fight-the-landlord/internal/types"
 )
 
+// SessionRegistrationFunc 游戏会话注册回调
+type SessionRegistrationFunc func(roomCode string, gs *session.GameSession)
+
 // Matcher 匹配系统
 type Matcher struct {
-	roomManager *room.RoomManager
-	redisStore  *storage.RedisStore
-	queue       []types.ClientInterface
-	mu          sync.Mutex
+	roomManager     *room.RoomManager
+	redisStore      *storage.RedisStore
+	leaderboard     *storage.LeaderboardManager
+	registerSession SessionRegistrationFunc
+	queue           []types.ClientInterface
+	mu              sync.Mutex
+}
+
+// MatcherDeps 匹配器依赖
+type MatcherDeps struct {
+	RoomManager     *room.RoomManager
+	RedisStore      *storage.RedisStore
+	Leaderboard     *storage.LeaderboardManager
+	RegisterSession SessionRegistrationFunc
 }
 
 // NewMatcher 创建匹配器
-func NewMatcher(rm *room.RoomManager, rs *storage.RedisStore) *Matcher {
+func NewMatcher(deps MatcherDeps) *Matcher {
 	return &Matcher{
-		roomManager: rm,
-		redisStore:  rs,
-		queue:       make([]types.ClientInterface, 0),
+		roomManager:     deps.RoomManager,
+		redisStore:      deps.RedisStore,
+		leaderboard:     deps.Leaderboard,
+		registerSession: deps.RegisterSession,
+		queue:           make([]types.ClientInterface, 0),
 	}
 }
 
@@ -124,9 +140,23 @@ func (m *Matcher) createMatchRoom(players []types.ClientInterface) {
 	}
 
 	// 开始游戏
-	if err := room.StartGame(); err == nil {
-		go func() { _ = m.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+	if err := room.StartGame(); err != nil {
+		log.Printf("匹配开始游戏失败: %v", err)
+		return
 	}
+
+	// 创建游戏会话并开始
+	gs := session.NewGameSession(room, m.leaderboard)
+
+	// 注册游戏会话
+	if m.registerSession != nil {
+		m.registerSession(room.Code, gs)
+	}
+
+	gs.Start()
+
+	// 保存房间状态
+	go func() { _ = m.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
 }
 
 // GetQueueLength 获取队列长度

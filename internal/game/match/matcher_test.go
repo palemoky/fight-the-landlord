@@ -9,9 +9,8 @@ import (
 )
 
 func TestMatcher_QueueOps(t *testing.T) {
-	// Matcher relies on Server only for createMatchRoom.
 	// As long as we keep queue size < 3, it won't call CreateRoom.
-	matcher := NewMatcher(nil, nil) // nil roomManager and redisStore for testing
+	matcher := NewMatcher(MatcherDeps{}) // nil dependencies for testing
 
 	c1 := &testutil.SimpleClient{ID: "p1", Name: "Player1"}
 	c2 := &testutil.SimpleClient{ID: "p2", Name: "Player2"}

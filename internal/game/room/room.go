@@ -36,6 +36,7 @@ type Room struct {
 type RoomManager struct {
 	redisStore  *storage.RedisStore
 	roomTimeout time.Duration
+	onGameStart func(*Room)
 	rooms       map[string]*Room
 	mu          sync.RWMutex
 }

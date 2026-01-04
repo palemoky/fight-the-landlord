@@ -107,7 +107,15 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	s.roomManager = room.NewRoomManager(s.redisStore, cfg.Game.RoomTimeoutDuration())
 
 	// 初始化匹配器
-	s.matcher = match.NewMatcher(s.roomManager, s.redisStore)
+	// 初始化匹配器
+	s.matcher = match.NewMatcher(match.MatcherDeps{
+		RoomManager: s.roomManager,
+		RedisStore:  s.redisStore,
+		Leaderboard: s.leaderboard,
+		RegisterSession: func(roomCode string, gs *session.GameSession) {
+			s.handler.SetGameSession(roomCode, gs)
+		},
+	})
 
 	// 初始化消息处理器
 	s.handler = handler.NewHandler(handler.HandlerDeps{
@@ -117,6 +125,13 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		ChatLimiter:    s.chatLimiter,
 		Leaderboard:    s.leaderboard,
 		SessionManager: s.sessionManager,
+	})
+
+	// 设置房间游戏开始回调
+	s.roomManager.SetOnGameStart(func(r *room.Room) {
+		gs := session.NewGameSession(r, s.leaderboard)
+		s.handler.SetGameSession(r.Code, gs)
+		gs.Start()
 	})
 
 	log.Printf("🔒 安全配置: 连接限制=%d/s, 消息限制=%d/s, 聊天限制=%d/s, 最大连接数=%d",

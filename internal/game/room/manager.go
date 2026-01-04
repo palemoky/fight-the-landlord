@@ -180,12 +180,27 @@ func (rm *RoomManager) SetPlayerReady(client types.ClientInterface, ready bool) 
 
 	// 检查是否所有人都准备好了
 	if room.checkAllReady() {
-		if err := room.StartGame(); err == nil {
-			go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+		if err := room.StartGame(); err != nil {
+			log.Printf("开始游戏失败: %v", err)
+			return nil
 		}
+
+		// 创建游戏会话并开始
+		if rm.onGameStart != nil {
+			rm.onGameStart(room)
+		}
+
+		// 保存房间状态
+		go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
 	}
 
 	return nil
+}
+
+func (rm *RoomManager) SetOnGameStart(callback func(*Room)) {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	rm.onGameStart = callback
 }
 
 // GetRoom 获取房间
