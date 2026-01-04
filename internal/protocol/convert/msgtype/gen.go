@@ -74,31 +74,41 @@ func main() {
 	fmt.Fprintln(output, ")")
 	fmt.Fprintln(output, "")
 
-	// StringToProtoMessageType
-	fmt.Fprintln(output, "// StringToProtoMessageType 字符串消息类型转 protobuf 枚举")
-	fmt.Fprintln(output, "func StringToProtoMessageType(s string) pb.MessageType {")
-	fmt.Fprintln(output, "\tswitch s {")
+	// Generate string to proto map
+	fmt.Fprintln(output, "// stringToProtoMap 字符串到 protobuf 枚举的映射表")
+	fmt.Fprintln(output, "var stringToProtoMap = map[string]pb.MessageType{")
 	for _, m := range mappings {
-		fmt.Fprintf(output, "\tcase \"%s\":\n", m.stringName)
-		fmt.Fprintf(output, "\t\treturn pb.MessageType_%s\n", m.protoName)
+		fmt.Fprintf(output, "\t\"%s\": pb.MessageType_%s,\n", m.stringName, m.protoName)
 	}
-	fmt.Fprintln(output, "\tdefault:")
-	fmt.Fprintln(output, "\t\treturn pb.MessageType_MSG_UNKNOWN")
-	fmt.Fprintln(output, "\t}")
 	fmt.Fprintln(output, "}")
 	fmt.Fprintln(output, "")
 
-	// ProtoMessageTypeToString
+	// Generate proto to string map
+	fmt.Fprintln(output, "// protoToStringMap protobuf 枚举到字符串的映射表")
+	fmt.Fprintln(output, "var protoToStringMap = map[pb.MessageType]string{")
+	for _, m := range mappings {
+		fmt.Fprintf(output, "\tpb.MessageType_%s: \"%s\",\n", m.protoName, m.stringName)
+	}
+	fmt.Fprintln(output, "}")
+	fmt.Fprintln(output, "")
+
+	// StringToProtoMessageType with map lookup
+	fmt.Fprintln(output, "// StringToProtoMessageType 字符串消息类型转 protobuf 枚举")
+	fmt.Fprintln(output, "func StringToProtoMessageType(s string) pb.MessageType {")
+	fmt.Fprintln(output, "\tif t, ok := stringToProtoMap[s]; ok {")
+	fmt.Fprintln(output, "\t\treturn t")
+	fmt.Fprintln(output, "\t}")
+	fmt.Fprintln(output, "\treturn pb.MessageType_MSG_UNKNOWN")
+	fmt.Fprintln(output, "}")
+	fmt.Fprintln(output, "")
+
+	// ProtoMessageTypeToString with map lookup
 	fmt.Fprintln(output, "// ProtoMessageTypeToString protobuf 枚举转字符串消息类型")
 	fmt.Fprintln(output, "func ProtoMessageTypeToString(t pb.MessageType) string {")
-	fmt.Fprintln(output, "\tswitch t {")
-	for _, m := range mappings {
-		fmt.Fprintf(output, "\tcase pb.MessageType_%s:\n", m.protoName)
-		fmt.Fprintf(output, "\t\treturn \"%s\"\n", m.stringName)
-	}
-	fmt.Fprintln(output, "\tdefault:")
-	fmt.Fprintln(output, "\t\treturn \"unknown\"")
+	fmt.Fprintln(output, "\tif s, ok := protoToStringMap[t]; ok {")
+	fmt.Fprintln(output, "\t\treturn s")
 	fmt.Fprintln(output, "\t}")
+	fmt.Fprintln(output, "\treturn \"unknown\"")
 	fmt.Fprintln(output, "}")
 
 	fmt.Println("✅ 代码生成完成: mapping.go")

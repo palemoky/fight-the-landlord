@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.0
-// source: internal/protocol/proto/server_messages.proto
+// source: internal/protocol/proto/server.proto
 
 package pb
 
@@ -33,7 +33,7 @@ type ConnectedPayload struct {
 
 func (x *ConnectedPayload) Reset() {
 	*x = ConnectedPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[0]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +45,7 @@ func (x *ConnectedPayload) String() string {
 func (*ConnectedPayload) ProtoMessage() {}
 
 func (x *ConnectedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[0]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +58,7 @@ func (x *ConnectedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectedPayload.ProtoReflect.Descriptor instead.
 func (*ConnectedPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{0}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ConnectedPayload) GetPlayerId() string {
@@ -95,7 +95,7 @@ type ReconnectedPayload struct {
 
 func (x *ReconnectedPayload) Reset() {
 	*x = ReconnectedPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[1]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -107,7 +107,7 @@ func (x *ReconnectedPayload) String() string {
 func (*ReconnectedPayload) ProtoMessage() {}
 
 func (x *ReconnectedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[1]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -120,7 +120,7 @@ func (x *ReconnectedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReconnectedPayload.ProtoReflect.Descriptor instead.
 func (*ReconnectedPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{1}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ReconnectedPayload) GetPlayerId() string {
@@ -162,7 +162,7 @@ type PongPayload struct {
 
 func (x *PongPayload) Reset() {
 	*x = PongPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[2]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -174,7 +174,7 @@ func (x *PongPayload) String() string {
 func (*PongPayload) ProtoMessage() {}
 
 func (x *PongPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[2]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -187,7 +187,7 @@ func (x *PongPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PongPayload.ProtoReflect.Descriptor instead.
 func (*PongPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{2}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PongPayload) GetClientTimestamp() int64 {
@@ -216,7 +216,7 @@ type PlayerOfflinePayload struct {
 
 func (x *PlayerOfflinePayload) Reset() {
 	*x = PlayerOfflinePayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[3]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -228,7 +228,7 @@ func (x *PlayerOfflinePayload) String() string {
 func (*PlayerOfflinePayload) ProtoMessage() {}
 
 func (x *PlayerOfflinePayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[3]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -241,7 +241,7 @@ func (x *PlayerOfflinePayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerOfflinePayload.ProtoReflect.Descriptor instead.
 func (*PlayerOfflinePayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{3}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PlayerOfflinePayload) GetPlayerId() string {
@@ -276,7 +276,7 @@ type PlayerOnlinePayload struct {
 
 func (x *PlayerOnlinePayload) Reset() {
 	*x = PlayerOnlinePayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[4]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -288,7 +288,7 @@ func (x *PlayerOnlinePayload) String() string {
 func (*PlayerOnlinePayload) ProtoMessage() {}
 
 func (x *PlayerOnlinePayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[4]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -301,7 +301,7 @@ func (x *PlayerOnlinePayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerOnlinePayload.ProtoReflect.Descriptor instead.
 func (*PlayerOnlinePayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{4}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PlayerOnlinePayload) GetPlayerId() string {
@@ -328,7 +328,7 @@ type OnlineCountPayload struct {
 
 func (x *OnlineCountPayload) Reset() {
 	*x = OnlineCountPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[5]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -340,7 +340,7 @@ func (x *OnlineCountPayload) String() string {
 func (*OnlineCountPayload) ProtoMessage() {}
 
 func (x *OnlineCountPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[5]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -353,7 +353,7 @@ func (x *OnlineCountPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OnlineCountPayload.ProtoReflect.Descriptor instead.
 func (*OnlineCountPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{5}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *OnlineCountPayload) GetCount() int64 {
@@ -373,7 +373,7 @@ type MaintenanceStatusPayload struct {
 
 func (x *MaintenanceStatusPayload) Reset() {
 	*x = MaintenanceStatusPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[6]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -385,7 +385,7 @@ func (x *MaintenanceStatusPayload) String() string {
 func (*MaintenanceStatusPayload) ProtoMessage() {}
 
 func (x *MaintenanceStatusPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[6]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -398,7 +398,7 @@ func (x *MaintenanceStatusPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintenanceStatusPayload.ProtoReflect.Descriptor instead.
 func (*MaintenanceStatusPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{6}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *MaintenanceStatusPayload) GetMaintenance() bool {
@@ -418,7 +418,7 @@ type MaintenancePayload struct {
 
 func (x *MaintenancePayload) Reset() {
 	*x = MaintenancePayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[7]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -430,7 +430,7 @@ func (x *MaintenancePayload) String() string {
 func (*MaintenancePayload) ProtoMessage() {}
 
 func (x *MaintenancePayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[7]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -443,7 +443,7 @@ func (x *MaintenancePayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintenancePayload.ProtoReflect.Descriptor instead.
 func (*MaintenancePayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{7}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *MaintenancePayload) GetMaintenance() bool {
@@ -464,7 +464,7 @@ type ErrorPayload struct {
 
 func (x *ErrorPayload) Reset() {
 	*x = ErrorPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[8]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -476,7 +476,7 @@ func (x *ErrorPayload) String() string {
 func (*ErrorPayload) ProtoMessage() {}
 
 func (x *ErrorPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[8]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -489,7 +489,7 @@ func (x *ErrorPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ErrorPayload.ProtoReflect.Descriptor instead.
 func (*ErrorPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{8}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ErrorPayload) GetCode() int64 {
@@ -529,7 +529,7 @@ type StatsResultPayload struct {
 
 func (x *StatsResultPayload) Reset() {
 	*x = StatsResultPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[9]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -541,7 +541,7 @@ func (x *StatsResultPayload) String() string {
 func (*StatsResultPayload) ProtoMessage() {}
 
 func (x *StatsResultPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[9]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -554,7 +554,7 @@ func (x *StatsResultPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsResultPayload.ProtoReflect.Descriptor instead.
 func (*StatsResultPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{9}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *StatsResultPayload) GetPlayerId() string {
@@ -666,7 +666,7 @@ type LeaderboardResultPayload struct {
 
 func (x *LeaderboardResultPayload) Reset() {
 	*x = LeaderboardResultPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[10]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +678,7 @@ func (x *LeaderboardResultPayload) String() string {
 func (*LeaderboardResultPayload) ProtoMessage() {}
 
 func (x *LeaderboardResultPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[10]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +691,7 @@ func (x *LeaderboardResultPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaderboardResultPayload.ProtoReflect.Descriptor instead.
 func (*LeaderboardResultPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{10}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *LeaderboardResultPayload) GetType() string {
@@ -718,7 +718,7 @@ type RoomListResultPayload struct {
 
 func (x *RoomListResultPayload) Reset() {
 	*x = RoomListResultPayload{}
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[11]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +730,7 @@ func (x *RoomListResultPayload) String() string {
 func (*RoomListResultPayload) ProtoMessage() {}
 
 func (x *RoomListResultPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_protocol_proto_server_messages_proto_msgTypes[11]
+	mi := &file_internal_protocol_proto_server_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +743,7 @@ func (x *RoomListResultPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoomListResultPayload.ProtoReflect.Descriptor instead.
 func (*RoomListResultPayload) Descriptor() ([]byte, []int) {
-	return file_internal_protocol_proto_server_messages_proto_rawDescGZIP(), []int{11}
+	return file_internal_protocol_proto_server_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RoomListResultPayload) GetRooms() []*RoomListItem {
@@ -753,11 +753,11 @@ func (x *RoomListResultPayload) GetRooms() []*RoomListItem {
 	return nil
 }
 
-var File_internal_protocol_proto_server_messages_proto protoreflect.FileDescriptor
+var File_internal_protocol_proto_server_proto protoreflect.FileDescriptor
 
-const file_internal_protocol_proto_server_messages_proto_rawDesc = "" +
+const file_internal_protocol_proto_server_proto_rawDesc = "" +
 	"\n" +
-	"-internal/protocol/proto/server_messages.proto\x12\bprotocol\x1a$internal/protocol/proto/common.proto\"y\n" +
+	"$internal/protocol/proto/server.proto\x12\bprotocol\x1a$internal/protocol/proto/common.proto\"y\n" +
 	"\x10ConnectedPayload\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
@@ -817,19 +817,19 @@ const file_internal_protocol_proto_server_messages_proto_rawDesc = "" +
 	"\x05rooms\x18\x01 \x03(\v2\x16.protocol.RoomListItemR\x05roomsB=Z;github.com/palemoky/fight-the-landlord/internal/protocol/pbb\x06proto3"
 
 var (
-	file_internal_protocol_proto_server_messages_proto_rawDescOnce sync.Once
-	file_internal_protocol_proto_server_messages_proto_rawDescData []byte
+	file_internal_protocol_proto_server_proto_rawDescOnce sync.Once
+	file_internal_protocol_proto_server_proto_rawDescData []byte
 )
 
-func file_internal_protocol_proto_server_messages_proto_rawDescGZIP() []byte {
-	file_internal_protocol_proto_server_messages_proto_rawDescOnce.Do(func() {
-		file_internal_protocol_proto_server_messages_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_protocol_proto_server_messages_proto_rawDesc), len(file_internal_protocol_proto_server_messages_proto_rawDesc)))
+func file_internal_protocol_proto_server_proto_rawDescGZIP() []byte {
+	file_internal_protocol_proto_server_proto_rawDescOnce.Do(func() {
+		file_internal_protocol_proto_server_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_protocol_proto_server_proto_rawDesc), len(file_internal_protocol_proto_server_proto_rawDesc)))
 	})
-	return file_internal_protocol_proto_server_messages_proto_rawDescData
+	return file_internal_protocol_proto_server_proto_rawDescData
 }
 
-var file_internal_protocol_proto_server_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
-var file_internal_protocol_proto_server_messages_proto_goTypes = []any{
+var file_internal_protocol_proto_server_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_internal_protocol_proto_server_proto_goTypes = []any{
 	(*ConnectedPayload)(nil),         // 0: protocol.ConnectedPayload
 	(*ReconnectedPayload)(nil),       // 1: protocol.ReconnectedPayload
 	(*PongPayload)(nil),              // 2: protocol.PongPayload
@@ -846,7 +846,7 @@ var file_internal_protocol_proto_server_messages_proto_goTypes = []any{
 	(*LeaderboardEntry)(nil),         // 13: protocol.LeaderboardEntry
 	(*RoomListItem)(nil),             // 14: protocol.RoomListItem
 }
-var file_internal_protocol_proto_server_messages_proto_depIdxs = []int32{
+var file_internal_protocol_proto_server_proto_depIdxs = []int32{
 	12, // 0: protocol.ReconnectedPayload.game_state:type_name -> protocol.GameStateDTO
 	13, // 1: protocol.LeaderboardResultPayload.entries:type_name -> protocol.LeaderboardEntry
 	14, // 2: protocol.RoomListResultPayload.rooms:type_name -> protocol.RoomListItem
@@ -857,9 +857,9 @@ var file_internal_protocol_proto_server_messages_proto_depIdxs = []int32{
 	0,  // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_internal_protocol_proto_server_messages_proto_init() }
-func file_internal_protocol_proto_server_messages_proto_init() {
-	if File_internal_protocol_proto_server_messages_proto != nil {
+func init() { file_internal_protocol_proto_server_proto_init() }
+func file_internal_protocol_proto_server_proto_init() {
+	if File_internal_protocol_proto_server_proto != nil {
 		return
 	}
 	file_internal_protocol_proto_common_proto_init()
@@ -867,17 +867,17 @@ func file_internal_protocol_proto_server_messages_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_protocol_proto_server_messages_proto_rawDesc), len(file_internal_protocol_proto_server_messages_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_protocol_proto_server_proto_rawDesc), len(file_internal_protocol_proto_server_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_internal_protocol_proto_server_messages_proto_goTypes,
-		DependencyIndexes: file_internal_protocol_proto_server_messages_proto_depIdxs,
-		MessageInfos:      file_internal_protocol_proto_server_messages_proto_msgTypes,
+		GoTypes:           file_internal_protocol_proto_server_proto_goTypes,
+		DependencyIndexes: file_internal_protocol_proto_server_proto_depIdxs,
+		MessageInfos:      file_internal_protocol_proto_server_proto_msgTypes,
 	}.Build()
-	File_internal_protocol_proto_server_messages_proto = out.File
-	file_internal_protocol_proto_server_messages_proto_goTypes = nil
-	file_internal_protocol_proto_server_messages_proto_depIdxs = nil
+	File_internal_protocol_proto_server_proto = out.File
+	file_internal_protocol_proto_server_proto_goTypes = nil
+	file_internal_protocol_proto_server_proto_depIdxs = nil
 }
