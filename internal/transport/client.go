@@ -17,12 +17,9 @@ const (
 	pongWait   = 60 * time.Second
 	pingPeriod = (pongWait * 9) / 10
 
-	// 心跳检测间隔
-	heartbeatInterval = 5 * time.Second
-	// 最大重连次数
-	maxReconnectAttempts = 5
-	// 重连间隔
-	reconnectInterval = 2 * time.Second
+	heartbeatInterval    = 5 * time.Second // 心跳检测间隔
+	maxReconnectAttempts = 5               // 最大重连次数
+	reconnectInterval    = 2 * time.Second // 重连间隔
 )
 
 // Client WebSocket 客户端
