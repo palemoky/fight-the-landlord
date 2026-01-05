@@ -37,11 +37,16 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install Linux dependencies
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
+
       - name: Build binary
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0
           DEFAULT_SERVER: ${{ vars.DEFAULT_SERVER || 'localhost:1780' }}
         run: |
           # Set output filename
@@ -49,6 +54,13 @@ jobs:
             OUTPUT="fight-the-landlord-${GOOS}-${GOARCH}.exe"
           else
             OUTPUT="fight-the-landlord-${GOOS}-${GOARCH}"
+          fi
+
+          # Determine CGO_ENABLED
+          if [ "$GOOS" = "linux" ]; then
+            export CGO_ENABLED=1
+          else
+            export CGO_ENABLED=0
           fi
 
           # Build with optimizations and inject default server
