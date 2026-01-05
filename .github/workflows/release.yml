@@ -43,6 +43,12 @@ jobs:
           sudo apt-get update
           if [ "${{ matrix.goarch }}" = "arm64" ]; then
             sudo dpkg --add-architecture arm64
+            sudo tee /etc/apt/sources.list.d/arm64.list > /dev/null << 'EOF'
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
+          EOF
+
             sudo apt-get update
             sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
             sudo apt-get install -y libasound2-dev:arm64 libgl1-mesa-dev:arm64 libxcursor-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 libxrandr-dev:arm64 libxxf86vm-dev:arm64
