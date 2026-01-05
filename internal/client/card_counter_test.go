@@ -180,3 +180,139 @@ func TestCardCounter_GetRemaining(t *testing.T) {
 	// Restore for other tests
 	remaining[card.Rank3] = originalCount
 }
+
+// --- 游戏场景测试 ---
+
+// countTotalCards 计算记牌器中剩余牌的总数
+func countTotalCards(cc *CardCounter) int {
+	total := 0
+	for _, count := range cc.GetRemaining() {
+		total += count
+	}
+	return total
+}
+
+func TestCardCounter_GameScenario_InitialDeck(t *testing.T) {
+	t.Parallel()
+
+	// 发牌前共54张牌
+	cc := NewCardCounter()
+	assert.Equal(t, 54, countTotalCards(cc), "一副牌共54张")
+}
+
+func TestCardCounter_GameScenario_AfterDeal(t *testing.T) {
+	t.Parallel()
+
+	cc := NewCardCounter()
+	deck := card.NewDeck() // 使用真实的一副牌
+	// 为了测试稳定，这里我们不洗牌，直接取前17张
+	playerHand := deck[:17]
+
+	cc.DeductCards(playerHand)
+	assert.Equal(t, 37, countTotalCards(cc), "发牌后扣除自己17张牌，记牌器应剩余37张")
+}
+
+func TestCardCounter_GameScenario_LandlordVsFarmer(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name          string
+		isLandlord    bool
+		expectedCards int
+	}{
+		{
+			name:          "地主视角：37-3=34张",
+			isLandlord:    true,
+			expectedCards: 34,
+		},
+		{
+			name:          "农民视角：保持37张",
+			isLandlord:    false,
+			expectedCards: 37,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			cc := NewCardCounter()
+			deck := card.NewDeck()
+
+			// 模拟玩家手牌（17张）
+			playerHand := deck[:17]
+			cc.DeductCards(playerHand)
+
+			// 底牌（3张）
+			bottomCards := deck[17:20]
+
+			// 地主需要扣除底牌
+			if tc.isLandlord {
+				cc.DeductCards(bottomCards)
+			}
+
+			assert.Equal(t, tc.expectedCards, countTotalCards(cc))
+		})
+	}
+}
+
+// 每个玩家的记牌器 = 另外两个玩家的牌 + 底牌
+func TestCardCounter_GameScenario_CounterEqualsOtherPlayers(t *testing.T) {
+	t.Parallel()
+
+	deck := card.NewDeck()
+	// 分配牌
+	player1Hand := deck[0:17]
+	player2Hand := deck[17:34]
+	player3Hand := deck[34:51]
+	bottomCards := deck[51:54]
+
+	// 验证总数
+	totalCards := len(player1Hand) + len(player2Hand) + len(player3Hand) + len(bottomCards)
+	assert.Equal(t, 54, totalCards, "总牌数应为54张")
+
+	// 玩家1的记牌器
+	cc1 := NewCardCounter()
+	// 扣除玩家1自己的牌
+	cc1.DeductCards(player1Hand)
+
+	// 记牌器应该等于其他玩家的牌 + 底牌
+	expectedInCounter := len(player2Hand) + len(player3Hand) + len(bottomCards)
+	assert.Equal(t, expectedInCounter, countTotalCards(cc1),
+		"玩家记牌器 = 其他两人牌数 + 底牌 = %d", expectedInCounter)
+
+	// 将剩余牌统计，验证具体牌的分布
+	expectedMap := make(map[card.Rank]int)
+	for _, c := range player2Hand {
+		expectedMap[c.Rank]++
+	}
+	for _, c := range player3Hand {
+		expectedMap[c.Rank]++
+	}
+	for _, c := range bottomCards {
+		expectedMap[c.Rank]++
+	}
+
+	remaining := cc1.GetRemaining()
+	for rank, count := range expectedMap {
+		assert.Equal(t, count, remaining[rank], "Rank %v 数量不匹配", rank)
+	}
+}
+
+func TestCardCounter_GameScenario_DuringPlay(t *testing.T) {
+	t.Parallel()
+
+	cc := NewCardCounter()
+	deck := card.NewDeck()
+
+	// 玩家1手牌
+	playerHand := deck[0:17]
+	cc.DeductCards(playerHand)
+	assert.Equal(t, 37, countTotalCards(cc), "发牌后记牌器37张")
+
+	// 假设玩家2出牌，使用的是 deck[17] 和 deck[18]
+	// 这些牌肯定在记牌器中（因为 playerHand 只拿了 0-16）
+	otherPlayerPlayed := deck[17:19]
+	cc.DeductCards(otherPlayerPlayed)
+	assert.Equal(t, 35, countTotalCards(cc), "其他玩家出2张后，记牌器35张")
+}
