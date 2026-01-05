@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/protocol/convert"
@@ -79,10 +78,6 @@ func handleMsgLandlord(m model.Model, msg *protocol.Message) tea.Cmd {
 	}
 	if payload.PlayerID == m.PlayerID() {
 		m.Game().State().IsLandlord = true
-	}
-
-	shouldDeductBottomCards := config.BottomCardsPublic || payload.PlayerID == m.PlayerID()
-	if shouldDeductBottomCards {
 		m.Game().State().CardCounter.DeductCards(m.Game().State().BottomCards)
 	}
 
@@ -140,9 +135,11 @@ func handleMsgCardPlayed(m model.Model, msg *protocol.Message) tea.Cmd {
 	}
 	if payload.PlayerID == m.PlayerID() {
 		m.Game().State().Hand = card.RemoveCards(m.Game().State().Hand, m.Game().State().LastPlayed)
+	} else {
+		// 只记录其他玩家出的牌
+		m.Game().State().CardCounter.DeductCards(m.Game().State().LastPlayed)
 	}
 
-	m.Game().State().CardCounter.DeductCards(m.Game().State().LastPlayed)
 	m.PlaySound("play")
 	return nil
 }
