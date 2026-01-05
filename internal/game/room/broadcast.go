@@ -68,7 +68,11 @@ func (r *Room) GetAllPlayersInfo() []protocol.PlayerInfo {
 func (r *Room) StartGame() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	return r.startGameLocked()
+}
 
+// startGameLocked 开始游戏（调用者已持有锁时使用）
+func (r *Room) startGameLocked() error {
 	if r.State != RoomStateWaiting || len(r.Players) < 3 {
 		return errors.New("cannot start game: room not ready or not enough players")
 	}

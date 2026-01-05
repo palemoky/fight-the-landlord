@@ -186,7 +186,7 @@ func (rm *RoomManager) SetPlayerReady(client types.ClientInterface, ready bool) 
 
 	// 检查是否所有人都准备好了
 	if room.checkAllReady() {
-		if err := room.StartGame(); err != nil {
+		if err := room.startGameLocked(); err != nil {
 			log.Printf("开始游戏失败: %v", err)
 			return nil
 		}
