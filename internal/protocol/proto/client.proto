@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package protocol;
+
+option go_package = "github.com/palemoky/fight-the-landlord/internal/protocol/pb";
+
+import "internal/protocol/proto/common.proto";
+
+// ========== 客户端请求消息 ==========
+
+// ReconnectPayload 断线重连请求
+message ReconnectPayload {
+  string token = 1;
+  string player_id = 2;
+}
+
+// PingPayload 心跳请求
+message PingPayload {
+  int64 timestamp = 1;
+}
+
+// JoinRoomPayload 加入房间请求
+message JoinRoomPayload {
+  string room_code = 1;
+}
+
+// BidPayload 叫地主请求
+message BidPayload {
+  bool bid = 1; // true = 叫地主, false = 不叫
+}
+
+// PlayCardsPayload 出牌请求
+message PlayCardsPayload {
+  repeated CardInfo cards = 1;
+}
+
+// GetLeaderboardPayload 获取排行榜请求
+message GetLeaderboardPayload {
+  string type = 1;   // total/daily/weekly
+  int64 offset = 2;  // 偏移量
+  int64 limit = 3;   // 数量
+}

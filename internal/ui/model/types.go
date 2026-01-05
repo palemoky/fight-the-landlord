@@ -9,8 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	gameClient "github.com/palemoky/fight-the-landlord/internal/client"
-	"github.com/palemoky/fight-the-landlord/internal/network/client"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/transport"
 )
 
 // GamePhase represents the current game phase.
@@ -100,7 +100,7 @@ type Model interface {
 	SetPlayerInfo(id, name string)
 
 	// Client access
-	Client() *client.Client
+	Client() *transport.Client
 
 	// UI components
 	Input() *textinput.Model
@@ -172,10 +172,8 @@ type GameAccessor interface {
 	BidTurn() string
 	SetBidTurn(string)
 
-	// Turn indicators
-	MustPlay() bool
+	// Turn indicators (setters only - getters unused)
 	SetMustPlay(bool)
-	CanBeat() bool
 	SetCanBeat(bool)
 
 	// Timer
@@ -184,8 +182,7 @@ type GameAccessor interface {
 	TimerStartTime() time.Time
 	SetTimerStartTime(time.Time)
 
-	// Bell
-	BellPlayed() bool
+	// Bell (setter only - getter unused)
 	SetBellPlayed(bool)
 
 	// Features
@@ -205,10 +202,6 @@ type GameAccessor interface {
 	ClearQuickMsgInput()
 	QuickMsgScroll() int
 	SetQuickMsgScroll(int)
-
-	// Dimensions
-	Width() int
-	Height() int
 }
 
 // --- Handler Interface ---

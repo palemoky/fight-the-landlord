@@ -7,23 +7,23 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol/convert"
+	payloadconv "github.com/palemoky/fight-the-landlord/internal/protocol/convert/payload"
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 )
 
 func handleMsgGameStart(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.GameStartPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.Game().State().Players = payload.Players
 	return nil
 }
 
 func handleMsgDealCards(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.DealCardsPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.Game().State().Hand = convert.InfosToCards(payload.Cards)
 	m.Game().State().SortHand()
 	if len(payload.BottomCards) > 0 && payload.BottomCards[0].Rank > 0 {
@@ -43,7 +43,7 @@ func handleMsgDealCards(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgBidTurn(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.BidTurnPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.SetPhase(model.PhaseBidding)
 	m.Game().SetBidTurn(payload.PlayerID)
 	m.Game().SetBellPlayed(false)
@@ -68,7 +68,7 @@ func handleMsgBidTurn(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgLandlord(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.LandlordPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.Game().State().BottomCards = convert.InfosToCards(payload.BottomCards)
 	for i, p := range m.Game().State().Players {
 		m.Game().State().Players[i].IsLandlord = (p.ID == payload.PlayerID)
@@ -78,10 +78,6 @@ func handleMsgLandlord(m model.Model, msg *protocol.Message) tea.Cmd {
 	}
 	if payload.PlayerID == m.PlayerID() {
 		m.Game().State().IsLandlord = true
-	}
-
-	shouldDeductBottomCards := config.BottomCardsPublic || payload.PlayerID == m.PlayerID()
-	if shouldDeductBottomCards {
 		m.Game().State().CardCounter.DeductCards(m.Game().State().BottomCards)
 	}
 
@@ -91,7 +87,7 @@ func handleMsgLandlord(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgPlayTurn(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.PlayTurnPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.SetPhase(model.PhasePlaying)
 	m.Game().State().CurrentTurn = payload.PlayerID
 	m.Game().SetMustPlay(payload.MustPlay)
@@ -126,7 +122,7 @@ func handleMsgPlayTurn(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgCardPlayed(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.CardPlayedPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.Game().State().LastPlayedBy = payload.PlayerID
 	m.Game().State().LastPlayedName = payload.PlayerName
 	m.Game().State().LastPlayed = convert.InfosToCards(payload.Cards)
@@ -139,16 +135,18 @@ func handleMsgCardPlayed(m model.Model, msg *protocol.Message) tea.Cmd {
 	}
 	if payload.PlayerID == m.PlayerID() {
 		m.Game().State().Hand = card.RemoveCards(m.Game().State().Hand, m.Game().State().LastPlayed)
+	} else {
+		// 只记录其他玩家出的牌
+		m.Game().State().CardCounter.DeductCards(m.Game().State().LastPlayed)
 	}
 
-	m.Game().State().CardCounter.DeductCards(m.Game().State().LastPlayed)
 	m.PlaySound("play")
 	return nil
 }
 
 func handleMsgGameOver(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.GameOverPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.SetPhase(model.PhaseGameOver)
 	m.Game().State().Winner = payload.WinnerName
 	m.Game().State().WinnerIsLandlord = payload.IsLandlord

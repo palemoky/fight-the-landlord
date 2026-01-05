@@ -8,13 +8,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	gameClient "github.com/palemoky/fight-the-landlord/internal/client"
-	"github.com/palemoky/fight-the-landlord/internal/network/client"
+	"github.com/palemoky/fight-the-landlord/internal/transport"
 )
 
 // GameModel handles game-specific UI state.
 type GameModel struct {
 	// Network client
-	client *client.Client
+	client *transport.Client
 
 	// Game state (business logic)
 	state *gameClient.GameState
@@ -51,7 +51,7 @@ type GameModel struct {
 }
 
 // NewGameModel creates a new GameModel.
-func NewGameModel(c *client.Client, input *textinput.Model) *GameModel {
+func NewGameModel(c *transport.Client, input *textinput.Model) *GameModel {
 	chatInput := textinput.New()
 	chatInput.Placeholder = "按 / 键聊天, T 键快捷消息..."
 	chatInput.CharLimit = 50
@@ -133,4 +133,4 @@ func (m *GameModel) SetSize(width, height int) {
 }
 func (m *GameModel) Input() *textinput.Model     { return m.input }
 func (m *GameModel) ChatInput() *textinput.Model { return &m.chatInput }
-func (m *GameModel) Client() *client.Client      { return m.client }
+func (m *GameModel) Client() *transport.Client   { return m.client }

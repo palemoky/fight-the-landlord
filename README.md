@@ -310,14 +310,14 @@ func (d Deck) Shuffle() {
 - 玩家可自由创建或加入房间
 - 完全由玩家控制，服务器不干预
 
-**代码位置**：`internal/network/server/matcher.go`
+**代码位置**：`internal/server/matcher.go`
 
 ### 开源审计
 
 所有核心逻辑代码完全开源，欢迎社区审计：
 
 - 发牌算法：`internal/game/card/card.go`
-- 匹配逻辑：`internal/network/server/matcher.go`
+- 匹配逻辑：`internal/server/matcher.go`
 - 游戏规则：`internal/game/rules.go`
 
 如果你发现任何可能影响公平性的代码，欢迎提交 Issue 或 Pull Request。

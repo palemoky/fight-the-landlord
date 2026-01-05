@@ -125,8 +125,8 @@ linters:
 
     # 排除的路径
     paths:
-      - internal/network/protocol/pb
-      - ".*_generated\\.go$"
+      - internal/protocol/pb
+      - internal/protocol/convert/msgtype/mapping.go
 
 issues:
   # 最大问题数 (0 = 无限制)

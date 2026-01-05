@@ -11,14 +11,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Game rules configuration
-const (
-	// BottomCardsPublic controls whether bottom cards are visible to all players
-	// true: All players see bottom cards, all counters deduct them
-	// false: Only landlord sees bottom cards, only landlord's counter deducts them
-	BottomCardsPublic = true
-)
-
 // 默认配置值
 const (
 	defaultHost                  = "0.0.0.0"

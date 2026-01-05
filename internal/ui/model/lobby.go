@@ -5,8 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/client"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/transport"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 
 // LobbyModel handles the lobby interface.
 type LobbyModel struct {
-	client *client.Client
+	client *transport.Client
 	width  int
 	height int
 
@@ -41,7 +41,7 @@ type LobbyModel struct {
 }
 
 // NewLobbyModel creates a new LobbyModel.
-func NewLobbyModel(c *client.Client, input *textinput.Model) *LobbyModel {
+func NewLobbyModel(c *transport.Client, input *textinput.Model) *LobbyModel {
 	chatInput := textinput.New()
 	chatInput.Placeholder = "按 / 键聊天..."
 	chatInput.CharLimit = 50
@@ -91,32 +91,37 @@ func (m *LobbyModel) AddChatMessage(msg string) {
 }
 func (m *LobbyModel) ChatInput() *textinput.Model { return &m.chatInput }
 
-func (m *LobbyModel) HandleUpKey(phase GamePhase) {
-	if phase == PhaseRoomList && len(m.availableRooms) > 0 {
-		m.selectedRoomIdx--
-		if m.selectedRoomIdx < 0 {
-			m.selectedRoomIdx = len(m.availableRooms) - 1
+// HandleNavigationKey 处理上下键导航
+// direction: -1 表示向上，1 表示向下
+func (m *LobbyModel) HandleNavigationKey(phase GamePhase, direction int) {
+	switch phase {
+	case PhaseRoomList:
+		if len(m.availableRooms) > 0 {
+			m.selectedRoomIdx += direction
+			if m.selectedRoomIdx < 0 {
+				m.selectedRoomIdx = len(m.availableRooms) - 1
+			} else if m.selectedRoomIdx >= len(m.availableRooms) {
+				m.selectedRoomIdx = 0
+			}
 		}
-	} else if phase == PhaseLobby {
-		m.selectedIndex--
+	case PhaseLobby:
+		m.selectedIndex += direction
 		if m.selectedIndex < 0 {
 			m.selectedIndex = 5
+		} else if m.selectedIndex > 5 {
+			m.selectedIndex = 0
 		}
 	}
 }
 
+// HandleUpKey 处理向上键
+func (m *LobbyModel) HandleUpKey(phase GamePhase) {
+	m.HandleNavigationKey(phase, -1)
+}
+
+// HandleDownKey 处理向下键
 func (m *LobbyModel) HandleDownKey(phase GamePhase) {
-	if phase == PhaseRoomList && len(m.availableRooms) > 0 {
-		m.selectedRoomIdx++
-		if m.selectedRoomIdx >= len(m.availableRooms) {
-			m.selectedRoomIdx = 0
-		}
-	} else if phase == PhaseLobby {
-		m.selectedIndex++
-		if m.selectedIndex > 5 {
-			m.selectedIndex = 0
-		}
-	}
+	m.HandleNavigationKey(phase, 1)
 }
 
 func (m *LobbyModel) Width() int  { return m.width }
@@ -125,7 +130,7 @@ func (m *LobbyModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 }
-func (m *LobbyModel) Input() *textinput.Model  { return m.input }
-func (m *LobbyModel) SelectedIndex() int       { return m.selectedIndex }
-func (m *LobbyModel) SetSelectedIndex(idx int) { m.selectedIndex = idx }
-func (m *LobbyModel) Client() *client.Client   { return m.client }
+func (m *LobbyModel) Input() *textinput.Model   { return m.input }
+func (m *LobbyModel) SelectedIndex() int        { return m.selectedIndex }
+func (m *LobbyModel) SetSelectedIndex(idx int)  { m.selectedIndex = idx }
+func (m *LobbyModel) Client() *transport.Client { return m.client }

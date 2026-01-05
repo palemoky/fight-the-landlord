@@ -10,15 +10,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/client"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/sound"
+	"github.com/palemoky/fight-the-landlord/internal/transport"
 	"github.com/palemoky/fight-the-landlord/internal/ui/common"
 )
 
 // OnlineModel is the main model for online game mode.
 type OnlineModel struct {
-	client *client.Client
+	client *transport.Client
 	phase  GamePhase
 	error  string
 
@@ -74,7 +74,7 @@ func NewOnlineModel(serverURL string) *OnlineModel {
 	ti.Width = 30
 	ti.Focus()
 
-	c := client.NewClient(serverURL)
+	c := transport.NewClient(serverURL)
 	reconnectChan := make(chan tea.Msg, 10)
 
 	m := &OnlineModel{
@@ -155,14 +155,14 @@ func (m *OnlineModel) SetPlayerInfo(id, name string) {
 	m.playerID = id
 	m.playerName = name
 }
-func (m *OnlineModel) Client() *client.Client  { return m.client }
-func (m *OnlineModel) Input() *textinput.Model { return m.input }
-func (m *OnlineModel) Timer() *timer.Model     { return &m.timer }
-func (m *OnlineModel) SetTimer(t timer.Model)  { m.timer = t }
-func (m *OnlineModel) Lobby() LobbyAccessor    { return m.lobby }
-func (m *OnlineModel) Game() GameAccessor      { return m.game }
-func (m *OnlineModel) Width() int              { return m.width }
-func (m *OnlineModel) Height() int             { return m.height }
+func (m *OnlineModel) Client() *transport.Client { return m.client }
+func (m *OnlineModel) Input() *textinput.Model   { return m.input }
+func (m *OnlineModel) Timer() *timer.Model       { return &m.timer }
+func (m *OnlineModel) SetTimer(t timer.Model)    { m.timer = t }
+func (m *OnlineModel) Lobby() LobbyAccessor      { return m.lobby }
+func (m *OnlineModel) Game() GameAccessor        { return m.game }
+func (m *OnlineModel) Width() int                { return m.width }
+func (m *OnlineModel) Height() int               { return m.height }
 
 func (m *OnlineModel) SetNotification(notifyType NotificationType, message string, temporary bool) {
 	m.notifications[notifyType] = &SystemNotification{

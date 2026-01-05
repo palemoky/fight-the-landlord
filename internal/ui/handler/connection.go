@@ -6,15 +6,15 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/codec"
-	"github.com/palemoky/fight-the-landlord/internal/network/protocol/convert"
+	"github.com/palemoky/fight-the-landlord/internal/protocol"
+	"github.com/palemoky/fight-the-landlord/internal/protocol/codec"
+	payloadconv "github.com/palemoky/fight-the-landlord/internal/protocol/convert/payload"
 	"github.com/palemoky/fight-the-landlord/internal/ui/model"
 )
 
 func handleMsgConnected(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.ConnectedPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 
 	m.SetPlayerInfo(payload.PlayerID, payload.PlayerName)
 	m.Client().ReconnectToken = payload.ReconnectToken
@@ -30,11 +30,19 @@ func handleMsgConnected(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgReconnected(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.ReconnectedPayload
-	if err := convert.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
+	if err := payloadconv.DecodePayload(msg.Type, msg.Payload, &payload); err != nil {
 		return nil
 	}
 
 	m.SetPlayerInfo(payload.PlayerID, payload.PlayerName)
+
+	// 清除旧的维护通知，避免显示过期状态
+	m.ClearNotification(model.NotifyMaintenance)
+	m.SetMaintenanceMode(false)
+
+	// 从服务器获取最新状态
+	_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetOnlineCount, nil))
+	_ = m.Client().SendMessage(codec.MustNewMessage(protocol.MsgGetMaintenanceStatus, nil))
 
 	if payload.RoomCode != "" {
 		m.Game().State().RoomCode = payload.RoomCode
@@ -53,7 +61,7 @@ func handleMsgReconnected(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgPong(msg *protocol.Message) tea.Cmd {
 	var payload protocol.PongPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	return nil
 }
 
@@ -87,7 +95,7 @@ func handleMsgError(m model.Model, msg *protocol.Message) tea.Cmd {
 
 func handleMsgOnlineCount(m model.Model, msg *protocol.Message) tea.Cmd {
 	var payload protocol.OnlineCountPayload
-	_ = convert.DecodePayload(msg.Type, msg.Payload, &payload)
+	_ = payloadconv.DecodePayload(msg.Type, msg.Payload, &payload)
 	m.Lobby().SetOnlineCount(payload.Count)
 	m.SetNotification(model.NotifyOnlineCount, fmt.Sprintf("🌐 在线玩家: %d 人", payload.Count), false)
 	return nil

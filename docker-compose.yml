@@ -4,7 +4,7 @@ services:
     image: palemoky/fight-the-landlord:latest
     container_name: poker-server
     restart: unless-stopped
-    stop_grace_period: $((${GAME_SHUTDOWN_TIMEOUT:-30} + 5))m
+    stop_grace_period: ${GAME_SHUTDOWN_TIMEOUT:-30}m
     stop_signal: SIGTERM
     env_file: .env
     environment:

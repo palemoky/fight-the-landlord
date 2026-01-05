@@ -35,21 +35,20 @@ const (
 	Joker               // 王牌
 )
 
+// suitSymbols 花色符号映射表
+var suitSymbols = map[Suit]string{
+	Spade:   "♠",
+	Heart:   "♥",
+	Club:    "♣",
+	Diamond: "♦",
+	Joker:   "",
+}
+
 func (s Suit) String() string {
-	switch s {
-	case Spade:
-		return "♠"
-	case Heart:
-		return "♥"
-	case Club:
-		return "♣"
-	case Diamond:
-		return "♦"
-	case Joker:
-		return ""
-	default:
-		return ""
+	if symbol, ok := suitSymbols[s]; ok {
+		return symbol
 	}
+	return ""
 }
 
 const (
@@ -70,28 +69,30 @@ const (
 	RankRedJoker   // RedJoker
 )
 
+// rankNames 牌面值字符串映射表
+var rankNames = map[Rank]string{
+	Rank3:          "3",
+	Rank4:          "4",
+	Rank5:          "5",
+	Rank6:          "6",
+	Rank7:          "7",
+	Rank8:          "8",
+	Rank9:          "9",
+	Rank10:         "10",
+	RankJ:          "J",
+	RankQ:          "Q",
+	RankK:          "K",
+	RankA:          "A",
+	Rank2:          "2",
+	RankBlackJoker: "B",
+	RankRedJoker:   "R",
+}
+
 func (r Rank) String() string {
-	switch r {
-	case RankJ:
-		return "J"
-	case RankQ:
-		return "Q"
-	case RankK:
-		return "K"
-	case RankA:
-		return "A"
-	case Rank2:
-		return "2"
-	case RankBlackJoker:
-		return "B"
-	case RankRedJoker:
-		return "R"
-	default:
-		if r == Rank10 {
-			return "10"
-		}
-		return strconv.Itoa(int(r))
+	if name, ok := rankNames[r]; ok {
+		return name
 	}
+	return strconv.Itoa(int(r))
 }
 
 // charToRank 用于快速查找字符对应的 Rank
