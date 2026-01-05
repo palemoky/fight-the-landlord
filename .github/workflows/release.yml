@@ -40,9 +40,15 @@ jobs:
       - name: Install Linux dependencies
         if: matrix.goos == 'linux'
         run: |
-          sudo apt-get update
           if [ "${{ matrix.goarch }}" = "arm64" ]; then
+            # Add ARM64 architecture
             sudo dpkg --add-architecture arm64
+
+            # Restrict default sources to amd64 only (prevent 404 errors for arm64)
+            sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+            sudo sed -i 's/^deb-src /deb-src [arch=amd64] /' /etc/apt/sources.list
+
+            # Add ARM64 package sources (ubuntu-ports mirror)
             sudo tee /etc/apt/sources.list.d/arm64.list > /dev/null << 'EOF'
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
@@ -53,6 +59,7 @@ jobs:
             sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
             sudo apt-get install -y libasound2-dev:arm64 libgl1-mesa-dev:arm64 libxcursor-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 libxrandr-dev:arm64 libxxf86vm-dev:arm64
           else
+            sudo apt-get update
             sudo apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
           fi
 
