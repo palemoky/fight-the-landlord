@@ -12,6 +12,9 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/ui"
 )
 
+// 默认服务器地址（可通过编译时 -ldflags 注入）
+var defaultServer = "localhost:1780"
+
 func main() {
 	// Initialize logger
 	if err := logger.Init(); err != nil {
@@ -33,9 +36,6 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-
-	// 默认服务器地址（可通过编译时 -ldflags 注入）
-	defaultServer := "localhost:1780"
 
 	serverAddr := flag.String("server", defaultServer, "服务器地址")
 	flag.Parse()
