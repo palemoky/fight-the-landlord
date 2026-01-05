@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -40,7 +41,13 @@ func main() {
 	serverAddr := flag.String("server", defaultServer, "服务器地址")
 	flag.Parse()
 
-	serverURL := fmt.Sprintf("ws://%s/ws", *serverAddr)
+	// 支持完整 URL (wss://...) 或仅 host:port
+	var serverURL string
+	if strings.HasPrefix(*serverAddr, "ws://") || strings.HasPrefix(*serverAddr, "wss://") {
+		serverURL = *serverAddr
+	} else {
+		serverURL = fmt.Sprintf("ws://%s/ws", *serverAddr)
+	}
 	logger.LogInfo("Connecting to server: %s", serverURL)
 
 	model := ui.NewOnlineModel(serverURL)
