@@ -31,39 +31,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Set up QEMU
+        if: matrix.goos == 'linux' && matrix.goarch == 'arm64'
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Go
+        if: matrix.goos != 'linux' || matrix.goarch != 'arm64'
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
 
-      - name: Install Linux dependencies
-        if: matrix.goos == 'linux'
+      - name: Install Linux amd64 dependencies
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
         run: |
-          if [ "${{ matrix.goarch }}" = "arm64" ]; then
-            # Add ARM64 architecture
-            sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
 
-            # Restrict default sources to amd64 only (prevent 404 errors for arm64)
-            sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
-            sudo sed -i 's/^deb-src /deb-src [arch=amd64] /' /etc/apt/sources.list
+      - name: Build Linux ARM64 in Docker
+        if: matrix.goos == 'linux' && matrix.goarch == 'arm64'
+        env:
+          DEFAULT_SERVER: ${{ vars.DEFAULT_SERVER || 'localhost:1780' }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD:/src" -w /src \
+            -e CGO_ENABLED=1 \
+            golang:1.25-trixie \
+            sh -c "
+              apt-get update && \
+              apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev && \
+              go build -trimpath -ldflags='-s -w -X main.version=${VERSION} -X main.defaultServer=${DEFAULT_SERVER}' \
+                -o fight-the-landlord-linux-arm64 ./cmd/client
+            "
+          sha256sum fight-the-landlord-linux-arm64 > fight-the-landlord-linux-arm64.sha256
 
-            # Add ARM64 package sources (ubuntu-ports mirror)
-            sudo tee /etc/apt/sources.list.d/arm64.list > /dev/null << 'EOF'
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
-          EOF
-
-            sudo apt-get update
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-            sudo apt-get install -y libasound2-dev:arm64 libgl1-mesa-dev:arm64 libxcursor-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 libxrandr-dev:arm64 libxxf86vm-dev:arm64
-          else
-            sudo apt-get update
-            sudo apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
-          fi
-
-      - name: Build binary
+      - name: Build other platforms
+        if: matrix.goos != 'linux' || matrix.goarch != 'arm64'
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
@@ -76,18 +80,14 @@ jobs:
             OUTPUT="fight-the-landlord-${GOOS}-${GOARCH}"
           fi
 
-          # Determine CGO_ENABLED and Cross-Compiler
+          # Set CGO for Linux amd64
           if [ "$GOOS" = "linux" ]; then
             export CGO_ENABLED=1
-            if [ "$GOARCH" = "arm64" ]; then
-               export CC=aarch64-linux-gnu-gcc
-               export CXX=aarch64-linux-gnu-g++
-            fi
           else
             export CGO_ENABLED=0
           fi
 
-          # Build with optimizations and inject default server
+          # Build with optimizations
           go build -trimpath -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.defaultServer=${DEFAULT_SERVER}" \
             -o "$OUTPUT" ./cmd/client
 
