@@ -61,7 +61,7 @@ jobs:
             sh -c "
               apt-get update && \
               apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev && \
-              go build -trimpath -ldflags='-s -w -X main.version=${VERSION} -X main.defaultServer=${DEFAULT_SERVER}' \
+              go build -buildvcs=false -trimpath -ldflags='-s -w -X main.version=${VERSION} -X main.defaultServer=${DEFAULT_SERVER}' \
                 -o fight-the-landlord-linux-arm64 ./cmd/client
             "
           sha256sum fight-the-landlord-linux-arm64 > fight-the-landlord-linux-arm64.sha256
