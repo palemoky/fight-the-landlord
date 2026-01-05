@@ -177,8 +177,6 @@ func TestMessagePool_Reuse(t *testing.T) {
 }
 
 func TestBufferPool_CapacityPreserved(t *testing.T) {
-	t.Parallel()
-
 	// Get buffer and write large data
 	buf := GetBuffer()
 	largeData := make([]byte, 1024)
