@@ -41,7 +41,14 @@ jobs:
         if: matrix.goos == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
+          if [ "${{ matrix.goarch }}" = "arm64" ]; then
+            sudo dpkg --add-architecture arm64
+            sudo apt-get update
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            sudo apt-get install -y libasound2-dev:arm64 libgl1-mesa-dev:arm64 libxcursor-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 libxrandr-dev:arm64 libxxf86vm-dev:arm64
+          else
+            sudo apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev
+          fi
 
       - name: Build binary
         env:
@@ -56,9 +63,13 @@ jobs:
             OUTPUT="fight-the-landlord-${GOOS}-${GOARCH}"
           fi
 
-          # Determine CGO_ENABLED
+          # Determine CGO_ENABLED and Cross-Compiler
           if [ "$GOOS" = "linux" ]; then
             export CGO_ENABLED=1
+            if [ "$GOARCH" = "arm64" ]; then
+               export CC=aarch64-linux-gnu-gcc
+               export CXX=aarch64-linux-gnu-g++
+            fi
           else
             export CGO_ENABLED=0
           fi

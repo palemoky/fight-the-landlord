@@ -31,7 +31,7 @@ ENV TZ=Asia/Shanghai
 COPY --from=builder /server /app/server
 
 # 复制配置文件
-COPY configs/config.yaml /app/configs/config.yaml
+COPY config.yaml /app/config.yaml
 
 # 暴露端口
 EXPOSE 1780
