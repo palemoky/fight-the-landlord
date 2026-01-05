@@ -57,6 +57,7 @@ jobs:
           docker run --rm --platform linux/arm64 \
             -v "$PWD:/src" -w /src \
             -e CGO_ENABLED=1 \
+            -e GIT_CEILING_DIRECTORIES=/src \
             golang:1.25-trixie \
             sh -c "
               apt-get update && \
