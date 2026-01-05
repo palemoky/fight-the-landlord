@@ -146,11 +146,8 @@ func (rm *RoomManager) LeaveRoom(client types.ClientInterface) {
 		// 从 Redis 删除
 		go func() { _ = rm.redisStore.DeleteRoom(context.Background(), roomCode) }()
 		log.Printf("🏠 房间 %s 已解散", roomCode)
-	} else {
-		// 更新 Redis
-		if rm.redisStore != nil && rm.redisStore.IsReady() {
-			go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
-		}
+	} else if rm.redisStore != nil && rm.redisStore.IsReady() {
+		go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
 	}
 }
 
