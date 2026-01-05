@@ -190,8 +190,13 @@ func TestBufferPool_CapacityPreserved(t *testing.T) {
 
 	// Get again - capacity should be preserved
 	buf2 := GetBuffer()
-	assert.GreaterOrEqual(t, buf2.Cap(), capacity)
 	assert.Equal(t, 0, buf2.Len()) // But length should be 0
+
+	// sync.Pool doesn't guarantee returning the same buffer.
+	// We can only assert capacity preservation if we got the same object back.
+	if buf == buf2 {
+		assert.GreaterOrEqual(t, buf2.Cap(), capacity)
+	}
 }
 
 func BenchmarkMessagePool_GetPut(b *testing.B) {
