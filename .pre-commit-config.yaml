@@ -41,14 +41,14 @@ repos:
         entry: goimports -w -local github.com/palemoky/fight-the-landlord
         language: system
         types: [go]
-        exclude: 'internal/protocol/pb/.*\.pb\.go$'
+        exclude: '(internal/protocol/pb/.*\.pb\.go|internal/protocol/convert/msgtype/mapping\.go)$'
 
       - id: gofumpt
         name: Format Go code
         entry: gofumpt -w
         language: system
         types: [go]
-        exclude: 'internal/protocol/pb/.*\.pb\.go$'
+        exclude: '(internal/protocol/pb/.*\.pb\.go|internal/protocol/convert/msgtype/mapping\.go)$'
 
       # Build verification (catch compilation errors early)
       - id: go-build
