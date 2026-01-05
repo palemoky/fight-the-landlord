@@ -112,7 +112,7 @@ func (gs *GameSession) endGame(winner *GamePlayer) {
 func (gs *GameSession) recordGameResults(winner *GamePlayer) {
 	ctx := context.Background()
 	leaderboard := gs.leaderboard
-	if leaderboard == nil {
+	if leaderboard == nil || !leaderboard.IsReady() {
 		return
 	}
 

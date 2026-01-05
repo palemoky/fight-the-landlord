@@ -76,3 +76,10 @@ func NewMockRoom(code string, client types.ClientInterface) *Room {
 	}
 	return room
 }
+
+// AddRoomForTest 添加房间用于测试
+func (rm *RoomManager) AddRoomForTest(room *Room) {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	rm.rooms[room.Code] = room
+}

@@ -27,5 +27,5 @@ type ClientInterface interface {
 // ChatLimiter 聊天速率限制器接口
 type ChatLimiter interface {
 	AllowChat(clientID string) (allowed bool, reason string)
-	RemoveClient(clientID string)
+	ClearRateLimit(clientID string)
 }

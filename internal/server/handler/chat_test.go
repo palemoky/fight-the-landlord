@@ -2,6 +2,7 @@ package handler
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 
@@ -17,11 +18,12 @@ func TestHandler_HandleChat_Lobby(t *testing.T) {
 	mockClient := new(testutil.MockClient)
 	mockLimiter := new(testutil.MockChatLimiter)
 
-	h := NewHandler(HandlerDeps{Server: mockServer})
+	h := NewHandler(HandlerDeps{
+		Server:      mockServer,
+		ChatLimiter: mockLimiter,
+	})
 
 	// 2. Expectations
-	mockServer.On("GetChatLimiter").Return(mockLimiter)
-
 	// For Lobby chat:
 	mockClient.On("GetID").Return("p1")
 	mockClient.On("GetName").Return("Player1")
@@ -53,10 +55,12 @@ func TestHandler_HandleChat_RateLimited(t *testing.T) {
 	mockClient := new(testutil.MockClient)
 	mockLimiter := new(testutil.MockChatLimiter)
 
-	h := NewHandler(HandlerDeps{Server: mockServer})
+	h := NewHandler(HandlerDeps{
+		Server:      mockServer,
+		ChatLimiter: mockLimiter,
+	})
 
 	// 2. Expectations
-	mockServer.On("GetChatLimiter").Return(mockLimiter)
 	mockClient.On("GetID").Return("p1")
 
 	// Reject chat
@@ -84,54 +88,39 @@ func TestHandler_HandleChat_Room(t *testing.T) {
 	mockServer := new(testutil.MockServer)
 	mockClient := new(testutil.MockClient)
 	mockLimiter := new(testutil.MockChatLimiter)
-	mockRM := new(r.MockRoomManager)
 
-	h := NewHandler(HandlerDeps{Server: mockServer})
-
-	// Use NewMockRoom helper which returns a real *game.Room
+	// Use NewMockRoom helper which returns a real *r.Room
 	room := r.NewMockRoom("123", nil)
-	// Add p1 to room explicitly or use helper? behavior
-	// Room needs p1 in Players to broadcast properly or just exists?
-	// handleChat calls room.Broadcast.
-	// We need to ensure room.Players has p1 if we want p1 to receive it?
-	// Or we just verify no error.
+
+	// Create a real RoomManager and add the room
+	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm.AddRoomForTest(room)
+
+	h := NewHandler(HandlerDeps{
+		Server:      mockServer,
+		ChatLimiter: mockLimiter,
+		RoomManager: rm,
+	})
 
 	// Expectations
-	mockServer.On("GetChatLimiter").Return(mockLimiter)
-	mockServer.On("GetRoomManager").Return(mockRM)
-
 	mockClient.On("GetID").Return("p1")
 	mockClient.On("GetName").Return("Player1")
-	// For room chat, GetRoom is called 3 times:
-	// 1. In handleChat to get roomCode
-	// 2. In handleChat to get roomInterface from manager
-	// 3. Possibly logging?
 	mockClient.On("GetRoom").Return("123")
-
 	mockLimiter.On("AllowChat", "p1").Return(true, "")
 
-	// Return the REAL *game.Room
-	mockRM.On("GetRoom", "123").Return(room)
-
-	// NOTE: room.Broadcast calls client.SendMessage for each player in room.
-	// Since room has no players (NewMockRoom(..., nil)), nothing happens.
-	// But we want to verify room logic was executed (i.e. not fell back to broadcast).
-	// If we add p1 to room, we expect SendMessage on p1.
-	// But p1 is mockClient.
-
-	// Let's add p1 to room.
+	// Add p1 to room so broadcast works
 	room.Players["p1"] = &r.RoomPlayer{
 		Client: mockClient,
 		Seat:   0,
 		Ready:  true,
 	}
 
-	// Expect p1 (mockClient) to receive the chat message echoed back
+	// Expect p1 (mockClient) to receive the chat message
 	mockClient.On("SendMessage", mock.MatchedBy(func(msg *protocol.Message) bool {
 		return msg.Type == protocol.MsgChat
 	})).Return()
 
-	// 3. Execution
+	// 2. Execution
 	payload := protocol.ChatPayload{
 		Content: "Hello Room",
 		Scope:   "room",
@@ -140,9 +129,7 @@ func TestHandler_HandleChat_Room(t *testing.T) {
 
 	h.handleChat(mockClient, msg)
 
-	// 4. Verification
-	mockServer.AssertExpectations(t)
+	// 3. Verification
 	mockClient.AssertExpectations(t)
 	mockLimiter.AssertExpectations(t)
-	mockRM.AssertExpectations(t)
 }

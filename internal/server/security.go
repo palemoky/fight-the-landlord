@@ -324,8 +324,8 @@ func (ml *MessageRateLimiter) GetWarningCount(clientID string) int {
 	return rate.warnings
 }
 
-// RemoveClient 移除客户端记录
-func (ml *MessageRateLimiter) RemoveClient(clientID string) {
+// ClearRateLimit 清除速率限制
+func (ml *MessageRateLimiter) ClearRateLimit(clientID string) {
 	ml.mu.Lock()
 	defer ml.mu.Unlock()
 	delete(ml.limits, clientID)
@@ -415,8 +415,8 @@ func (cl *ChatRateLimiter) AllowChat(clientID string) (allowed bool, reason stri
 	return true, ""
 }
 
-// RemoveClient 移除客户端记录
-func (cl *ChatRateLimiter) RemoveClient(clientID string) {
+// ClearRateLimit 清除速率限制
+func (cl *ChatRateLimiter) ClearRateLimit(clientID string) {
 	cl.mu.Lock()
 	defer cl.mu.Unlock()
 	delete(cl.limits, clientID)

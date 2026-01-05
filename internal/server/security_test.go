@@ -110,12 +110,12 @@ func TestChatRateLimiter_CooldownPeriod(t *testing.T) {
 	// 3rd message triggers cooldown
 	allowed, reason = cl.AllowChat(clientID)
 	assert.False(t, allowed)
-	assert.Contains(t, reason, "章鱼哥")
+	assert.Contains(t, reason, "派大星")
 
 	// During cooldown, messages blocked
 	allowed, reason = cl.AllowChat(clientID)
 	assert.False(t, allowed)
-	assert.NotEmpty(t, reason)
+	assert.Contains(t, reason, "章鱼哥")
 
 	// Wait for cooldown to expire
 	time.Sleep(3100 * time.Millisecond)
@@ -323,7 +323,7 @@ func TestMessageRateLimiter_WarningCount(t *testing.T) {
 	assert.Greater(t, warnings, 0)
 }
 
-func TestMessageRateLimiter_RemoveClient(t *testing.T) {
+func TestMessageRateLimiter_ClearRateLimit(t *testing.T) {
 	t.Parallel()
 
 	ml := NewMessageRateLimiter(5)
@@ -334,7 +334,7 @@ func TestMessageRateLimiter_RemoveClient(t *testing.T) {
 	ml.AllowMessage(clientID)
 
 	// Remove client
-	ml.RemoveClient(clientID)
+	ml.ClearRateLimit(clientID)
 
 	// Should start fresh
 	allowed, warning := ml.AllowMessage(clientID)

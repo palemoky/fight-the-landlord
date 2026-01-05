@@ -40,7 +40,9 @@ func (rm *RoomManager) CreateRoom(client types.ClientInterface) (*Room, error) {
 	rm.rooms[code] = room
 
 	// 保存到 Redis
-	go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+	if rm.redisStore != nil && rm.redisStore.IsReady() {
+		go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+	}
 
 	log.Printf("🏠 房间 %s 已创建，玩家 %s", code, client.GetName())
 
@@ -87,7 +89,9 @@ func (rm *RoomManager) JoinRoom(client types.ClientInterface, code string) (*Roo
 	}))
 
 	// 保存到 Redis
-	go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+	if rm.redisStore != nil && rm.redisStore.IsReady() {
+		go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+	}
 
 	return room, nil
 }
@@ -144,7 +148,9 @@ func (rm *RoomManager) LeaveRoom(client types.ClientInterface) {
 		log.Printf("🏠 房间 %s 已解散", roomCode)
 	} else {
 		// 更新 Redis
-		go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+		if rm.redisStore != nil && rm.redisStore.IsReady() {
+			go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+		}
 	}
 }
 
@@ -191,7 +197,9 @@ func (rm *RoomManager) SetPlayerReady(client types.ClientInterface, ready bool) 
 		}
 
 		// 保存房间状态
-		go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+		if rm.redisStore != nil && rm.redisStore.IsReady() {
+			go func() { _ = rm.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+		}
 	}
 
 	return nil

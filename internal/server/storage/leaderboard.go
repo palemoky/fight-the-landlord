@@ -80,6 +80,11 @@ func NewLeaderboardManager(client *redis.Client) *LeaderboardManager {
 	return &LeaderboardManager{redis: client}
 }
 
+// IsReady 检查 Redis 客户端是否可用
+func (lm *LeaderboardManager) IsReady() bool {
+	return lm != nil && lm.redis != nil
+}
+
 // GetPlayerStats 获取玩家统计
 func (lm *LeaderboardManager) GetPlayerStats(ctx context.Context, playerID string) (*PlayerStats, error) {
 	key := playerStatsKey + playerID

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -53,11 +54,15 @@ func TestHandler_HandleBid_Success(t *testing.T) {
 	room, gs, clients := setupGameRoom(t)
 
 	mockServer := new(testutil.MockServer)
-	mockRM := new(r.MockRoomManager)
-	mockServer.On("GetRoomManager").Return(mockRM)
-	mockRM.On("GetRoom", "123").Return(room)
 
-	h := NewHandler(HandlerDeps{Server: mockServer})
+	// Create real RoomManager and add room
+	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm.AddRoomForTest(room)
+
+	h := NewHandler(HandlerDeps{
+		Server:      mockServer,
+		RoomManager: rm,
+	})
 	h.SetGameSession(room.Code, gs)
 
 	assert.NotNil(t, h.GetGameSession(room.Code))
@@ -102,11 +107,15 @@ func TestHandler_HandlePlayCards_Success(t *testing.T) {
 	room, gs, clients := setupGameRoom(t)
 
 	mockServer := new(testutil.MockServer)
-	mockRM := new(r.MockRoomManager)
-	mockServer.On("GetRoomManager").Return(mockRM)
-	mockRM.On("GetRoom", "123").Return(room)
 
-	h := NewHandler(HandlerDeps{Server: mockServer})
+	// Create real RoomManager and add room
+	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm.AddRoomForTest(room)
+
+	h := NewHandler(HandlerDeps{
+		Server:      mockServer,
+		RoomManager: rm,
+	})
 	h.SetGameSession(room.Code, gs)
 
 	assert.NotNil(t, h.GetGameSession(room.Code))

@@ -58,6 +58,11 @@ func NewRedisStore(client *redis.Client) *RedisStore {
 	return &RedisStore{client: client}
 }
 
+// IsReady 检查 Redis 客户端是否可用
+func (rs *RedisStore) IsReady() bool {
+	return rs != nil && rs.client != nil
+}
+
 // --- 房间存储 ---
 
 // SaveRoom 保存房间到 Redis

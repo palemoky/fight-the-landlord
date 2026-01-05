@@ -16,11 +16,13 @@ func (h *Handler) handleChat(client types.ClientInterface, msg *protocol.Message
 	}
 
 	// 聊天限流检查
-	allowed, reason := h.chatLimiter.AllowChat(client.GetID())
-	if !allowed {
-		client.SendMessage(codec.NewErrorMessageWithText(
-			protocol.ErrCodeRateLimit, reason))
-		return
+	if h.chatLimiter != nil {
+		allowed, reason := h.chatLimiter.AllowChat(client.GetID())
+		if !allowed {
+			client.SendMessage(codec.NewErrorMessageWithText(
+				protocol.ErrCodeRateLimit, reason))
+			return
+		}
 	}
 
 	// 填充发送者信息
@@ -40,6 +42,10 @@ func (h *Handler) handleChat(client types.ClientInterface, msg *protocol.Message
 	roomID := client.GetRoom()
 	if roomID == "" {
 		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeNotInRoom, "不在房间中，无法发送房间消息"))
+		return
+	}
+
+	if h.roomManager == nil {
 		return
 	}
 

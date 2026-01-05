@@ -9,6 +9,7 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/apperrors"
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
+	"github.com/palemoky/fight-the-landlord/internal/game/rule"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/protocol/convert"
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
@@ -208,7 +209,8 @@ func TestHandlePass_Success(t *testing.T) {
 	gs.mu.Lock()
 	gs.state = GameStatePlaying
 	gs.currentPlayer = 1
-	gs.lastPlayerIdx = 0 // Player 0 played last
+	gs.lastPlayerIdx = 0                                                        // Player 0 played last
+	gs.lastPlayedHand = rule.ParsedHand{Type: rule.Single, KeyRank: card.Rank3} // Non-empty
 	gs.mu.Unlock()
 
 	// Pass successfully
@@ -258,7 +260,8 @@ func TestHandlePass_TwoPassesNewRound(t *testing.T) {
 	gs.state = GameStatePlaying
 	gs.currentPlayer = 1
 	gs.lastPlayerIdx = 0
-	gs.consecutivePasses = 1 // Already one pass
+	gs.lastPlayedHand = rule.ParsedHand{Type: rule.Single, KeyRank: card.Rank3} // Non-empty
+	gs.consecutivePasses = 1                                                    // Already one pass
 	gs.mu.Unlock()
 
 	// Second pass should trigger new round

@@ -18,6 +18,11 @@ func (h *Handler) handleBid(client types.ClientInterface, msg *protocol.Message)
 		return
 	}
 
+	if h.roomManager == nil {
+		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeGameNotStart))
+		return
+	}
+
 	room := h.roomManager.GetRoom(client.GetRoom())
 	if room == nil {
 		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeNotInRoom))
@@ -48,6 +53,11 @@ func (h *Handler) handlePlayCards(client types.ClientInterface, msg *protocol.Me
 		return
 	}
 
+	if h.roomManager == nil {
+		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeGameNotStart))
+		return
+	}
+
 	room := h.roomManager.GetRoom(client.GetRoom())
 	if room == nil {
 		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeNotInRoom))
@@ -72,6 +82,11 @@ func (h *Handler) handlePlayCards(client types.ClientInterface, msg *protocol.Me
 
 // handlePass 处理不出
 func (h *Handler) handlePass(client types.ClientInterface) {
+	if h.roomManager == nil {
+		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeGameNotStart))
+		return
+	}
+
 	room := h.roomManager.GetRoom(client.GetRoom())
 	if room == nil {
 		client.SendMessage(codec.NewErrorMessage(protocol.ErrCodeNotInRoom))

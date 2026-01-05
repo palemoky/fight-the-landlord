@@ -36,12 +36,15 @@ func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 
 	room.mu.Lock()
 
+	// 标记当前玩家为离线
+	if player, exists := room.Players[client.GetID()]; exists {
+		player.Client = nil
+	}
+
 	// 检查所有玩家是否都离线
 	allOffline := true
-	for id, player := range room.Players {
-		isCurrentOffline := id == client.GetID()
-		playerOnline := player.Client != nil && !isCurrentOffline
-		if playerOnline {
+	for _, player := range room.Players {
+		if player.Client != nil {
 			allOffline = false
 			// 通知其他在线玩家
 			player.Client.SendMessage(codec.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{

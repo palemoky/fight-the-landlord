@@ -13,3 +13,7 @@ func (m *MockChatLimiter) AllowChat(playerID string) (allowed bool, reason strin
 	args := m.Called(playerID)
 	return args.Bool(0), args.String(1)
 }
+
+func (m *MockChatLimiter) ClearRateLimit(clientID string) {
+	m.Called(clientID)
+}

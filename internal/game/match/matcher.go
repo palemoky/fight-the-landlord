@@ -156,7 +156,9 @@ func (m *Matcher) createMatchRoom(players []types.ClientInterface) {
 	gs.Start()
 
 	// 保存房间状态
-	go func() { _ = m.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+	if m.redisStore != nil && m.redisStore.IsReady() {
+		go func() { _ = m.redisStore.SaveRoom(context.Background(), room.Code, room.ToRoomData()) }()
+	}
 }
 
 // GetQueueLength 获取队列长度
