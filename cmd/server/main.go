@@ -1,9 +1,9 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
-	"os"
 	"os/signal"
 	"syscall"
 
@@ -28,20 +28,20 @@ func main() {
 		log.Fatalf("创建服务器失败: %v", err)
 	}
 
-	// 优雅关闭
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		<-quit
-		log.Println("📢 收到关闭信号，开始优雅关闭...")
-		srv.GracefulShutdown(cfg.Game.ShutdownTimeoutDuration())
-		os.Exit(0)
-	}()
+	// 监听关闭信号
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	// 启动服务器
-	log.Println("🎮 斗地主服务器启动中...")
-	if err := srv.Start(); err != nil {
-		log.Fatalf("服务器启动失败: %v", err)
-	}
+	go func() {
+		log.Println("🎮 斗地主服务器启动中...")
+		if err := srv.Start(); err != nil {
+			log.Fatalf("服务器启动失败: %v", err)
+		}
+	}()
+
+	// 等待关闭信号
+	<-ctx.Done()
+	log.Println("📢 收到关闭信号，开始优雅关闭...")
+	srv.GracefulShutdown(cfg.Game.ShutdownTimeoutDuration())
 }
