@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -24,7 +25,7 @@ func TestServer_RegisterUnregister_Concurrency(t *testing.T) {
 	for i := 0; i < count; i++ {
 		go func(i int) {
 			defer wg.Done()
-			c := &Client{ID: string(rune(i))}
+			c := &Client{ID: strconv.Itoa(i)}
 			s.RegisterClient(c.ID, c)
 		}(i)
 	}
@@ -36,7 +37,7 @@ func TestServer_RegisterUnregister_Concurrency(t *testing.T) {
 	for i := 0; i < count; i++ {
 		go func(i int) {
 			defer wg.Done()
-			s.UnregisterClient(string(rune(i)))
+			s.UnregisterClient(strconv.Itoa(i))
 		}(i)
 	}
 	wg.Wait()

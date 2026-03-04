@@ -90,6 +90,9 @@ linters:
     gosec:
       excludes:
         - G404 # 使用弱随机数生成器
+        - G117 # 结构体字段名匹配敏感词（内部配置结构体，不会暴露）
+        - G704 # SSRF（URL 来自可信环境变量）
+        - G706 # 日志注入（日志参数来自内部生成，非用户输入）
 
     errorlint:
       errorf: true

@@ -63,9 +63,9 @@ func WaitingView(m model.Model) string {
 		if p.ID == m.PlayerID() {
 			meStr = " (你)"
 		}
-		playerList.WriteString(fmt.Sprintf("  %s %s%s\n", readyStr, p.Name, meStr))
+		fmt.Fprintf(&playerList, "  %s %s%s\n", readyStr, p.Name, meStr)
 	}
-	playerList.WriteString(fmt.Sprintf("\n等待玩家: %d/3", len(state.Players)))
+	fmt.Fprintf(&playerList, "\n等待玩家: %d/3", len(state.Players))
 
 	playerBox := common.BoxStyle.Render(playerList.String())
 	sb.WriteString(lipgloss.PlaceHorizontal(width, lipgloss.Center, playerBox))
@@ -383,7 +383,7 @@ func renderTimer(duration time.Duration, startTime time.Time) string {
 func renderQuickMsgMenu(scroll int, inputBuf string) string {
 	var sb strings.Builder
 	total := len(QuickMessages)
-	sb.WriteString(fmt.Sprintf("【快捷消息】 共 %d 条\n", total))
+	fmt.Fprintf(&sb, "【快捷消息】 共 %d 条\n", total)
 	sb.WriteString(strings.Repeat("─", 35) + "\n")
 
 	// Show 10 messages at a time with scroll

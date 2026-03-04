@@ -54,10 +54,11 @@ func renderChatBox(lobby model.LobbyAccessor, height int) string {
 
 	chatHeader := lipgloss.NewStyle().Bold(true).Render("💬 聊天室")
 	innerHeight := height - 2
-	contentLines := []string{chatHeader}
-	contentLines = append(contentLines, chatLines...)
-	usedLines := len(contentLines) + 1
+	usedLines := 1 + len(chatLines) + 1 // header + chat + input
 	emptyLines := max(innerHeight-usedLines, 0)
+	contentLines := make([]string, 0, 1+len(chatLines)+emptyLines+1)
+	contentLines = append(contentLines, chatHeader)
+	contentLines = append(contentLines, chatLines...)
 	for range emptyLines {
 		contentLines = append(contentLines, "")
 	}
