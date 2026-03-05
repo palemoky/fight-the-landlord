@@ -23,6 +23,7 @@ const (
 	defaultShutdownTimeout       = 30
 	defaultShutdownCheckInterval = 15
 	defaultRoomCleanupDelay      = 30
+	defaultOfflineWaitTimeout    = 30
 	defaultRateLimitPerSecond    = 10
 	defaultRateLimitPerMinute    = 60
 	defaultBanDuration           = 60
@@ -62,6 +63,7 @@ type GameConfig struct {
 	ShutdownTimeout       int `yaml:"shutdown_timeout"`        // 优雅关闭超时（分钟）
 	ShutdownCheckInterval int `yaml:"shutdown_check_interval"` // 优雅关闭检测间隔（秒）
 	RoomCleanupDelay      int `yaml:"room_cleanup_delay"`      // 游戏结束后服务器关闭延迟（秒）
+	OfflineWaitTimeout    int `yaml:"offline_wait_timeout"`    // 玩家离线等待超时（秒）
 }
 
 // SecurityConfig 安全配置
@@ -114,6 +116,10 @@ func (c *GameConfig) ShutdownCheckIntervalDuration() time.Duration {
 
 func (c *GameConfig) RoomCleanupDelayDuration() time.Duration {
 	return time.Duration(c.RoomCleanupDelay) * time.Second
+}
+
+func (c *GameConfig) OfflineWaitTimeoutDuration() time.Duration {
+	return time.Duration(c.OfflineWaitTimeout) * time.Second
 }
 
 func (c *RateLimitConfig) BanDurationTime() time.Duration {
@@ -227,6 +233,7 @@ func setDefaults(cfg *Config) {
 	setDefaultInt(&cfg.Game.ShutdownTimeout, defaultShutdownTimeout)
 	setDefaultInt(&cfg.Game.ShutdownCheckInterval, defaultShutdownCheckInterval)
 	setDefaultInt(&cfg.Game.RoomCleanupDelay, defaultRoomCleanupDelay)
+	setDefaultInt(&cfg.Game.OfflineWaitTimeout, defaultOfflineWaitTimeout)
 
 	// Security
 	setDefaultStrSlice(&cfg.Security.AllowedOrigins, []string{"*"})

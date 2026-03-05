@@ -179,7 +179,7 @@ func (gs *GameSession) notifyPlayTurn() {
 
 	gs.room.Broadcast(codec.MustNewMessage(protocol.MsgPlayTurn, protocol.PlayTurnPayload{
 		PlayerID: player.ID,
-		Timeout:  30,
+		Timeout:  gs.gameConfig.TurnTimeout,
 		MustPlay: mustPlay,
 		CanBeat:  canBeat,
 	}))

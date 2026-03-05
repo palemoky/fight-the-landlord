@@ -9,22 +9,16 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/protocol/convert"
 )
 
-const (
-	// 玩家离线等待时间（秒）
-	offlineWaitTimeout = 30 * time.Second
-	// 出牌/叫地主超时时间
-	turnTimeout = 30 * time.Second
-)
-
 // --- 超时控制 ---
 
 func (gs *GameSession) startBidTimer() {
 	gs.timerMu.Lock()
 	defer gs.timerMu.Unlock()
 
+	bidTimeout := gs.gameConfig.BidTimeoutDuration()
 	gs.timerStartTime = time.Now()
-	gs.remainingTime = turnTimeout
-	gs.turnTimer = time.AfterFunc(turnTimeout, func() {
+	gs.remainingTime = bidTimeout
+	gs.turnTimer = time.AfterFunc(bidTimeout, func() {
 		// 超时自动不叫
 		currentPlayer := gs.players[gs.currentBidder]
 		_ = gs.HandleBid(currentPlayer.ID, false)
@@ -35,6 +29,7 @@ func (gs *GameSession) startPlayTimer() {
 	gs.timerMu.Lock()
 	defer gs.timerMu.Unlock()
 
+	turnTimeout := gs.gameConfig.TurnTimeoutDuration()
 	gs.timerStartTime = time.Now()
 	gs.remainingTime = turnTimeout
 	gs.turnTimer = time.AfterFunc(turnTimeout, func() {
@@ -132,11 +127,12 @@ func (gs *GameSession) PlayerOffline(playerID string) {
 	}
 
 	// 启动离线等待计时器
-	gs.offlineWaitTimer = time.AfterFunc(offlineWaitTimeout, func() {
+	offlineTimeout := gs.gameConfig.OfflineWaitTimeoutDuration()
+	gs.offlineWaitTimer = time.AfterFunc(offlineTimeout, func() {
 		gs.handleOfflineTimeout(playerID)
 	})
 
-	log.Printf("⏸️ 玩家 %s 离线，暂停计时等待重连 (%v)", gs.players[playerIdx].Name, offlineWaitTimeout)
+	log.Printf("⏸️ 玩家 %s 离线，暂停计时等待重连 (%v)", gs.players[playerIdx].Name, offlineTimeout)
 }
 
 // PlayerOnline 玩家上线

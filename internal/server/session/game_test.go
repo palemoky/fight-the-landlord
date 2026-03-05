@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/palemoky/fight-the-landlord/internal/apperrors"
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/game/rule"
@@ -25,7 +26,7 @@ func TestHandleBid_Success(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	// Get current bidder
@@ -49,7 +50,7 @@ func TestHandleBid_NotYourTurn(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	// Try to bid with wrong player
@@ -67,7 +68,7 @@ func TestHandleBid_GameNotStarted(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	// Don't start the game
 
 	err := gs.HandleBid("p1", true)
@@ -83,7 +84,7 @@ func TestHandleBid_AllPass_RandomLandlord(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	// All players pass
@@ -113,7 +114,7 @@ func TestHandlePlayCards_Success(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	// Set landlord and start playing
@@ -152,7 +153,7 @@ func TestHandlePlayCards_NotYourTurn(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	gs.mu.Lock()
@@ -174,7 +175,7 @@ func TestHandlePlayCards_InvalidCards(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	gs.mu.Lock()
@@ -203,7 +204,7 @@ func TestHandlePass_Success(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	gs.mu.Lock()
@@ -230,7 +231,7 @@ func TestHandlePass_MustPlay(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	gs.mu.Lock()
@@ -253,7 +254,7 @@ func TestHandlePass_TwoPassesNewRound(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	gs.mu.Lock()
@@ -282,7 +283,7 @@ func TestValidateCardsInHand(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 
 	player := &GamePlayer{
 		Hand: []card.Card{
