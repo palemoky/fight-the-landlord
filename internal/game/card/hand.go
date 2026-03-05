@@ -6,31 +6,9 @@ import (
 	"strings"
 )
 
-// findRocketInHand 查找手牌中的王炸
-func findRocketInHand(hand []Card) ([]Card, bool) {
-	var black, red Card
-	var foundBlack, foundRed bool
-
-	for i := range hand {
-		switch hand[i].Rank {
-		case RankBlackJoker:
-			black = hand[i]
-			foundBlack = true
-		case RankRedJoker:
-			red = hand[i]
-			foundRed = true
-		}
-
-		if foundBlack && foundRed {
-			return []Card{black, red}, true
-		}
-	}
-	return nil, false
-}
-
 // parseInputRanks 解析输入字符串为 Rank 计数
 func parseInputRanks(input string) (map[Rank]int, error) {
-	inputRanks := make(map[Rank]int)
+	inputRanks := map[Rank]int{}
 	cleanInput := strings.ReplaceAll(input, "10", "T")
 
 	for _, char := range cleanInput {
@@ -45,7 +23,7 @@ func parseInputRanks(input string) (map[Rank]int, error) {
 
 // countHandRanks 统计手牌中各 Rank 的数量
 func countHandRanks(hand []Card) map[Rank]int {
-	counts := make(map[Rank]int)
+	counts := map[Rank]int{}
 	for _, c := range hand {
 		counts[c.Rank]++
 	}
@@ -70,14 +48,6 @@ func extractCards(handCopy []Card, inputRanks map[Rank]int) []Card {
 
 // FindCardsInHand 从手牌中根据输入字符串找出对应的牌
 func FindCardsInHand(hand []Card, input string) ([]Card, error) {
-	// 处理王炸特殊情况
-	if input == "JOKER" {
-		if cards, ok := findRocketInHand(hand); ok {
-			return cards, nil
-		}
-		return nil, fmt.Errorf("你没有王炸")
-	}
-
 	// 解析输入
 	inputRanks, err := parseInputRanks(input)
 	if err != nil {

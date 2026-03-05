@@ -250,13 +250,6 @@ func TestFindCardsInHand(t *testing.T) {
 			expectedCards: []Card{{Rank: Rank8, Suit: Heart}, {Rank: Rank8, Suit: Club}, {Rank: Rank10, Suit: Club}},
 		},
 		{
-			name:          "find the Rocket with JOKER keyword",
-			hand:          fullHand,
-			input:         "JOKER",
-			expectError:   false,
-			expectedCards: testRuleCards(RankBlackJoker, RankRedJoker),
-		},
-		{
 			name:          "find the Rocket with RB keyword",
 			hand:          fullHand,
 			input:         "RB",
@@ -282,7 +275,7 @@ func TestFindCardsInHand(t *testing.T) {
 		{
 			name:          "fail to find Rocket when one is missing",
 			hand:          testRuleCards(RankRedJoker, Rank3),
-			input:         "JOKER",
+			input:         "RB",
 			expectError:   true,
 			expectedCards: nil,
 		},
