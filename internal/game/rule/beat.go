@@ -7,15 +7,15 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 )
 
-// hasWinningBombOrRocket checks for any bomb or rocket that can beat the opponent's hand.
+// hasWinningBombOrRocket 检查是否有炸弹或王炸能压过对手的牌
 func hasWinningBombOrRocket(analysis HandAnalysis, opponentHand ParsedHand) bool {
-	// Check for a winning Rocket.
+	// 检查王炸
 	if analysis.counts[card.RankBlackJoker] >= 1 && analysis.counts[card.RankRedJoker] >= 1 {
-		// A Rocket beats anything.
+		// 王炸压一切
 		return true
 	}
 
-	// Check for a winning Bomb.
+	// 检查炸弹
 	for _, r := range analysis.fours {
 		myBomb, _ := ParseHand([]card.Card{{Rank: r}, {Rank: r}, {Rank: r}, {Rank: r}})
 		if CanBeat(myBomb, opponentHand) {
@@ -25,46 +25,45 @@ func hasWinningBombOrRocket(analysis HandAnalysis, opponentHand ParsedHand) bool
 	return false
 }
 
-// findWinningSingle checks for any single card that can win.
+// findWinningSingle 检查是否有更大的单牌能压过对手
 func findWinningSingle(analysis HandAnalysis, opponentHand ParsedHand) bool {
 	for r := range analysis.counts {
 		if r > opponentHand.KeyRank {
-			return true // Found a higher card.
+			return true
 		}
 	}
 	return false
 }
 
-// findWinningPair checks for any pair that can win.
+// findWinningPair 检查是否有更大的对子能压过对手
 func findWinningPair(analysis HandAnalysis, opponentHand ParsedHand) bool {
 	for r, count := range analysis.counts {
 		if count >= 2 && r > opponentHand.KeyRank {
-			return true // Found a higher pair.
+			return true
 		}
 	}
 	return false
 }
 
-// findWinningTrio checks for trios with or without kickers.
-// kickerType: 0=none, 1=single, 2=pair.
+// findWinningTrio 检查是否有更大的三条（含带牌）能压过对手
+// kickerType: 0=不带, 1=带单, 2=带对
 func findWinningTrio(analysis HandAnalysis, opponentHand ParsedHand, kickerType int) bool {
 	for r, count := range analysis.counts {
 		if count >= 3 && r > opponentHand.KeyRank {
-			// Found a higher trio. Now check if we have enough cards for kickers.
+			// 找到更大的三条，检查是否有足够的带牌
 			remainingCards := len(analysis.ones) + len(analysis.pairs)*2 + len(analysis.trios)*3 + len(analysis.fours)*4 - 3
 			switch kickerType {
-			case 0: // No kicker needed
+			case 0: // 不带牌
 				return true
-			case 1: // Need one single
+			case 1: // 带一张单牌
 				if remainingCards >= 1 {
 					return true
 				}
-			case 2: // Need one pair
+			case 2: // 带一对
 				if remainingCards < 2 {
 					continue
 				}
-				// Check if the remaining cards contain a pair.
-				// This is true if there's any other pair/trio/four, or if the current trio came from a four.
+				// 检查剩余牌中是否有对子（其他对/三条/四条，或当前三条来自四条）
 				if len(analysis.pairs) > 0 || len(analysis.trios) > 1 || len(analysis.fours) > 1 || (count == 4) {
 					return true
 				}
@@ -74,13 +73,13 @@ func findWinningTrio(analysis HandAnalysis, opponentHand ParsedHand, kickerType 
 	return false
 }
 
-// findWinningStraight checks for a winning straight of a specific length.
+// findWinningStraight 检查是否有更大的顺子能压过对手
 func findWinningStraight(analysis HandAnalysis, opponentHand ParsedHand) bool {
 	length := opponentHand.Length
 
 	var availableRanks []card.Rank
 	for r := range analysis.counts {
-		if r < card.Rank2 { // Straights cannot include 2 or Jokers
+		if r < card.Rank2 { // 顺子不能包含2和王
 			availableRanks = append(availableRanks, r)
 		}
 	}
@@ -91,7 +90,7 @@ func findWinningStraight(analysis HandAnalysis, opponentHand ParsedHand) bool {
 	}
 
 	for i := 0; i <= len(availableRanks)-length; i++ {
-		// Check for a continuous sequence
+		// 检查连续序列
 		isStraight := true
 		for j := 1; j < length; j++ {
 			if availableRanks[i+j-1]+1 != availableRanks[i+j] {
@@ -100,13 +99,13 @@ func findWinningStraight(analysis HandAnalysis, opponentHand ParsedHand) bool {
 			}
 		}
 		if isStraight && availableRanks[i] > opponentHand.KeyRank {
-			return true // Found a higher straight.
+			return true
 		}
 	}
 	return false
 }
 
-// findWinningPairStraight checks for a winning pair straight.
+// findWinningPairStraight 检查是否有更大的连对能压过对手
 func findWinningPairStraight(analysis HandAnalysis, opponentHand ParsedHand) bool {
 	length := opponentHand.Length
 
@@ -122,7 +121,7 @@ func findWinningPairStraight(analysis HandAnalysis, opponentHand ParsedHand) boo
 		return false
 	}
 
-	// Use the same sliding window logic as findWinningStraight
+	// 使用与 findWinningStraight 相同的滑动窗口逻辑
 	for i := 0; i <= len(pairRanks)-length; i++ {
 		isPairStraight := true
 		for j := 1; j < length; j++ {
@@ -138,8 +137,8 @@ func findWinningPairStraight(analysis HandAnalysis, opponentHand ParsedHand) boo
 	return false
 }
 
-// findWinningPlane checks for a winning plane with or without kickers.
-// kickerType: 0=none, 1=singles, 2=pairs.
+// findWinningPlane 检查是否有更大的飞机（含带牌）能压过对手
+// kickerType: 0=不带, 1=带单, 2=带对
 func findWinningPlane(analysis HandAnalysis, opponentHand ParsedHand, kickerType int) bool {
 	length := opponentHand.Length
 
@@ -156,17 +155,17 @@ func findWinningPlane(analysis HandAnalysis, opponentHand ParsedHand, kickerType
 	}
 
 	for i := 0; i <= len(trioRanks)-length; i++ {
-		// Check for continuous sequence (Plane body)
+		// 检查连续序列（飞机主体）
 		if !isContinuousSequence(trioRanks, i, length) {
 			continue
 		}
 
-		// Check if rank is higher
+		// 检查点数是否更大
 		if trioRanks[i] <= opponentHand.KeyRank {
 			continue
 		}
 
-		// Check for kickers
+		// 检查带牌
 		if checkKickers(analysis, trioRanks, i, length, kickerType) {
 			return true
 		}
@@ -174,7 +173,7 @@ func findWinningPlane(analysis HandAnalysis, opponentHand ParsedHand, kickerType
 	return false
 }
 
-// isContinuousSequence checks if a slice of ranks forms a continuous sequence
+// isContinuousSequence 检查给定点数切片是否构成连续序列
 func isContinuousSequence(ranks []card.Rank, startIndex, length int) bool {
 	for j := 1; j < length; j++ {
 		if ranks[startIndex+j-1]+1 != ranks[startIndex+j] {
@@ -184,7 +183,7 @@ func isContinuousSequence(ranks []card.Rank, startIndex, length int) bool {
 	return true
 }
 
-// checkKickers checks if the hand has enough kickers for the plane
+// checkKickers 检查飞机是否有足够的带牌
 func checkKickers(analysis HandAnalysis, trioRanks []card.Rank, startIndex, length, kickerType int) bool {
 	if kickerType == 0 {
 		return true
@@ -197,9 +196,9 @@ func checkKickers(analysis HandAnalysis, trioRanks []card.Rank, startIndex, leng
 	remainingCardCount := totalCardsInHand - (length * 3)
 
 	switch kickerType {
-	case 1: // Need N singles
+	case 1: // 需要 N 张单牌
 		return remainingCardCount >= length
-	case 2: // Need N pairs
+	case 2: // 需要 N 对
 		if remainingCardCount < length*2 {
 			return false
 		}
@@ -209,7 +208,7 @@ func checkKickers(analysis HandAnalysis, trioRanks []card.Rank, startIndex, leng
 
 		kickerPairs := 0
 		for r, count := range analysis.counts {
-			// Skip ranks that are part of the plane
+			// 跳过飞机主体的点数
 			if r >= startRank && r <= endRank {
 				continue
 			}
