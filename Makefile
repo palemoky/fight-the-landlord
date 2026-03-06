@@ -26,7 +26,7 @@ lint:  ## Run linter
 ## test: 运行所有测试
 test:  ## Run all tests
 	@echo "$(BLUE)Running tests...$(NC)"
-	go test -v -race ./...
+	go test -race ./...
 
 ## coverage: 生成测试覆盖率报告
 coverage:  ## Generate test coverage report

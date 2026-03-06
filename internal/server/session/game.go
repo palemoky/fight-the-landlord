@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/card"
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/game/rule"
@@ -34,6 +35,7 @@ type GamePlayer struct {
 type GameSession struct {
 	room        *room.Room
 	leaderboard *storage.LeaderboardManager
+	gameConfig  config.GameConfig
 	state       GameState
 	players     []*GamePlayer // 按座位顺序
 
@@ -62,7 +64,7 @@ type GameSession struct {
 }
 
 // NewGameSession 创建游戏会话
-func NewGameSession(r *room.Room, lb *storage.LeaderboardManager) *GameSession {
+func NewGameSession(r *room.Room, lb *storage.LeaderboardManager, gameCfg config.GameConfig) *GameSession {
 	playerOrder := r.PlayerOrder
 	players := make([]*GamePlayer, len(playerOrder))
 	for i, id := range playerOrder {
@@ -77,6 +79,7 @@ func NewGameSession(r *room.Room, lb *storage.LeaderboardManager) *GameSession {
 	return &GameSession{
 		room:          r,
 		leaderboard:   lb,
+		gameConfig:    gameCfg,
 		state:         GameStateInit,
 		players:       players,
 		highestBidder: -1,

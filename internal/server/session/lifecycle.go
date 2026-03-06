@@ -55,7 +55,7 @@ func (gs *GameSession) deal() {
 		})
 	}
 
-	// 发送手牌给各玩家（先不显示底牌具体内容）
+	// 发送手牌给各玩家（先不显示底牌）
 	for _, p := range gs.players {
 		rp := gs.room.Players[p.ID]
 		client := rp.Client

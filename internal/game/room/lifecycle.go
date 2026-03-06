@@ -50,7 +50,7 @@ func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 			player.Client.SendMessage(codec.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
 				PlayerID:   client.GetID(),
 				PlayerName: client.GetName(),
-				Timeout:    20, // 20秒离线等待
+				Timeout:    rm.gameConfig.OfflineWaitTimeout, // 从配置读取
 			}))
 		}
 	}

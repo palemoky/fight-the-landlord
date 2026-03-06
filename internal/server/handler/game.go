@@ -10,6 +10,15 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/apperrors"
 )
 
+// sendGameError 统一处理游戏错误并发送给客户端
+func sendGameError(client types.ClientInterface, err error) {
+	if gameErr, ok := errors.AsType[*apperrors.GameError](err); ok {
+		client.SendMessage(codec.NewErrorMessage(gameErr.Code))
+	} else {
+		client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
+	}
+}
+
 // handleBid 处理叫地主
 func (h *Handler) handleBid(client types.ClientInterface, msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.BidPayload](msg)
@@ -36,12 +45,7 @@ func (h *Handler) handleBid(client types.ClientInterface, msg *protocol.Message)
 	}
 
 	if err := gameSession.HandleBid(client.GetID(), payload.Bid); err != nil {
-		var gameErr *apperrors.GameError
-		if errors.As(err, &gameErr) {
-			client.SendMessage(codec.NewErrorMessage(gameErr.Code))
-		} else {
-			client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
-		}
+		sendGameError(client, err)
 	}
 }
 
@@ -71,12 +75,7 @@ func (h *Handler) handlePlayCards(client types.ClientInterface, msg *protocol.Me
 	}
 
 	if err := gameSession.HandlePlayCards(client.GetID(), payload.Cards); err != nil {
-		var gameErr *apperrors.GameError
-		if errors.As(err, &gameErr) {
-			client.SendMessage(codec.NewErrorMessage(gameErr.Code))
-		} else {
-			client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
-		}
+		sendGameError(client, err)
 	}
 }
 
@@ -100,11 +99,6 @@ func (h *Handler) handlePass(client types.ClientInterface) {
 	}
 
 	if err := gameSession.HandlePass(client.GetID()); err != nil {
-		var gameErr *apperrors.GameError
-		if errors.As(err, &gameErr) {
-			client.SendMessage(codec.NewErrorMessage(gameErr.Code))
-		} else {
-			client.SendMessage(codec.NewErrorMessageWithText(protocol.ErrCodeUnknown, err.Error()))
-		}
+		sendGameError(client, err)
 	}
 }

@@ -22,7 +22,7 @@ func TestServer_RegisterUnregister_Concurrency(t *testing.T) {
 
 	// Concurrent Register
 	wg.Add(count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		go func(i int) {
 			defer wg.Done()
 			c := &Client{ID: strconv.Itoa(i)}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
 	"github.com/palemoky/fight-the-landlord/internal/testutil"
@@ -20,7 +21,7 @@ func TestStartGame_DealCards(t *testing.T) {
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
 	// Create game session
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 
 	// Start game
 	gs.Start()
@@ -54,7 +55,7 @@ func TestStartGame_CardsAreSorted(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	// Verify hands are sorted (descending by rank)
@@ -75,7 +76,7 @@ func TestStartGame_BidderSelected(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	// Verify a bidder was selected (0, 1, or 2)
@@ -92,7 +93,7 @@ func TestEndGame_WinnerAnnounced(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	// Set winner
@@ -117,7 +118,7 @@ func TestNewGameSession_Initialization(t *testing.T) {
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
 	// Create session
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 
 	// Verify initialization
 	assert.Equal(t, GameStateInit, gs.state)
@@ -140,7 +141,7 @@ func TestGameSession_PlayerOfflineHandling(t *testing.T) {
 	r.Players["p3"] = &room.RoomPlayer{Client: testutil.NewSimpleClient("p3", "Player3"), Seat: 2}
 	r.PlayerOrder = []string{"p1", "p2", "p3"}
 
-	gs := NewGameSession(r, storage.NewLeaderboardManager(nil))
+	gs := NewGameSession(r, storage.NewLeaderboardManager(nil), config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 
 	// Mark player as offline
 	gs.mu.Lock()

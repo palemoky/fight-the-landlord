@@ -104,13 +104,14 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}
 
 	// 初始化房间管理器
-	s.roomManager = room.NewRoomManager(s.redisStore, cfg.Game.RoomTimeoutDuration())
+	s.roomManager = room.NewRoomManager(s.redisStore, cfg.Game)
 
 	// 初始化匹配器
 	s.matcher = match.NewMatcher(match.MatcherDeps{
 		RoomManager: s.roomManager,
 		RedisStore:  s.redisStore,
 		Leaderboard: s.leaderboard,
+		GameConfig:  cfg.Game,
 		RegisterSession: func(roomCode string, gs *session.GameSession) {
 			s.handler.SetGameSession(roomCode, gs)
 		},
@@ -128,7 +129,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	// 设置房间游戏开始回调
 	s.roomManager.SetOnGameStart(func(r *room.Room) {
-		gs := session.NewGameSession(r, s.leaderboard)
+		gs := session.NewGameSession(r, s.leaderboard, s.config.Game)
 		s.handler.SetGameSession(r.Code, gs)
 		gs.Start()
 	})

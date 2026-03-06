@@ -42,8 +42,7 @@ func (r *Room) checkAllReady() bool {
 func (r *Room) GetPlayerInfo(playerID string) protocol.PlayerInfo {
 	player := r.Players[playerID]
 	cardsCount := 0
-	// gameSession will be passed from external caller if needed
-	// For now, we'll leave it as 0 since game is managed externally
+	// 游戏会话由外部调用方管理，此处暂不传入
 	return protocol.PlayerInfo{
 		ID:         player.Client.GetID(),
 		Name:       player.Client.GetName(),

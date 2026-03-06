@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/protocol/codec"
@@ -22,6 +23,7 @@ type Matcher struct {
 	roomManager     *room.RoomManager
 	redisStore      *storage.RedisStore
 	leaderboard     *storage.LeaderboardManager
+	gameConfig      config.GameConfig
 	registerSession SessionRegistrationFunc
 	queue           []types.ClientInterface
 	mu              sync.Mutex
@@ -32,6 +34,7 @@ type MatcherDeps struct {
 	RoomManager     *room.RoomManager
 	RedisStore      *storage.RedisStore
 	Leaderboard     *storage.LeaderboardManager
+	GameConfig      config.GameConfig
 	RegisterSession SessionRegistrationFunc
 }
 
@@ -41,6 +44,7 @@ func NewMatcher(deps MatcherDeps) *Matcher {
 		roomManager:     deps.RoomManager,
 		redisStore:      deps.RedisStore,
 		leaderboard:     deps.Leaderboard,
+		gameConfig:      deps.GameConfig,
 		registerSession: deps.RegisterSession,
 		queue:           make([]types.ClientInterface, 0),
 	}
@@ -101,7 +105,7 @@ func (m *Matcher) createMatchRoom(players []types.ClientInterface) {
 		log.Printf("匹配创建房间失败: %v", err)
 		// 将玩家放回队列
 		m.mu.Lock()
-		m.queue = append(players, m.queue...)
+		m.queue = append(players, m.queue...) // 先到先匹配
 		m.mu.Unlock()
 		return
 	}
@@ -146,7 +150,7 @@ func (m *Matcher) createMatchRoom(players []types.ClientInterface) {
 	}
 
 	// 创建游戏会话并开始
-	gs := session.NewGameSession(room, m.leaderboard)
+	gs := session.NewGameSession(room, m.leaderboard, m.gameConfig)
 
 	// 注册游戏会话
 	if m.registerSession != nil {

@@ -7,17 +7,17 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 )
 
-// GameState manages client-side game state
+// GameState 管理客户端侧的游戏状态
 type GameState struct {
-	// Player data
+	// 玩家数据
 	Hand        []card.Card
 	BottomCards []card.Card
 	IsLandlord  bool
 
-	// Other players
+	// 其他玩家
 	Players []protocol.PlayerInfo
 
-	// Game progress
+	// 游戏进程
 	RoomCode       string
 	CurrentTurn    string
 	LastPlayedBy   string
@@ -25,29 +25,29 @@ type GameState struct {
 	LastPlayed     []card.Card
 	LastHandType   string
 
-	// Game result
+	// 游戏结果
 	Winner           string
 	WinnerIsLandlord bool
 
-	// Features
+	// 功能组件
 	CardCounter *CardCounter
 }
 
-// NewGameState creates a new game state
+// NewGameState 创建一个新的游戏状态
 func NewGameState() *GameState {
 	return &GameState{
 		CardCounter: NewCardCounter(),
 	}
 }
 
-// SortHand sorts the player's hand in descending order by rank
+// SortHand 将玩家手牌按点数降序排序
 func (gs *GameState) SortHand() {
 	sort.Slice(gs.Hand, func(i, j int) bool {
 		return gs.Hand[i].Rank > gs.Hand[j].Rank
 	})
 }
 
-// Reset clears all game state
+// Reset 清除所有游戏状态
 func (gs *GameState) Reset() {
 	gs.Hand = nil
 	gs.BottomCards = nil

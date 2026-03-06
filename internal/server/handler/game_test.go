@@ -2,11 +2,11 @@ package handler
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	r "github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	payloadconv "github.com/palemoky/fight-the-landlord/internal/protocol/convert/payload"
@@ -44,7 +44,7 @@ func setupGameRoom(t *testing.T) (*r.Room, *session.GameSession, []*testutil.Moc
 	}
 
 	// Create and start session
-	gs := session.NewGameSession(room, nil)
+	gs := session.NewGameSession(room, nil, config.GameConfig{TurnTimeout: 30, BidTimeout: 15})
 	gs.Start()
 
 	return room, gs, clients
@@ -56,7 +56,7 @@ func TestHandler_HandleBid_Success(t *testing.T) {
 	mockServer := new(testutil.MockServer)
 
 	// Create real RoomManager and add room
-	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm := r.NewRoomManager(nil, config.GameConfig{RoomTimeout: 10})
 	rm.AddRoomForTest(room)
 
 	h := NewHandler(HandlerDeps{
@@ -109,7 +109,7 @@ func TestHandler_HandlePlayCards_Success(t *testing.T) {
 	mockServer := new(testutil.MockServer)
 
 	// Create real RoomManager and add room
-	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm := r.NewRoomManager(nil, config.GameConfig{RoomTimeout: 10})
 	rm.AddRoomForTest(room)
 
 	h := NewHandler(HandlerDeps{

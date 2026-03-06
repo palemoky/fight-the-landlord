@@ -50,30 +50,6 @@ var handTypeNames = map[HandType]string{
 	Rocket:           "王炸",
 }
 
-// handChecker 牌型检查函数类型
-type handChecker func(HandAnalysis, ParsedHand) bool
-
-// handCheckers 牌型检查函数映射表
-var handCheckers = map[HandType]handChecker{
-	Single:           func(a HandAnalysis, h ParsedHand) bool { return findWinningSingle(a, h) },
-	Pair:             func(a HandAnalysis, h ParsedHand) bool { return findWinningPair(a, h) },
-	Trio:             func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 0) },
-	TrioWithSingle:   func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 1) },
-	TrioWithPair:     func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 2) },
-	Straight:         func(a HandAnalysis, h ParsedHand) bool { return findWinningStraight(a, h) },
-	PairStraight:     func(a HandAnalysis, h ParsedHand) bool { return findWinningPairStraight(a, h) },
-	Plane:            func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 0) },
-	PlaneWithSingles: func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 1) },
-	PlaneWithPairs:   func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 2) },
-}
-
-func (h HandType) String() string {
-	if name, ok := handTypeNames[h]; ok {
-		return name
-	}
-	return "无效"
-}
-
 // ParsedHand 解析后的手牌，用于比较
 type ParsedHand struct {
 	Type    HandType
@@ -86,7 +62,7 @@ func (p ParsedHand) IsEmpty() bool {
 	return p.Type == Invalid
 }
 
-// HandAnalysis 对一手牌进行预分析，统计不同点数的牌出现了几次
+// HandAnalysis 对手牌进行预分析，统计不同点数的牌出现了几次
 type HandAnalysis struct {
 	counts map[card.Rank]int // 每种点数牌的数量
 	// 为了方便，提前将不同数量的牌分组
@@ -95,6 +71,9 @@ type HandAnalysis struct {
 	pairs []card.Rank
 	ones  []card.Rank
 }
+
+// handChecker 牌型检查函数类型
+type handChecker func(HandAnalysis, ParsedHand) bool
 
 // analyzeCards 分析手牌，返回一个包含所有统计信息的结构
 func analyzeCards(cards []card.Card) HandAnalysis {
@@ -135,6 +114,7 @@ func isContinuous(ranks []card.Rank) bool {
 	if len(ranks) == 0 {
 		return false
 	}
+
 	for i, r := range ranks {
 		if r >= card.Rank2 { // 顺子、连对、飞机不能包含2和王
 			return false
@@ -143,7 +123,29 @@ func isContinuous(ranks []card.Rank) bool {
 			return false
 		}
 	}
+
 	return true
+}
+
+func (h HandType) String() string {
+	if name, ok := handTypeNames[h]; ok {
+		return name
+	}
+	return "无效"
+}
+
+// handCheckers 牌型检查函数映射表
+var handCheckers = map[HandType]handChecker{
+	Single:           func(a HandAnalysis, h ParsedHand) bool { return findWinningSingle(a, h) },
+	Pair:             func(a HandAnalysis, h ParsedHand) bool { return findWinningPair(a, h) },
+	Trio:             func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 0) },
+	TrioWithSingle:   func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 1) },
+	TrioWithPair:     func(a HandAnalysis, h ParsedHand) bool { return findWinningTrio(a, h, 2) },
+	Straight:         func(a HandAnalysis, h ParsedHand) bool { return findWinningStraight(a, h) },
+	PairStraight:     func(a HandAnalysis, h ParsedHand) bool { return findWinningPairStraight(a, h) },
+	Plane:            func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 0) },
+	PlaneWithSingles: func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 1) },
+	PlaneWithPairs:   func(a HandAnalysis, h ParsedHand) bool { return findWinningPlane(a, h, 2) },
 }
 
 // ParseHand 解析牌型
