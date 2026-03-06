@@ -2,7 +2,6 @@ package handler
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -57,7 +56,7 @@ func TestHandler_HandleBid_Success(t *testing.T) {
 	mockServer := new(testutil.MockServer)
 
 	// Create real RoomManager and add room
-	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm := r.NewRoomManager(nil, config.GameConfig{RoomTimeout: 10})
 	rm.AddRoomForTest(room)
 
 	h := NewHandler(HandlerDeps{
@@ -110,7 +109,7 @@ func TestHandler_HandlePlayCards_Success(t *testing.T) {
 	mockServer := new(testutil.MockServer)
 
 	// Create real RoomManager and add room
-	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm := r.NewRoomManager(nil, config.GameConfig{RoomTimeout: 10})
 	rm.AddRoomForTest(room)
 
 	h := NewHandler(HandlerDeps{

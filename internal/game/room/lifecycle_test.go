@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/palemoky/fight-the-landlord/internal/apperrors"
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
 	"github.com/palemoky/fight-the-landlord/internal/testutil"
 )
@@ -16,7 +17,7 @@ func TestNotifyPlayerOffline_AllPlayersOffline(t *testing.T) {
 	t.Parallel()
 
 	// Setup
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	client1 := testutil.NewSimpleClient("p1", "Player1")
 	client2 := testutil.NewSimpleClient("p2", "Player2")
 	client3 := testutil.NewSimpleClient("p3", "Player3")
@@ -42,7 +43,7 @@ func TestNotifyPlayerOffline_PartialOffline(t *testing.T) {
 	t.Parallel()
 
 	// Setup
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	client1 := testutil.NewSimpleClient("p1", "Player1")
 	client2 := testutil.NewSimpleClient("p2", "Player2")
 	client3 := testutil.NewSimpleClient("p3", "Player3")
@@ -70,7 +71,7 @@ func TestNotifyPlayerOffline_PartialOffline(t *testing.T) {
 func TestNotifyPlayerOffline_NotInRoom(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	client := testutil.NewSimpleClient("p1", "Player1")
 
 	// Client not in any room - should not panic
@@ -83,7 +84,7 @@ func TestReconnectPlayer_Success(t *testing.T) {
 	t.Parallel()
 
 	// Setup
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	oldClient := testutil.NewSimpleClient("p1", "Player1")
 	newClient := testutil.NewSimpleClient("p1", "Player1") // Same ID, new connection
 
@@ -113,7 +114,7 @@ func TestReconnectPlayer_Success(t *testing.T) {
 func TestReconnectPlayer_RoomNotFound(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	oldClient := testutil.NewSimpleClient("p1", "Player1")
 	newClient := testutil.NewSimpleClient("p1", "Player1")
 
@@ -127,7 +128,7 @@ func TestReconnectPlayer_RoomNotFound(t *testing.T) {
 func TestReconnectPlayer_PlayerNotInRoom(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	client1 := testutil.NewSimpleClient("p1", "Player1")
 	oldClient := testutil.NewSimpleClient("p2", "Player2")
 	newClient := testutil.NewSimpleClient("p2", "Player2")
@@ -145,7 +146,7 @@ func TestReconnectPlayer_PlayerNotInRoom(t *testing.T) {
 func TestReconnectPlayer_NotInAnyRoom(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	oldClient := testutil.NewSimpleClient("p1", "Player1")
 	newClient := testutil.NewSimpleClient("p1", "Player1")
 
@@ -157,7 +158,7 @@ func TestReconnectPlayer_NotInAnyRoom(t *testing.T) {
 func TestGenerateRoomCode_Uniqueness(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 
 	codes := make(map[string]bool)
 	for i := 0; i < 100; i++ {
@@ -175,7 +176,8 @@ func TestCleanup_TimeoutRooms(t *testing.T) {
 	t.Parallel()
 
 	// Use short timeout for testing
-	rm := NewRoomManager(storage.NewRedisStore(nil), 100*time.Millisecond)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{})
+	rm.roomTimeout = 100 * time.Millisecond
 	client := testutil.NewSimpleClient("p1", "Player1")
 
 	// Create room
@@ -198,7 +200,7 @@ func TestCleanup_TimeoutRooms(t *testing.T) {
 func TestCleanup_DoesNotRemoveActiveRooms(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	client := testutil.NewSimpleClient("p1", "Player1")
 
 	// Create room
@@ -215,7 +217,8 @@ func TestCleanup_DoesNotRemoveActiveRooms(t *testing.T) {
 func TestCleanup_DoesNotRemovePlayingRooms(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 100*time.Millisecond)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{})
+	rm.roomTimeout = 100 * time.Millisecond
 	client := testutil.NewSimpleClient("p1", "Player1")
 
 	// Create room
@@ -240,7 +243,7 @@ func TestCleanup_DoesNotRemovePlayingRooms(t *testing.T) {
 func TestSetAllPlayersReady(t *testing.T) {
 	t.Parallel()
 
-	rm := NewRoomManager(storage.NewRedisStore(nil), 10*time.Minute)
+	rm := NewRoomManager(storage.NewRedisStore(nil), config.GameConfig{RoomTimeout: 10})
 	client1 := testutil.NewSimpleClient("p1", "Player1")
 	client2 := testutil.NewSimpleClient("p2", "Player2")
 	client3 := testutil.NewSimpleClient("p3", "Player3")

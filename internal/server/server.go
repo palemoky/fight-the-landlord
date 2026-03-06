@@ -104,7 +104,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}
 
 	// 初始化房间管理器
-	s.roomManager = room.NewRoomManager(s.redisStore, cfg.Game.RoomTimeoutDuration())
+	s.roomManager = room.NewRoomManager(s.redisStore, cfg.Game)
 
 	// 初始化匹配器
 	s.matcher = match.NewMatcher(match.MatcherDeps{

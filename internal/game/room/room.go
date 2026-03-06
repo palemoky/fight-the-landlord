@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
 	"github.com/palemoky/fight-the-landlord/internal/types"
 )
@@ -36,16 +37,18 @@ type Room struct {
 type RoomManager struct {
 	redisStore  *storage.RedisStore
 	roomTimeout time.Duration
+	gameConfig  config.GameConfig
 	onGameStart func(*Room)
 	rooms       map[string]*Room
 	mu          sync.RWMutex
 }
 
 // NewRoomManager 创建房间管理器
-func NewRoomManager(rs *storage.RedisStore, roomTimeout time.Duration) *RoomManager {
+func NewRoomManager(rs *storage.RedisStore, gameConfig config.GameConfig) *RoomManager {
 	rm := &RoomManager{
 		redisStore:  rs,
-		roomTimeout: roomTimeout,
+		roomTimeout: gameConfig.RoomTimeoutDuration(),
+		gameConfig:  gameConfig,
 		rooms:       make(map[string]*Room),
 	}
 

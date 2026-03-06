@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/testutil"
 )
 
@@ -13,7 +14,7 @@ func TestRoomManager_GetRoomList(t *testing.T) {
 	t.Parallel()
 
 	// Initialize RoomManager with nil server (ok for this test)
-	rm := NewRoomManager(nil, 10*time.Minute)
+	rm := NewRoomManager(nil, config.GameConfig{RoomTimeout: 10})
 
 	// Manually add a suitable room
 	room := &Room{

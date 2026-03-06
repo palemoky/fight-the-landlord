@@ -2,10 +2,10 @@ package handler
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/mock"
 
+	"github.com/palemoky/fight-the-landlord/internal/config"
 	r "github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
 	"github.com/palemoky/fight-the-landlord/internal/protocol/codec"
@@ -93,7 +93,7 @@ func TestHandler_HandleChat_Room(t *testing.T) {
 	room := r.NewMockRoom("123", nil)
 
 	// Create a real RoomManager and add the room
-	rm := r.NewRoomManager(nil, 10*time.Minute)
+	rm := r.NewRoomManager(nil, config.GameConfig{RoomTimeout: 10})
 	rm.AddRoomForTest(room)
 
 	h := NewHandler(HandlerDeps{
