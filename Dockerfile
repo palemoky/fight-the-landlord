@@ -1,5 +1,8 @@
+# 定义构建参数，设置一个默认值（以防本地直接 docker build 时没有传参）
+ARG GO_VERSION=1.26
+
 # 构建阶段
-FROM golang:1.25-alpine AS builder
+FROM golang:${GO_VERSION}-alpine AS builder
 
 WORKDIR /app
 

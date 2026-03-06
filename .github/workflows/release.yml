@@ -157,6 +157,10 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Extract Go Version
+        id: go_version
+        run: echo "version=$(grep '^go ' go.mod | awk '{print $2}')" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -171,6 +175,7 @@ jobs:
           sbom: true
           build-args: |
             VERSION=${{ github.ref_name }}
+            GO_VERSION=${{ steps.go_version.outputs.version }}
 
       - name: Update Docker Hub description
         if: github.event_name != 'pull_request'
