@@ -54,11 +54,12 @@ jobs:
           DEFAULT_SERVER: ${{ vars.DEFAULT_SERVER || 'localhost:1780' }}
           VERSION: ${{ github.ref_name }}
         run: |
+          GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
           docker run --rm --platform linux/arm64 \
             -v "$PWD:/src" -w /src \
             -e CGO_ENABLED=1 \
             -e GIT_CEILING_DIRECTORIES=/src \
-            golang:1.25-trixie \
+            golang:${GO_VERSION}-trixie \
             sh -c "
               apt-get update && \
               apt-get install -y libasound2-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev && \
