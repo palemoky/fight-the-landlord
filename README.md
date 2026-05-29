@@ -36,6 +36,15 @@
   <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/in-game.png" alt="In Game" width="45%" />
 </div>
 
+## 🤖 DouZero 机器人出牌演示
+
+[DouZero](https://github.com/kwai/DouZero) 是快手开源的基于深度强化学习的斗地主 AI。相比于经常出非法牌型的 LLM 而言，DouZero 能展现出更丰富的高级策略：自由出牌时主动组合复杂牌型、农民间默契配合、精准顶牌与拆牌等，对局体验更接近真人对手。
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/douzero-game.png" alt="Game" width="45%" />
+  <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/douzero-log.png" alt="Log" width="45%" />
+</div>
+
 ## ✨ 功能特性
 
 | 功能         | 说明                                                                        |
