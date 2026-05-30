@@ -6,7 +6,6 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -19,10 +18,11 @@ import (
 )
 
 // soundFS 把音效文件编译进二进制，让客户端二进制自包含、可独立分发。
-// 仅嵌入顶层 mp3（即实际播放的英文命名音效）；sounds/women 下的中文女声
-// 为备用语音，暂未启用，故不嵌入以免无谓增大二进制。
+// 仅嵌入当前启用的音效：lobby（大厅/BGM）、gaming/effects（非人声音效）、
+// gaming/voices/male（男声播报）。gaming/voices/female 为备用女声，暂未启用，
+// 故不嵌入以免无谓增大二进制。
 //
-//go:embed sounds/*.mp3
+//go:embed lobby gaming/effects gaming/voices/male
 var soundFS embed.FS
 
 type SoundManager struct {
@@ -61,37 +61,37 @@ func (sm *SoundManager) Init() error {
 	return nil
 }
 
-// loadSoundFiles loads every embedded sound file, keyed by its filename
-// without extension (e.g. deal.mp3 -> "deal").
+// loadSoundFiles walks the embedded filesystem recursively and loads every
+// sound file, keyed by its base filename without extension (e.g.
+// gaming/voices/male/single/single_A.mp3 -> "single_A"). The directory layout
+// is purely for human maintainability; callers still address sounds by their
+// flat key. Base filenames are therefore expected to be unique across the
+// embedded set.
 func (sm *SoundManager) loadSoundFiles(sampleRate beep.SampleRate) error {
-	const soundDir = "sounds"
-	files, err := fs.ReadDir(soundFS, soundDir)
-	if err != nil {
-		return fmt.Errorf("failed to read embedded sound directory: %w", err)
-	}
-
-	for _, file := range files {
-		if file.IsDir() {
-			continue
+	return fs.WalkDir(soundFS, ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		name := file.Name()
+		if d.IsDir() {
+			return nil
+		}
+		name := d.Name()
 		key := strings.TrimSuffix(name, filepath.Ext(name))
-		if err := sm.loadSoundFile(soundDir, name, key, sampleRate); err != nil {
-			// Continue loading other files even if one fails.
-			continue
-		}
-	}
-	return nil
+		// Continue loading other files even if one fails.
+		_ = sm.loadSoundFile(p, key, sampleRate)
+		return nil
+	})
 }
 
-// loadSoundFile loads a single sound file into the buffer under key `key`.
-func (sm *SoundManager) loadSoundFile(soundDir, rel, key string, sampleRate beep.SampleRate) error {
-	ext := strings.ToLower(filepath.Ext(rel))
+// loadSoundFile loads a single sound file at path `p` into the buffer under
+// key `key`.
+func (sm *SoundManager) loadSoundFile(p, key string, sampleRate beep.SampleRate) error {
+	ext := strings.ToLower(filepath.Ext(p))
 	if ext != ".mp3" && ext != ".wav" {
 		return nil
 	}
 
-	f, err := soundFS.Open(path.Join(soundDir, rel))
+	f, err := soundFS.Open(p)
 	if err != nil {
 		return err
 	}
