@@ -21,6 +21,9 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/server/storage"
 )
 
+// Version 是服务端版本号，可由 cmd/server 在启动时通过编译注入的值覆盖。
+var Version = "dev"
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -161,6 +164,7 @@ func (s *Server) Start() error {
 
 	http.HandleFunc("/ws", s.handleWebSocket)
 	http.HandleFunc("/health", s.handleHealth)
+	http.HandleFunc("/version", s.handleVersion)
 
 	// 启动监控 goroutine
 	go s.monitorStats()

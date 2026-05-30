@@ -1,18 +1,4 @@
 services:
-  # DouZero AI 推理服务
-  douzero:
-    image: palemoky/fight-the-landlord-douzero:latest
-    container_name: poker-douzero
-    restart: unless-stopped
-    networks:
-      - poker-network
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:2021/health')"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-
   # 游戏服务器
   poker-server:
     image: palemoky/fight-the-landlord:latest
@@ -33,6 +19,20 @@ services:
         condition: service_healthy
     networks:
       - poker-network
+
+  # DouZero AI 推理服务
+  douzero:
+    image: palemoky/fight-the-landlord-douzero:latest
+    container_name: poker-douzero
+    restart: unless-stopped
+    networks:
+      - poker-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:2021/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # Redis 数据库
   redis:

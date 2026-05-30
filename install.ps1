@@ -68,7 +68,7 @@ function Install-Binary {
     $installDir = Join-Path $env:USERPROFILE ".fight-the-landlord"
     New-Item -ItemType Directory -Force -Path $installDir | Out-Null
 
-    $targetPath = Join-Path $installDir "fight-the-landlord.exe"
+    $targetPath = Join-Path $installDir "ddz.exe"
     Copy-Item -Path $BinaryPath -Destination $targetPath -Force
 
     Write-Info "已安装到: $targetPath"
@@ -104,7 +104,7 @@ function Main {
     Write-Info "✅ 安装完成！"
     Write-Host ""
     Write-Host "🎮 开始游戏：" -ForegroundColor Cyan
-    Write-Host "    fight-the-landlord" -ForegroundColor Yellow
+    Write-Host "    ddz" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "💡 提示：直接运行即可，已自动连接到官方服务器" -ForegroundColor Gray
     Write-Host ""

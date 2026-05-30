@@ -11,9 +11,15 @@ import (
 	"github.com/palemoky/fight-the-landlord/internal/server"
 )
 
+// version 是服务端版本号，可通过编译时 -ldflags "-X main.version=..." 注入。
+var version = "dev"
+
 func main() {
 	configPath := flag.String("config", "config.yaml", "配置文件路径")
 	flag.Parse()
+
+	// 将注入的版本号传递给 server 包，供 /version 接口公布
+	server.Version = version
 
 	// 加载配置
 	cfg, err := config.Load(*configPath)

@@ -1,5 +1,6 @@
 # 定义构建参数，设置一个默认值（以防本地直接 docker build 时没有传参）
 ARG GO_VERSION=1.26
+ARG VERSION=dev
 
 # 构建阶段（dev 变体带 shell/编译器/git，用于 CI 构建）
 FROM dhi.io/golang:${GO_VERSION}-dev AS builder
@@ -16,8 +17,11 @@ RUN go mod download
 # 复制源代码
 COPY . .
 
-# 构建服务端二进制（CGO 关闭，产出静态二进制）
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o /server ./cmd/server
+# 在构建阶段重新声明 ARG 以便在 RUN 中使用（FROM 之前的 ARG 不会自动透传到阶段内）
+ARG VERSION
+
+# 构建服务端二进制（CGO 关闭，产出静态二进制），注入版本号
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s -X main.version=${VERSION}" -o /server ./cmd/server
 
 # 运行阶段：DHI static 为 distroless 风格，自带 ca-certificates，默认非 root
 # static 无 latest 标签，需固定到带日期的 tag（catalog 中查最新）

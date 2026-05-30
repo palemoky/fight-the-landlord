@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -86,6 +87,24 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("OK"))
+}
+
+// handleVersion 版本接口，向客户端公布服务端版本及其要求的最低客户端版本。
+//
+// 客户端启动时据此判断是否需要强制升级，使升级策略由服务端集中控制。
+func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
+	resp := struct {
+		ServerVersion    string `json:"server_version"`
+		MinClientVersion string `json:"min_client_version"`
+	}{
+		ServerVersion:    Version,
+		MinClientVersion: s.config.Server.MinClientVersion,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("⚠️  写入版本响应失败: %v", err)
+	}
 }
 
 // registerClient 注册客户端

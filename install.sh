@@ -111,14 +111,14 @@ install_binary() {
     # 如果需要 sudo 权限
     if [ "$INSTALL_DIR" = "/usr/local/bin" ] && [ ! -w "$INSTALL_DIR" ]; then
         warn "需要 sudo 权限安装到 $INSTALL_DIR"
-        sudo mv "$BINARY_NAME" "$INSTALL_DIR/fight-the-landlord"
-        sudo chmod +x "$INSTALL_DIR/fight-the-landlord"
+        sudo mv "$BINARY_NAME" "$INSTALL_DIR/ddz"
+        sudo chmod +x "$INSTALL_DIR/ddz"
     else
-        mv "$BINARY_NAME" "$INSTALL_DIR/fight-the-landlord"
-        chmod +x "$INSTALL_DIR/fight-the-landlord"
+        mv "$BINARY_NAME" "$INSTALL_DIR/ddz"
+        chmod +x "$INSTALL_DIR/ddz"
     fi
 
-    info "已安装到: $INSTALL_DIR/fight-the-landlord"
+    info "已安装到: $INSTALL_DIR/ddz"
 
     # 检查 PATH
     if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
@@ -149,7 +149,7 @@ main() {
     info "✅ 安装完成！"
     echo ""
     echo "🎮 开始游戏："
-    echo "    fight-the-landlord"
+    echo "    ddz"
     echo ""
     echo "💡 提示：直接运行即可，已自动连接到官方服务器"
     echo ""

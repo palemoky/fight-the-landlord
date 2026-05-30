@@ -58,6 +58,9 @@ type ServerConfig struct {
 	Host           string `yaml:"host"`
 	Port           int    `yaml:"port"`
 	MaxConnections int    `yaml:"max_connections"` // 最大并发连接数，0 表示无限制
+	// 要求的最低客户端版本（如 v1.2.0），空表示不限制。
+	// 低于该版本的客户端启动时会被强制自动升级，用于发布不兼容变更时保证版本一致。
+	MinClientVersion string `yaml:"min_client_version"`
 }
 
 // RedisConfig Redis 配置
@@ -194,6 +197,7 @@ func loadFromEnv(cfg *Config) {
 	getEnvStr("SERVER_HOST", &cfg.Server.Host)
 	getEnvInt("SERVER_PORT", &cfg.Server.Port)
 	getEnvInt("SERVER_MAX_CONNECTIONS", &cfg.Server.MaxConnections)
+	getEnvStr("SERVER_MIN_CLIENT_VERSION", &cfg.Server.MinClientVersion)
 
 	// Redis
 	getEnvStr("REDIS_ADDR", &cfg.Redis.Addr)

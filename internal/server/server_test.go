@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -8,6 +9,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/palemoky/fight-the-landlord/internal/config"
 )
 
 func TestServer_RegisterUnregister_Concurrency(t *testing.T) {
@@ -57,6 +61,32 @@ func TestServer_HandleHealth(t *testing.T) {
 	defer func() { _ = res.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+}
+
+func TestServer_HandleVersion(t *testing.T) {
+	t.Parallel()
+
+	s := &Server{config: &config.Config{}}
+	s.config.Server.MinClientVersion = "v1.1.0"
+
+	req := httptest.NewRequest(http.MethodGet, "/version", http.NoBody)
+	w := httptest.NewRecorder()
+
+	s.handleVersion(w, req)
+
+	res := w.Result()
+	defer func() { _ = res.Body.Close() }()
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
+
+	var body struct {
+		ServerVersion    string `json:"server_version"`
+		MinClientVersion string `json:"min_client_version"`
+	}
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+	assert.Equal(t, "v1.1.0", body.MinClientVersion)
+	assert.Equal(t, Version, body.ServerVersion)
 }
 
 func TestServer_MaintenanceMode(t *testing.T) {

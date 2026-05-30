@@ -83,7 +83,7 @@ irm https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/install.p
 **运行客户端**：
 
 ```bash
-fight-the-landlord
+ddz
 ```
 
 ### 服务端部署
