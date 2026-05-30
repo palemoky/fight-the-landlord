@@ -182,10 +182,12 @@ func GameOverView(m model.Model) string {
 	}
 	sb.WriteString("\n按 ESC 返回大厅")
 
-	return lipgloss.NewStyle().
+	content := lipgloss.NewStyle().
 		Width(width).
 		Align(lipgloss.Center).
 		Render(sb.String())
+
+	return lipgloss.Place(width, m.Height(), lipgloss.Center, lipgloss.Center, content)
 }
 
 // --- Helper rendering functions ---
