@@ -139,7 +139,6 @@ go run ./cmd/client
 | C    | 开关记牌器（默认关闭） |
 | P    | Pass                   |
 | H    | 帮助                   |
-| 10/T | 出 10                  |
 | B    | 小王（Black Joker）    |
 | R    | 大王（Red Joker）      |
 | Esc  | 返回上一页             |
@@ -147,6 +146,12 @@ go run ./cmd/client
 ## 🤝 贡献
 
 欢迎贡献代码、报告问题或提出建议！
+
+<div>
+  <a href="https://star-history.com/#palemoky/fight-the-landlord&Date">
+    <img src="https://api.star-history.com/svg?repos=palemoky/fight-the-landlord&type=Date" alt="Star History Chart" width="55%" />
+  </a>
+</div>
 
 ---
 
