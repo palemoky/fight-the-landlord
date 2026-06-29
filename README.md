@@ -1,7 +1,7 @@
 <div align="center">
     <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/logo.png" alt="Logo" height="100px" />
 
-# 🎮 欢乐斗地主
+# 🎮 斗地主
 
 **一个真正公平的斗地主游戏 - 无控牌、无算法操控、纯粹的运气与技巧**
 
@@ -15,25 +15,25 @@
 
 </div>
 
-## 💡 项目初衷
+## 项目初衷
 
 在某些知名斗地主游戏中，新手或回归玩家刚开始会获得好牌，匹配豆子少的对手，营造"连胜"的错觉。但随着游戏时间增长，牌质量明显下降，且频繁匹配高段位玩家，导致快速输光豆子。这种算法操控严重破坏了游戏的公平性和纯粹性，在本项目中：
 
-- ✅ **真随机发牌**：每局洗牌完全随机，无任何控牌算法
-- ✅ **公平匹配**：不考虑胜率、段位、游戏时长，纯随机或房间匹配
-- ✅ **开源透明**：所有代码公开，欢迎审计和贡献
-- ✅ **无内购无广告**：纯粹的游戏体验，技巧决定胜负
+- **真随机发牌**：每局洗牌完全随机，无任何控牌算法
+- **公平匹配**：不考虑胜率、段位、游戏时长，纯随机或房间匹配
+- **开源透明**：所有代码公开，欢迎审计和贡献
+- **无内购无广告**：纯粹的游戏体验，技巧决定胜负
 
 > **核心理念**：斗地主应该是运气与技巧的博弈，而不是算法与钱包的较量。
 
-## 📸 游戏截图
+## 游戏截图
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/lobby.png" alt="Lobby" width="45%" />
   <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/in-game.png" alt="In Game" width="45%" />
 </div>
 
-## 🤖 DouZero 机器人出牌演示
+## DouZero 机器人出牌演示
 
 [DouZero](https://github.com/kwai/DouZero) 是快手开源的基于深度强化学习的斗地主 AI。相比于经常出非法牌型的 LLM 而言，DouZero 能展现出更丰富的高级策略：自由出牌时主动组合复杂牌型、农民间默契配合、精准顶牌与拆牌等，对局体验更接近真人对手。
 
@@ -42,7 +42,7 @@
   <img src="https://raw.githubusercontent.com/palemoky/fight-the-landlord/main/docs/douzero-log.png" alt="Log" width="45%" />
 </div>
 
-## 🚀 快速开始
+## 快速开始
 
 ### 客户端安装
 
@@ -106,7 +106,7 @@ go run ./cmd/server
 go run ./cmd/client
 ```
 
-## 🎲 游戏规则
+## 游戏规则
 
 与常见的斗地主相同，开局叫地主后，两位农民需配合击败地主，地主则需要阻击两个农民，率先出完手牌的一方获胜。
 
@@ -143,15 +143,6 @@ go run ./cmd/client
 | R    | 大王（Red Joker）      |
 | Esc  | 返回上一页             |
 
-## 🤝 贡献
-
-欢迎贡献代码、报告问题或提出建议！
-
-<div>
-  <a href="https://star-history.com/#palemoky/fight-the-landlord&Date">
-    <img src="https://api.star-history.com/svg?repos=palemoky/fight-the-landlord&type=Date" alt="Star History Chart" width="55%" />
-  </a>
-</div>
 
 ---
 
