@@ -28,7 +28,7 @@ jobs:
           cache: false
 
       - name: Restore Go cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/go/pkg/mod
@@ -48,7 +48,7 @@ jobs:
         run: go test -tags=ci -race -p 4 -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Save Go cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         if: github.ref == 'refs/heads/main'
         with:
           path: |
