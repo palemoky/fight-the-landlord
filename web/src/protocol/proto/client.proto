@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package protocol;
+
+import "common.proto";
+
+message ReconnectPayload {
+  string token = 1;
+  string player_id = 2;
+}
+
+message PingPayload {
+  int64 timestamp = 1;
+}
+
+message JoinRoomPayload {
+  string room_code = 1;
+}
+
+message BidPayload {
+  bool bid = 1;
+}
+
+message PlayCardsPayload {
+  repeated CardInfo cards = 1;
+}
+
+message GetLeaderboardPayload {
+  string type = 1;
+  int64 offset = 2;
+  int64 limit = 3;
+}
