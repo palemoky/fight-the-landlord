@@ -41,11 +41,13 @@ services:
     restart: unless-stopped
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+    environment:
+      - REDISCLI_AUTH=${REDIS_PASSWORD:-}
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-}"
     networks:
       - poker-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
       interval: 10s
       timeout: 3s
       retries: 3
