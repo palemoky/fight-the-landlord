@@ -1,0 +1,46 @@
+:root {
+  --font-sans: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --bg: #123724;
+  --bg-sky: #76b9e8;
+  --felt: #1f7545;
+  --felt-dark: #155632;
+  --rail: #122d24;
+  --panel: rgba(255, 255, 255, 0.94);
+  --panel-dark: rgba(17, 39, 33, 0.82);
+  --panel-soft: rgba(255, 255, 255, 0.12);
+  --text: #18251f;
+  --text-light: #fff9e9;
+  --muted: #60736a;
+  --line: rgba(255, 255, 255, 0.16);
+  --line-dark: rgba(23, 45, 36, 0.14);
+  --amber: #e99c24;
+  --amber-hi: #f8ce55;
+  --blue: #3479c7;
+  --green: #4dbb72;
+  --danger: #d84f42;
+  --black-card: #1c2630;
+  --red-card: #d6433b;
+  --shadow: 0 18px 42px rgba(8, 20, 16, 0.25);
+  --shadow-soft: 0 10px 24px rgba(8, 20, 16, 0.14);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --wood: #4b2e22;
+  --wood-dark: #24150f;
+  --gold: #d7a84b;
+  --gold-hi: #ffe08a;
+  --table-felt: #0f7042;
+  --table-felt-hi: #2ea765;
+  --table-felt-dark: #073b28;
+  --button-blue: #246dc8;
+  --button-blue-hi: #5ba2ff;
+  --button-green: #2eac52;
+  --button-green-hi: #76dd83;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
