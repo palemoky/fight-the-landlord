@@ -149,7 +149,7 @@ func (gs *GameSession) validateCardsInHand(player *GamePlayer, cards []card.Card
 	for _, c := range cards {
 		found := false
 		for i, h := range handCopy {
-			if h.Suit == c.Suit && h.Rank == c.Rank {
+			if h.Suit == c.Suit && h.Rank == c.Rank && h.Color == c.Color {
 				handCopy = append(handCopy[:i], handCopy[i+1:]...)
 				found = true
 				break
