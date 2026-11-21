@@ -96,6 +96,9 @@ func findSmallestBeatingTrio(playerHand []card.Card, analysis HandAnalysis, oppo
 
 // findSmallestBomb 找到最小的炸弹
 func findSmallestBomb(playerHand []card.Card, analysis HandAnalysis, opponentHand ParsedHand) []card.Card {
+	if opponentHand.Type == Rocket {
+		return nil
+	}
 	for _, r := range analysis.fours {
 		if opponentHand.Type != Bomb || r > opponentHand.KeyRank {
 			return findCardsWithRank(playerHand, r, 4)
