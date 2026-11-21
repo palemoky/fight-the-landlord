@@ -38,13 +38,13 @@ func (rm *RoomManager) NotifyPlayerOffline(client types.ClientInterface) {
 
 	// 标记当前玩家为离线
 	if player, exists := room.Players[client.GetID()]; exists {
-		player.Client = nil
+		player.Offline = true
 	}
 
 	// 检查所有玩家是否都离线
 	allOffline := true
 	for _, player := range room.Players {
-		if player.Client != nil {
+		if !player.Offline {
 			allOffline = false
 			// 通知其他在线玩家
 			player.Client.SendMessage(codec.MustNewMessage(protocol.MsgPlayerOffline, protocol.PlayerOfflinePayload{
@@ -98,6 +98,7 @@ func (rm *RoomManager) ReconnectPlayer(oldClient, newClient types.ClientInterfac
 
 	// 更新客户端引用
 	player.Client = newClient
+	player.Offline = false
 	newClient.SetRoom(roomCode)
 
 	// 通知其他玩家该玩家已上线

@@ -20,6 +20,7 @@ type RoomPlayer struct {
 	Seat       int  // 座位号 0-2
 	Ready      bool // 是否准备
 	IsLandlord bool // 是否是地主
+	Offline    bool // 是否离线
 }
 
 // Room 游戏房间
