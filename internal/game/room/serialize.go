@@ -18,8 +18,8 @@ func (r *Room) ToRoomData() *storage.RoomData {
 	}
 
 	for _, player := range r.Players {
-		// 跳过已离线的玩家（Client 为 nil）
-		if player.Client == nil {
+		// 跳过已离线的玩家
+		if player.Offline {
 			continue
 		}
 		data.Players = append(data.Players, storage.PlayerData{
